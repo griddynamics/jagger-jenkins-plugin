@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Built-By: Andrey
+Created-By: Apache Maven
+Build-Jdk: 1.6.0_38
+Extension-Name: jagger-jenkins-plugin
+Implementation-Title: jagger-jenkins-plugin
+Implementation-Version: 1.0.1-SNAPSHOT
+Group-Id: com.griddynamics.jagger
+Short-Name: jagger-jenkins-plugin
+Long-Name: Jagger Jenkins Plug-in
+Url: http://jenkins-ci.org/plugin/jagger-jenkins-plugin/
+Plugin-Version: 1.0.1-SNAPSHOT (private-12/20/2012 15:13-Andrey)
+Hudson-Version: 1.466
+Jenkins-Version: 1.466
+Plugin-Developers: 
+

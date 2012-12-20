@@ -1,0 +1,21 @@
+<l:dependencies xmlns:l='licenses' groupId='com.griddynamics.jagger' artifactId='jagger-jenkins-plugin' version='1.0.1-SNAPSHOT'>
+  <l:dependency name='Jagger Jenkins Plug-in' groupId='com.griddynamics.jagger' artifactId='jagger-jenkins-plugin' version='1.0.1-SNAPSHOT' url='http://jenkins-ci.org/plugin/jagger-jenkins-plugin/'>
+    <l:description />
+  </l:dependency>
+  <l:dependency name='BeanShell' groupId='org.beanshell' artifactId='bsh' version='2.0b4'>
+    <l:description>BeanShell</l:description>
+    <l:license name='GNU LESSER GENERAL PUBLIC LICENSE' url='http://www.gnu.org/licenses/lgpl.txt' />
+  </l:dependency>
+  <l:dependency name='TestNG' groupId='org.testng' artifactId='testng' version='6.0.1' url='http://testng.org'>
+    <l:description>TestNG is a testing framework.</l:description>
+    <l:license name='Apache License, Version 2.0' url='http://apache.org/licenses/LICENSE-2.0' />
+  </l:dependency>
+  <l:dependency name='SnakeYAML' groupId='org.yaml' artifactId='snakeyaml' version='1.6' url='http://code.google.com/p/snakeyaml/'>
+    <l:description>YAML 1.1 parser and emitter for Java</l:description>
+    <l:license name='Apache License Version 2.0' url='LICENSE.txt' />
+  </l:dependency>
+  <l:dependency name='JCommander' groupId='com.beust' artifactId='jcommander' version='1.12' url='http://beust.com/jcommander'>
+    <l:description>A Java framework to parse command line options with annotations.</l:description>
+    <l:license name='The Apache Software License, Version 2.0' url='http://www.apache.org/licenses/LICENSE-2.0.txt' />
+  </l:dependency>
+</l:dependencies>

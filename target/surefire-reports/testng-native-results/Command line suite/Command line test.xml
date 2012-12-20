@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite hostname="Andrey-ПК" name="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest" tests="14" failures="0" timestamp="20 Dec 2012 11:12:28 GMT" time="0.692" errors="0">
+  <testcase name="testErrorIgnoreFalse" time="0.625" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testErrorIgnoreTrue" time="0.0050" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testExceptionIgnoreFalse" time="0.0040" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testExceptionIgnoreTrue" time="0.0040" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testFatalIgnoreFalse" time="0.0060" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testFatalIgnoreTrue" time="0.0040" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testFileBrokenFalse" time="0.0030" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testFileBrokenTrue" time="0.0030" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testFileDoesNotExistIgnoreFalse" time="0.0020" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testFileDoesNotExistIgnoreTrue" time="0.0020" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testOkIgnoreFalse" time="0.0040" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testOkIgnoreTrue" time="0.0040" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testWarningIgnoreFalse" time="0.0040" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+  <testcase name="testWarningIgnoreTrue" time="0.0060" classname="com.griddynamics.jagger.jenkins.plugin.JaggerComparisonPluginTest"/>
+</testsuite>
