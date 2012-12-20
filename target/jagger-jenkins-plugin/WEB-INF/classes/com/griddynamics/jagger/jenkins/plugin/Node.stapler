@@ -1,2 +1,0 @@
-#Thu Dec 20 15:11:25 GMT+04:00 2012
-constructor=serverAddress,userName,sshKeyPath,usePassword,userPassword,propertiesPath,setPropertiesByHand,isKernel,isMaster,isCoordinationServer,isRdbServer,rdbDrver,rdbPort,rdbName,rdbUserName,rdbPassword,rdbDialect,isReporter,isAgentServer
