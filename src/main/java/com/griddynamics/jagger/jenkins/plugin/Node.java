@@ -7,8 +7,6 @@ import hudson.model.Hudson;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -31,6 +29,18 @@ public class Node implements Describable<Node> {
 
     private final boolean setPropertiesByHand;
 
+//    private final Master master;
+//
+//    private final RdbServer rdbServer;
+//
+//    private final CoordinationServer coordinationServer;
+//
+//    private final Kernel kernel;
+//
+//    private  final Reporter reporter;
+//
+//    private final NodeToAttack nodeToAttack;
+
     private ArrayList<Role> roles = new ArrayList<Role>() ;
 
     @DataBoundConstructor
@@ -38,14 +48,15 @@ public class Node implements Describable<Node> {
                 String sshKeyPath, boolean usePassword,String userPassword, String propertiesPath,
                 boolean setPropertiesByHand,
 
-                boolean isKernel,
-                boolean isMaster,
-                boolean isCoordinationServer,
-                boolean isRdbServer,
-                String rdbDrver,
-                String rdbPort, String rdbName,String rdbUserName, String rdbPassword, String rdbDialect ,
-                boolean isReporter,
-                boolean isAgentServer) {
+                Master master,
+                RdbServer rdbServer,
+                CoordinationServer coordinationServer,
+                Kernel kernel,
+                Reporter reporter ,
+                NodeToAttack nodeToAttack
+
+
+    ) {
 
         this.serverAddress = serverAddress;
         this.userName = userName;
@@ -55,17 +66,72 @@ public class Node implements Describable<Node> {
         this.propertiesPath = propertiesPath;
         this.setPropertiesByHand = setPropertiesByHand;
 
+//        this.nodeToAttack = nodeToAttack;
+//        this.master = master;
+//        this.rdbServer = rdbServer;
+//        this.coordinationServer = coordinationServer;
+//        this.kernel = kernel;
+//        this.reporter = reporter;
+
+
         if (setPropertiesByHand){
-            fillRoles(
-                    isKernel,
-                    isMaster,
-                    isCoordinationServer,
-                    isRdbServer, rdbDrver, rdbPort ,rdbName , rdbUserName , rdbPassword, rdbDialect,
-                    isReporter,
-                    isAgentServer
-                );
+            fillRoles(nodeToAttack ,master, rdbServer , coordinationServer, kernel, reporter );
         }
 
+    }
+
+    public NodeToAttack getNodeToAttack() {
+        for(Role role:getRoles()){
+            if(role instanceof NodeToAttack){
+                return (NodeToAttack) role;
+            }
+        }
+        return null;
+    }
+
+    public CoordinationServer getCoordinationServer() {
+        for(Role role:getRoles()){
+            if(role instanceof CoordinationServer){
+                return (CoordinationServer) role;
+            }
+        }
+        return null;
+    }
+
+    public Kernel getKernel() {
+        for(Role role:getRoles()){
+            if(role instanceof Kernel){
+                return (Kernel) role;
+            }
+        }
+        return null;
+    }
+
+    public Reporter getReporter() {
+        for(Role role:getRoles()){
+            if(role instanceof Reporter){
+                return (Reporter) role;
+            }
+        }
+        return null;
+    }
+
+    public Master getMaster() {
+        for(Role role:getRoles()){
+            if(role instanceof Master){
+                return (Master) role;
+            }
+        }
+        return null;
+    }
+
+    public RdbServer getRdbServer() {
+        for(Role role:getRoles()){
+            if(role instanceof RdbServer){
+                return (RdbServer) role;
+            }
+        }
+        return null;
     }
 
     public boolean isSetPropertiesByHand() {
@@ -96,30 +162,20 @@ public class Node implements Describable<Node> {
         return usePassword;
     }
 
+
+
     public ArrayList<Role> getRoles() {
         return roles;
     }
 
 
-    private void fillRoles(boolean kernel,
-                           boolean master,
-                           boolean coordinationServer,
-                           boolean rdbServer,
-                           String rdbDriver,
-                                String rdbPort, String rdbName,String rdbUserName, String rdbPassword, String rdbDialect,
-                           boolean reporter,
-                           boolean agentServer) {
+    private void fillRoles(Role ... roles) {
 
-
-        if(master) {
-            roles.add(new Master());
+        for(Role role : roles) {
+            if(role != null){
+                this.roles.add(role);
+            }
         }
-        if(rdbServer) {
-            roles.add(new RdbServer(rdbDriver,rdbPort,rdbName,rdbUserName,rdbPassword,rdbDialect))  ;
-        }
-
-
-
     }
 
     public Descriptor<Node> getDescriptor() {
@@ -134,6 +190,10 @@ public class Node implements Describable<Node> {
         public String getDisplayName() {
             return "Node";
         }
+
+
     }
+
+
 
 }

@@ -8,16 +8,11 @@ import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import hudson.util.FormValidation;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 
 public class JaggerEasyDeployPlugin extends Builder
@@ -30,11 +25,18 @@ public class JaggerEasyDeployPlugin extends Builder
     private boolean coordinatorExists;
     private boolean KernelExists;
 
-    @DataBoundConstructor
-    public JaggerEasyDeployPlugin(ArrayList<Node> nodList){
+//    private ArrayList<NodeToAttack> nodesToAttack = new ArrayList<NodeToAttack>();
 
+    @DataBoundConstructor
+    public JaggerEasyDeployPlugin(/*ArrayList<NodeToAttack> nodesToAttack,*/ ArrayList<Node> nodList){
+
+ //       this.nodesToAttack = nodesToAttack;
         this.nodList = nodList;
     }
+
+//    public ArrayList<NodeToAttack> getNodesToAttack() {
+//        return nodesToAttack;
+//    }
 
     public ArrayList<Node> getNodList() {
         return nodList;
@@ -76,18 +78,35 @@ public class JaggerEasyDeployPlugin extends Builder
         PrintStream logger = listener.getLogger();
         logger.println("\n______Jagger_Easy_Deploy_Started______\n");
 
-        for(Node node:nodList){
-            logger.println("Node address : "+node.getServerAddress());
-            logger.println("Node's Roles : ");
-            for(Role role: node.getRoles()){
-                logger.println(role);
+        try{
+//            for(NodeToAttack node:nodesToAttack){
+//                logger.println("-------------------------");
+//                logger.println("NodeToAttack address : "+node.getServerAddress());
+//                logger.println("-------------------------");
+//                logger.println("installAgent : "+node.isInstallAgent());
+//                }
+//                logger.println("-------------------------\n-------------------------\n");
+
+            for(Node node:nodList){
+                logger.println("-------------------------");
+                logger.println("Node address : "+node.getServerAddress());
+                logger.println("-------------------------");
+                logger.println("Node's rolespack : ");
+                for(Role role: node.getRoles()){
+                    logger.println(role.toString());
+                }
+                logger.println("-------------------------\n-------------------------");
+
             }
 
+            logger.println("\n______Jagger_Easy_Deploy_Finished______\n");
+
+            return true;
+
+        }catch (Exception e){
+            logger.println("Troubles : " +e.getLocalizedMessage() );
         }
-
-        logger.println("\n______Jagger_Easy_Deploy_Finished______\n");
-
-        return true;
+            return false;
     }
 
     @Override
