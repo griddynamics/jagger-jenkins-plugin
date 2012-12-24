@@ -1,8 +1,8 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:entry title="Path" field="path">
+  <f:entry title="Path to Jagger output xml file" field="path">
     <f:textbox />
   </f:entry>
-  <f:entry title="Ignore Errors" field="ignoreErrors">
+  <f:entry title="Stop and set the build to 'failed' status if there are errors when processing a result file" field="ignoreErrors">
     <f:checkbox default="checked"/>
   </f:entry>
 </j:jelly>
