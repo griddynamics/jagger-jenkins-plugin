@@ -18,8 +18,11 @@
               <f:textbox field="sshKeyPath" />
             </f:entry>
 
+
+
      </table>
   </f:block>
+
 
   <f:block>
       <table>
@@ -44,27 +47,28 @@
 
 
 
+
 <f:block>
   <table>
     <f:optionalBlock field = "setPropertiesByHand" checked= "${instance.setPropertiesByHand}"  title = "Set Properties By Hand" inline = "true">
 
+    <!--
             <f:block>
                 <table>
                   <f:optionalProperty field = "nodeToAttack" title = "Node To Attack" />
                 </table>
             </f:block>
+    -->
 
             <f:block>
                <table>
                   <f:optionalProperty field = "master" title = "MASTER" />
-                <!--  <f:property field = "master" /> -->
              </table>
              </f:block>
 
             <f:block>
                <table>
                    <f:optionalProperty field = "rdbServer" title = "RDB_SERVER" />
-                <!--  <f:property field = "rdbServer" /> -->
                </table>
             </f:block>
 

@@ -4,8 +4,12 @@ import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.util.FormValidation;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
+import java.io.IOException;
+import java.net.*;
 import java.util.ArrayList;
 
 /**
@@ -28,18 +32,6 @@ public class Node implements Describable<Node> {
     private final boolean usePassword;
 
     private final boolean setPropertiesByHand;
-
-//    private final Master master;
-//
-//    private final RdbServer rdbServer;
-//
-//    private final CoordinationServer coordinationServer;
-//
-//    private final Kernel kernel;
-//
-//    private  final Reporter reporter;
-//
-//    private final NodeToAttack nodeToAttack;
 
     private ArrayList<Role> roles = new ArrayList<Role>() ;
 
@@ -65,14 +57,6 @@ public class Node implements Describable<Node> {
         this.usePassword = usePassword;
         this.propertiesPath = propertiesPath;
         this.setPropertiesByHand = setPropertiesByHand;
-
-//        this.nodeToAttack = nodeToAttack;
-//        this.master = master;
-//        this.rdbServer = rdbServer;
-//        this.coordinationServer = coordinationServer;
-//        this.kernel = kernel;
-//        this.reporter = reporter;
-
 
         if (setPropertiesByHand){
             fillRoles(nodeToAttack ,master, rdbServer , coordinationServer, kernel, reporter );
@@ -191,9 +175,27 @@ public class Node implements Describable<Node> {
             return "Node";
         }
 
+        public FormValidation doCheckServerAddress(@QueryParameter String value) {
+
+            try {
+
+
+                if(value == null || value.matches("\\s*")) {
+                    return FormValidation.error("Set Address");
+                }
+
+                InetAddress.getByName(value).isReachable(1000);
+                return FormValidation.ok();
+
+            } catch(UnknownHostException e){
+
+                return FormValidation.error("Bad Server Address");
+            } catch (IOException e) {
+
+                return FormValidation.error("Server With That Address Unavailable");
+            }
+        }
 
     }
-
-
 
 }

@@ -25,18 +25,18 @@ public class JaggerEasyDeployPlugin extends Builder
     private boolean coordinatorExists;
     private boolean KernelExists;
 
-//    private ArrayList<NodeToAttack> nodesToAttack = new ArrayList<NodeToAttack>();
+    private ArrayList<NodeToAttack> nodesToAttack = new ArrayList<NodeToAttack>();
 
     @DataBoundConstructor
-    public JaggerEasyDeployPlugin(/*ArrayList<NodeToAttack> nodesToAttack,*/ ArrayList<Node> nodList){
+    public JaggerEasyDeployPlugin(ArrayList<NodeToAttack> nodesToAttack, ArrayList<Node> nodList){
 
- //       this.nodesToAttack = nodesToAttack;
+        this.nodesToAttack = nodesToAttack;
         this.nodList = nodList;
     }
 
-//    public ArrayList<NodeToAttack> getNodesToAttack() {
-//        return nodesToAttack;
-//    }
+    public ArrayList<NodeToAttack> getNodesToAttack() {
+        return nodesToAttack;
+    }
 
     public ArrayList<Node> getNodList() {
         return nodList;
@@ -79,13 +79,13 @@ public class JaggerEasyDeployPlugin extends Builder
         logger.println("\n______Jagger_Easy_Deploy_Started______\n");
 
         try{
-//            for(NodeToAttack node:nodesToAttack){
-//                logger.println("-------------------------");
-//                logger.println("NodeToAttack address : "+node.getServerAddress());
-//                logger.println("-------------------------");
-//                logger.println("installAgent : "+node.isInstallAgent());
-//                }
-//                logger.println("-------------------------\n-------------------------\n");
+            for(NodeToAttack node:nodesToAttack){
+                logger.println("-------------------------");
+                logger.println("NodeToAttack address : "+node.getServerAddress());
+                logger.println("-------------------------");
+                logger.println(node.toString());
+                }
+                logger.println("-------------------------\n-------------------------\n");
 
             for(Node node:nodList){
                 logger.println("-------------------------");
