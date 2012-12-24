@@ -27,6 +27,10 @@
                     </f:entry>
     </f:section>
 
-
+<!--
+    <f:validateButton
+       title="${%Test Validation of Nodes}" progress="${%Testing...}"
+       method="testNodeValidation" with="nodList" />
+-->
 
 </j:jelly>

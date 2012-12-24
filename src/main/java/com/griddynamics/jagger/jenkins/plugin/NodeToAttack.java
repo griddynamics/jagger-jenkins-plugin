@@ -1,5 +1,11 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
+
+import ch.ethz.ssh2.*;
+//import com.jcraft.jsch.JSch;
+//import com.jcraft.jsch.JSchException;
+//import com.jcraft.jsch.Session;
+//import com.jcraft.jsch.UserInfo;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -8,8 +14,10 @@ import hudson.util.FormValidation;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.*;
+import java.util.Properties;
 
 /**
  * Created with IntelliJ IDEA.
@@ -122,19 +130,45 @@ public class NodeToAttack extends Role implements Describable<NodeToAttack> {
             }
         }
 
+        /**
+         * For test ssh connection
+         * @param serverAddress   STRING host address
+         * @param userName        STRING user name
+         * @param sshKeyPath      STRING path of ssh Key
+         * @param usePassword     BOOLEAN if password in use
+         * @param userPassword    STRING user password
+         * @return   ok if connect, error otherwise
+         */
         public FormValidation doTestSSHConnection(@QueryParameter("serverAddress") final String serverAddress,
-                                               @QueryParameter("installAgent") final boolean installAgent,
                                                @QueryParameter("userName") final String userName,
                                                @QueryParameter("sshKeyPath") final String sshKeyPath,
                                                @QueryParameter("usePassword") final boolean usePassword,
                                                @QueryParameter("userPassword") final String userPassword) {
             try {
-                return FormValidation.ok("serverAddress :"+serverAddress+"\t"+
-                        "install Agent :"+installAgent+"\t"+"userName :"+userName+"\t"+
-                        "sshKeyPath :"+sshKeyPath+"\t"+"usePassword :"+usePassword+"\t"+
-                        "userPassword :"+userPassword);
-            } catch (Exception e) {
-                return FormValidation.error("Bad Luck");
+
+                Connection conn = new Connection(serverAddress);
+                conn.connect();
+
+                if(!usePassword){
+
+                    File rsaKeyFile = new File(sshKeyPath);
+
+                    if(!conn.authenticateWithPublicKey(userName,rsaKeyFile,"")) {
+                        return FormValidation.error("can't authenticate with pub.key");
+                    }
+                } else {
+                    if(!conn.authenticateWithPassword(userName,userPassword)) {
+
+                        return FormValidation.error("can't authenticate with password");
+                    }
+                }
+
+                return FormValidation.ok();
+
+            } catch (ConnectException e) {
+                return FormValidation.error("can't make even connection");
+            } catch (IOException e) {
+                return FormValidation.error("Can't connect with such configuration\n"+e.getLocalizedMessage());
             }
         }
 

@@ -1,5 +1,6 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
+import ch.ethz.ssh2.Connection;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -8,6 +9,7 @@ import hudson.util.FormValidation;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
@@ -194,6 +196,95 @@ public class Node implements Describable<Node> {
 
                 return FormValidation.error("Server With That Address Unavailable");
             }
+        }
+
+        public FormValidation doCheckPropertiesPath(@QueryParameter("setPropertiesByHand") final boolean setPropertiesByHand,
+                                                @QueryParameter("propertiesPath")final String propertiesPath) {
+
+            if(setPropertiesByHand){
+                return FormValidation.ok();
+            } else {
+
+                if(propertiesPath.matches("\\s*")){
+                    return FormValidation.error("Set Properties Path, or Set Properties By Hand");
+                }
+                return FormValidation.warning("not yet implemented : "+propertiesPath);
+            }
+
+        }
+
+        /**
+         * For testing Connection to remote machine(ssh, rdb connection ... )
+         * @param  serverAddress         serverAddress
+         * @param userName      userName
+         * @param sshKeyPath        sshKeyPath
+         * @param usePassword        usePassword
+         * @param userPassword         userPassword
+         * @param propertiesPath        propertiesPath
+//       * @param master               master
+//       * @param rdbServer             rdbServer
+//       * @param coordinationServer       coordinationServer
+//       * @param kernel       kernel
+//       * @param reporter            reporter
+         * @return   OK if connect, ERROR if there are some fails
+         */
+        public FormValidation doTestConnection(@QueryParameter("serverAddress") final String serverAddress,
+                                                  @QueryParameter("userName") final String userName,
+                                                  @QueryParameter("sshKeyPath") final String sshKeyPath,
+                                                  @QueryParameter("usePassword") final boolean usePassword,
+                                                  @QueryParameter("userPassword") final String userPassword,
+                                                  @QueryParameter("propertiesPath") final String propertiesPath
+//                                                  ,@QueryParameter("master") final Master master,
+//                                                  @QueryParameter("rdbServer") final RdbServer rdbServer,
+//                                                  @QueryParameter("coordinationServer") final CoordinationServer coordinationServer,
+//                                                  @QueryParameter("kernel") final Kernel kernel,
+//                                                  @QueryParameter("reporter") final Reporter reporter
+                                                ) {
+            try {
+
+
+                Connection conn = new Connection(serverAddress);
+                conn.connect();
+
+                if(!usePassword){
+                    File rsaKeyFile = new File(sshKeyPath);
+                    if(!conn.authenticateWithPublicKey(userName,rsaKeyFile,"")) {
+                        return FormValidation.error("can't authenticate with pub.key");
+                    }
+                } else {
+                    if(!conn.authenticateWithPassword(userName,userPassword)) {
+
+                        return FormValidation.error("can't authenticate with password");
+                    }
+                }
+
+//                if(rdbServer != null){
+//                    FormValidation temp = doCheckRdbConnection(serverAddress,rdbServer);
+//                    if(temp != null) {
+//                        return temp;
+//                    }
+//                }
+
+             // ......
+
+                return FormValidation.ok();
+
+            } catch (ConnectException e) {
+                return FormValidation.error("can't make even connection");
+            } catch (IOException e) {
+                return FormValidation.error("Can't connect with such configuration\n"+e.getLocalizedMessage());
+            }
+        }
+
+        /**
+         * To test RdbConnection
+         * @param serverAddress     serverAddress
+         * @param rdbServer          rdbServer
+         * @return null if connection OK FormValidation otherwise
+         */
+        public FormValidation doCheckRdbConnection(String serverAddress, RdbServer rdbServer){
+
+            return  null;
         }
 
     }

@@ -1,57 +1,57 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
+  <f:section title="Node">
+
+        <f:block>
+            <table>
 
 
-    <f:block>
-        <table>
+                <f:block>
+                    <table>
+                        <f:entry title = "Address" >
+                            <f:textbox field = "serverAddress" />
+                        </f:entry>
+                    </table>
+                </f:block>
 
 
-            <f:block>
-                <table>
-                    <f:entry title = "Address" >
-                        <f:textbox field = "serverAddress" />
-                    </f:entry>
-                </table>
-            </f:block>
-
-
-              <f:block>
-               <table>
-                    <f:optionalBlock field = "installAgent" checked = "${instance.installAgent}" title = "Install Agent" inline = "true" >
-                        <f:block>
-
-                            <f:entry title="User Name" field="userName">
-                                <f:textbox />
-                            </f:entry>
-
-                            <f:entry title="Ssh Key Path">
-                              <f:textbox field="sshKeyPath" />
-                            </f:entry>
-
+                  <f:block>
+                   <table>
+                        <f:optionalBlock field = "installAgent" checked = "${instance.installAgent}" title = "Install Agent" inline = "true" >
                             <f:block>
-                                  <table>
 
-                                    <f:optionalBlock field = "usePassword" checked="${instance.usePassword}" title="Use Password" inline="true">
-                                      <f:entry title = "Password">
-                                        <f:password field = "userPassword"/>
-                                      </f:entry>
-                                    </f:optionalBlock>
+                                <f:entry title="User Name" field="userName">
+                                    <f:textbox />
+                                </f:entry>
 
-                                  </table>
-                            </f:block>
+                                <f:entry title="Ssh Key Path">
+                                  <f:textbox field="sshKeyPath" />
+                                </f:entry>
 
-                            <f:validateButton
-                               title="${%Test SSH Connection}" progress="${%Testing...}"
-                               method="testSSHConnection" with="serverAddress,installAgent,userName,sshKeyPath,usePassword,userPassword" />
+                                <f:block>
+                                      <table>
 
-                         </f:block>
-                    </f:optionalBlock>
-                </table>
-              </f:block>
+                                        <f:optionalBlock field = "usePassword" checked="${instance.usePassword}" title="Use Password" inline="true">
+                                          <f:entry title = "Password">
+                                            <f:password field = "userPassword"/>
+                                          </f:entry>
+                                        </f:optionalBlock>
 
-        </table>
-    </f:block>
+                                      </table>
+                                </f:block>
 
+                                <f:validateButton
+                                   title="${%Test SSH Connection}" progress="${%Testing...}"
+                                   method="testSSHConnection" with="serverAddress,userName,sshKeyPath,usePassword,userPassword" />
 
+                             </f:block>
+                        </f:optionalBlock>
+                    </table>
+                  </f:block>
+
+            </table>
+        </f:block>
+
+  </f:section>
 
 </j:jelly>

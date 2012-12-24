@@ -8,17 +8,13 @@
               <f:textbox />
             </f:entry>
 
-
           <f:entry title="User Name" field="userName">
                 <f:textbox />
             </f:entry>
 
-
             <f:entry title="Ssh Key Path">
               <f:textbox field="sshKeyPath" />
             </f:entry>
-
-
 
      </table>
   </f:block>
@@ -52,13 +48,7 @@
   <table>
     <f:optionalBlock field = "setPropertiesByHand" checked= "${instance.setPropertiesByHand}"  title = "Set Properties By Hand" inline = "true">
 
-    <!--
-            <f:block>
-                <table>
-                  <f:optionalProperty field = "nodeToAttack" title = "Node To Attack" />
-                </table>
-            </f:block>
-    -->
+       <f:entry>
 
             <f:block>
                <table>
@@ -91,8 +81,13 @@
                 </table>
             </f:block>
 
-
+       </f:entry>
     </f:optionalBlock>
+
+    <f:validateButton
+       title="${%Test Connection}" progress="${%Testing...}"
+       method="testConnection" with="serverAddress,userName,sshKeyPath,usePassword,userPassword,propertiesPath,master,rdbServer,coordinationServer,kernel,reporter" />
+
   </table>
 </f:block>
 
