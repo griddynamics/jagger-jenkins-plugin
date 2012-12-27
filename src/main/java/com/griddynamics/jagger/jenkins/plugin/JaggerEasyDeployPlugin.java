@@ -122,12 +122,13 @@ public class JaggerEasyDeployPlugin extends Builder
             return "Easy Deploy";
         }
 
+
         /**
          * To test number of each role
          * @param nodList whole list of nodes that do work
          * @return OK if it's OK, ERROR otherwise
          */
-        public FormValidation doCheckNodList(@QueryParameter ArrayList<Node> nodList){
+        public FormValidation doTestNodeValidation(@QueryParameter("nodList") ArrayList nodList){
 
             int numberOfMasters = 0,
                 numberOfCoordServers = 0,
@@ -135,11 +136,10 @@ public class JaggerEasyDeployPlugin extends Builder
                 numberOfRdbServers = 0,
                 numberOfReporters = 0;
 
-           // masterExists
 
             try{
 
-                for(Node node:nodList){
+                for(Node node:(ArrayList<Node>)nodList){
                     for(Role role:node.getRoles()){
                         if (role instanceof Kernel){
                             numberOfKernels ++;

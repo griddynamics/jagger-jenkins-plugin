@@ -1,18 +1,24 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
-import ch.ethz.ssh2.Connection;
+//import ch.ethz.ssh2.Connection;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.common.IOUtils;
+import net.schmizz.sshj.connection.channel.direct.Session;
+import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
+import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created with IntelliJ IDEA.
@@ -181,7 +187,6 @@ public class Node implements Describable<Node> {
 
             try {
 
-
                 if(value == null || value.matches("\\s*")) {
                     return FormValidation.error("Set Address");
                 }
@@ -243,34 +248,32 @@ public class Node implements Describable<Node> {
             try {
 
 
-                Connection conn = new Connection(serverAddress);
-                conn.connect();
+                final SSHClient ssh = new SSHClient();
 
-                if(!usePassword){
-                    File rsaKeyFile = new File(sshKeyPath);
-                    if(!conn.authenticateWithPublicKey(userName,rsaKeyFile,"")) {
-                        return FormValidation.error("can't authenticate with pub.key");
+                ssh.addHostKeyVerifier(new HostKeyVerifier() {
+                    public boolean verify(String arg0, int arg1, PublicKey arg2) {
+                        return true;  // don't bother verifying
                     }
-                } else {
-                    if(!conn.authenticateWithPassword(userName,userPassword)) {
+                });
 
-                        return FormValidation.error("can't authenticate with password");
+                ssh.connect(serverAddress);
+                try{
+                    if (usePassword){
+                        ssh.authPassword(userName,userPassword);
+                    } else {
+                        ssh.authPublickey(userName);
                     }
+                    final Session session = ssh.startSession();
+                    session.close();
+
+                } finally {
+                    ssh.disconnect();
                 }
 
-//                if(rdbServer != null){
-//                    FormValidation temp = doCheckRdbConnection(serverAddress,rdbServer);
-//                    if(temp != null) {
-//                        return temp;
-//                    }
-//                }
 
-             // ......
 
                 return FormValidation.ok();
 
-            } catch (ConnectException e) {
-                return FormValidation.error("can't make even connection");
             } catch (IOException e) {
                 return FormValidation.error("Can't connect with such configuration\n"+e.getLocalizedMessage());
             }

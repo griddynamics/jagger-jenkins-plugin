@@ -75,6 +75,12 @@
             <version>build209</version>
         </dependency>
 
+        <dependency>
+            <groupId>net.schmizz</groupId>
+            <artifactId>sshj</artifactId>
+            <version>0.8.1</version>
+        </dependency>
+
 
     </dependencies>
 
