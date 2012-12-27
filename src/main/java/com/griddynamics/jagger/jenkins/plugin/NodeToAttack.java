@@ -105,7 +105,7 @@ public class NodeToAttack implements Describable<NodeToAttack> {
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<NodeToAttack>{
+    public static class DescriptorNTA extends Descriptor<NodeToAttack>{
 
         @Override
         public String getDisplayName() {

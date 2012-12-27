@@ -27,7 +27,7 @@ public class Master implements Role, Describable<Master> {
 
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<Master>{
+    public static class DescriptorM extends Descriptor<Master>{
 
         @Override
         public String getDisplayName() {

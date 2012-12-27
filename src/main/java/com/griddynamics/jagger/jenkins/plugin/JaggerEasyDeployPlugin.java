@@ -108,7 +108,7 @@ public class JaggerEasyDeployPlugin extends Builder
 //    }
 
     @Extension
-    public static final class DescriptorJaggerEasyDeploy  extends BuildStepDescriptor<Builder>
+    public static final class DescriptorJEDP  extends BuildStepDescriptor<Builder>
     {
 
         @Override

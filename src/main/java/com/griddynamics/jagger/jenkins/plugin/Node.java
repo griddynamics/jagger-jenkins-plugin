@@ -65,9 +65,8 @@ public class Node implements Describable<Node> {
         this.setPropertiesByHand = setPropertiesByHand;
 
         if (setPropertiesByHand){
-            fillRoles(nodeToAttack ,master, rdbServer , coordinationServer, kernel, reporter );
+            fillRoles(master, rdbServer , coordinationServer, kernel, reporter );
         }
-
     }
 
     public NodeToAttack getNodeToAttack() {
@@ -152,12 +151,9 @@ public class Node implements Describable<Node> {
         return usePassword;
     }
 
-
-
     public ArrayList<Role> getRoles() {
         return roles;
     }
-
 
     private void fillRoles(Role ... roles) {
 
@@ -172,9 +168,8 @@ public class Node implements Describable<Node> {
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
-
     @Extension
-    public static class DescriptorImpl extends Descriptor<Node>{
+    public static class DescriptorN extends Descriptor<Node>{
 
         @Override
         public String getDisplayName() {
@@ -219,7 +214,6 @@ public class Node implements Describable<Node> {
                 }
                 return FormValidation.warning("not yet implemented : "+propertiesPath);
             }
-
         }
 
         /**
@@ -251,7 +245,6 @@ public class Node implements Describable<Node> {
                                                 ) {
             try {
 
-
                 final SSHClient ssh = new SSHClient();
 
                 ssh.addHostKeyVerifier(new HostKeyVerifier() {
@@ -273,8 +266,6 @@ public class Node implements Describable<Node> {
                 } finally {
                     ssh.disconnect();
                 }
-
-
 
                 return FormValidation.ok();
 

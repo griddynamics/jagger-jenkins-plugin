@@ -27,7 +27,7 @@ public class Kernel implements Role, Describable<Kernel> {
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<Kernel>{
+    public static class DescriptorK extends Descriptor<Kernel>{
 
         @Override
         public String getDisplayName() {

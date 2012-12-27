@@ -26,7 +26,7 @@ public class CoordinationServer implements Role, Describable<CoordinationServer>
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<CoordinationServer>{
+    public static class DescriptorCS extends Descriptor<CoordinationServer>{
 
         @Override
         public String getDisplayName() {

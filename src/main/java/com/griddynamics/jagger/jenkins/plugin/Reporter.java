@@ -27,7 +27,7 @@ public class Reporter implements Role, Describable<Reporter> {
 
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<Reporter>{
+    public static class DescriptorR extends Descriptor<Reporter>{
 
         @Override
         public String getDisplayName() {

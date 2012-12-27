@@ -64,7 +64,7 @@ public class RdbServer implements Role, Describable<RdbServer> {
 
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<RdbServer>{
+    public static class DescriptorRDBS extends Descriptor<RdbServer>{
 
         @Override
         public String getDisplayName() {
