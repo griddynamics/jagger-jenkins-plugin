@@ -11,7 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * User: amikryukov
  * Date: 12/21/12
  */
-public class CoordinationServer extends Role implements Describable<CoordinationServer> {
+public class CoordinationServer implements Role, Describable<CoordinationServer> {
 
     private final String port;
 

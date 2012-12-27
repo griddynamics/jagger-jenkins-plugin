@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * To Make Object of Server that we want to test
  */
-public class NodeToAttack extends Role implements Describable<NodeToAttack> {
+public class NodeToAttack implements Describable<NodeToAttack> {
 
     private final String serverAddress;
 
@@ -125,15 +125,21 @@ public class NodeToAttack extends Role implements Describable<NodeToAttack> {
                     return FormValidation.error("Set Address");
                 }
 
-                InetAddress.getByName(value).isReachable(1000);
-                return FormValidation.ok();
+                Process p1 = java.lang.Runtime.getRuntime().exec("ping -c 1 "+value);
 
+                if(p1.waitFor() == 0) {
+                    return FormValidation.ok();
+                } else {
+                    return FormValidation.error("Server unreachable");
+                }
             } catch(UnknownHostException e){
 
                 return FormValidation.error("Bad Server Address");
             } catch (IOException e) {
 
                 return FormValidation.error("Server With That Address Unavailable");
+            } catch (InterruptedException e) {
+                return FormValidation.error("");
             }
         }
 

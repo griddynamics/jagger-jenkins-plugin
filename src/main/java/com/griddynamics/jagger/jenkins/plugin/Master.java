@@ -11,7 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * User: Andrey
  * Date: 20/12/12
  */
-public class Master extends Role implements Describable<Master> {
+public class Master implements Role, Describable<Master> {
 
     @DataBoundConstructor
     public Master(){}

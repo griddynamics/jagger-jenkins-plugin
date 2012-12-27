@@ -12,7 +12,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * Date: 20/12/12
  */
 
-public class RdbServer extends Role implements Describable<RdbServer> {
+public class RdbServer implements Role, Describable<RdbServer> {
 
     private final String rdbDriver,
             rdbPort,

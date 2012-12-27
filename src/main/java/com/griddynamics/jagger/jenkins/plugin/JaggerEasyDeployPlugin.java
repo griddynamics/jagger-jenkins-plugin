@@ -102,13 +102,13 @@ public class JaggerEasyDeployPlugin extends Builder
             return false;
     }
 
-    @Override
-    public Descriptor<Builder> getDescriptor() {
-        return super.getDescriptor();
-    }
+//    @Override
+//    public Descriptor<Builder> getDescriptor() {
+//        return super.getDescriptor();
+//    }
 
     @Extension
-    public static final class DescriptorImpl  extends BuildStepDescriptor<Builder>
+    public static final class DescriptorJaggerEasyDeploy  extends BuildStepDescriptor<Builder>
     {
 
         @Override
@@ -116,10 +116,9 @@ public class JaggerEasyDeployPlugin extends Builder
             return true;
         }
 
-
         @Override
         public String getDisplayName() {
-            return "Easy Deploy";
+            return "Jagger Easy Deploy";
         }
 
 
@@ -128,7 +127,7 @@ public class JaggerEasyDeployPlugin extends Builder
          * @param nodList whole list of nodes that do work
          * @return OK if it's OK, ERROR otherwise
          */
-        public FormValidation doTestNodeValidation(@QueryParameter("nodList") ArrayList nodList){
+        public FormValidation doCheckNodList(@QueryParameter("nodList") ArrayList nodList){
 
             int numberOfMasters = 0,
                 numberOfCoordServers = 0,

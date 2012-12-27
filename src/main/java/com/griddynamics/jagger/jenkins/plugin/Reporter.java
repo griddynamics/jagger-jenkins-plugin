@@ -11,7 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * User: amikryukov
  * Date: 12/21/12
  */
-public class Reporter extends Role implements Describable<Reporter> {
+public class Reporter implements Role, Describable<Reporter> {
 
     @DataBoundConstructor
     public Reporter(){}

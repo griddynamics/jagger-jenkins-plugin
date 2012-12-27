@@ -1,6 +1,5 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
-//import ch.ethz.ssh2.Connection;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -18,7 +17,6 @@ import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created with IntelliJ IDEA.
@@ -191,15 +189,21 @@ public class Node implements Describable<Node> {
                     return FormValidation.error("Set Address");
                 }
 
-                InetAddress.getByName(value).isReachable(1000);
-                return FormValidation.ok();
+                Process p1 = java.lang.Runtime.getRuntime().exec("ping -c 1 "+value);
 
+                if(p1.waitFor() == 0) {
+                    return FormValidation.ok();
+                } else {
+                    return FormValidation.error("Server unreachable");
+                }
             } catch(UnknownHostException e){
 
                 return FormValidation.error("Bad Server Address");
             } catch (IOException e) {
 
                 return FormValidation.error("Server With That Address Unavailable");
+            } catch (InterruptedException e) {
+                return FormValidation.error("");
             }
         }
 
