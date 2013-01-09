@@ -15,23 +15,22 @@
         </f:repeatable>
  -->
 
-             <f:entry >
-                     <f:repeatableProperty field = "nodesToAttack" minimum = "1" />
-
-                </f:entry>
+         <f:entry >
+                 <f:repeatableProperty field = "nodesToAttack" minimum = "1" />
+         </f:entry>
 
     </f:section>
 
     <f:section title = "Adding Nodes To Do Work">
-                    <f:entry >
-                         <f:repeatableProperty field = "nodList" minimum = "1" />
-
-                    </f:entry>
+        <f:entry field="nodList">
+             <f:repeatableProperty field = "nodList" minimum = "1" />
+        </f:entry>
     </f:section>
 
+<!--
     <f:validateButton
        title="${%Test Validation of Nodes}" progress="${%Testing...}"
-       method="checkNodList" with="nodList" />
-
+       method="testNodList" with="nodList" />
+-->
 
 </j:jelly>

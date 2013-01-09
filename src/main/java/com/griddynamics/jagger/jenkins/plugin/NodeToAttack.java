@@ -54,6 +54,10 @@ public class NodeToAttack implements Describable<NodeToAttack> {
     @DataBoundConstructor
     public NodeToAttack(String serverAddress , boolean installAgent, String userName, String sshKeyPath,
                         boolean usePassword, String userPassword){
+//
+//        if(serverAddress.matches("\\$\\{\\.+\\}")){
+//            this.serverAddress
+//        }
 
         this.serverAddress = serverAddress;
         this.installAgent = installAgent;
@@ -125,6 +129,10 @@ public class NodeToAttack implements Describable<NodeToAttack> {
                     return FormValidation.error("Set Address");
                 }
 
+//                if(value.matches("\\$\\{\\.+\\}")){
+//                    value = getPropertyType(value).displayName;
+//                }
+
                 Process p1 = java.lang.Runtime.getRuntime().exec("ping -c 1 "+value);
 
                 if(p1.waitFor() == 0) {
@@ -172,7 +180,7 @@ public class NodeToAttack implements Describable<NodeToAttack> {
                     if (usePassword){
                         ssh.authPassword(userName,userPassword);
                     } else {
-                        ssh.authPublickey(userName);
+                        ssh.authPublickey(userName,sshKeyPath);
                     }
 
                     final net.schmizz.sshj.connection.channel.direct.Session session = ssh.startSession();
@@ -183,7 +191,7 @@ public class NodeToAttack implements Describable<NodeToAttack> {
                 }
 
 
-                return FormValidation.ok();
+                return FormValidation.ok("ok");
 
             } catch (ConnectException e) {
                 return FormValidation.error("can't make even connection");

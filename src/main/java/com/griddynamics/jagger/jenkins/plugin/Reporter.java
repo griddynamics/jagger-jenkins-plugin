@@ -25,6 +25,10 @@ public class Reporter implements Role, Describable<Reporter> {
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
+    public RoleTypeName getType() {
+        return RoleTypeName.REPORTER;
+    }
+
 
     @Extension
     public static class DescriptorR extends Descriptor<Reporter>{

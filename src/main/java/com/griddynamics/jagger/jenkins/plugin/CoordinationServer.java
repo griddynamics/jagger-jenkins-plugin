@@ -25,6 +25,10 @@ public class CoordinationServer implements Role, Describable<CoordinationServer>
         return port;
     }
 
+    public RoleTypeName getType() {
+        return RoleTypeName.COORDINATION_SERVER;
+    }
+
     @Extension
     public static class DescriptorCS extends Descriptor<CoordinationServer>{
 

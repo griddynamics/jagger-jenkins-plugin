@@ -25,6 +25,10 @@ public class Master implements Role, Describable<Master> {
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
+    public RoleTypeName getType() {
+        return RoleTypeName.MASTER;
+    }
+
 
     @Extension
     public static class DescriptorM extends Descriptor<Master>{

@@ -6,17 +6,15 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
 import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.common.IOUtils;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,7 +37,7 @@ public class Node implements Describable<Node> {
 
     private final boolean setPropertiesByHand;
 
-    private ArrayList<Role> roles = new ArrayList<Role>() ;
+    private HashMap<RoleTypeName, Role> hmRoles ;
 
     @DataBoundConstructor
     public Node(String serverAddress, String userName,
@@ -50,9 +48,7 @@ public class Node implements Describable<Node> {
                 RdbServer rdbServer,
                 CoordinationServer coordinationServer,
                 Kernel kernel,
-                Reporter reporter ,
-                NodeToAttack nodeToAttack
-
+                Reporter reporter
 
     ) {
 
@@ -69,58 +65,29 @@ public class Node implements Describable<Node> {
         }
     }
 
-    public NodeToAttack getNodeToAttack() {
-        for(Role role:getRoles()){
-            if(role instanceof NodeToAttack){
-                return (NodeToAttack) role;
-            }
-        }
-        return null;
-    }
-
     public CoordinationServer getCoordinationServer() {
-        for(Role role:getRoles()){
-            if(role instanceof CoordinationServer){
-                return (CoordinationServer) role;
-            }
-        }
-        return null;
+
+        return (CoordinationServer) hmRoles.get(RoleTypeName.COORDINATION_SERVER);
     }
 
     public Kernel getKernel() {
-        for(Role role:getRoles()){
-            if(role instanceof Kernel){
-                return (Kernel) role;
-            }
-        }
-        return null;
+
+        return (Kernel) hmRoles.get(RoleTypeName.KERNEL);
     }
 
     public Reporter getReporter() {
-        for(Role role:getRoles()){
-            if(role instanceof Reporter){
-                return (Reporter) role;
-            }
-        }
-        return null;
+
+        return (Reporter) hmRoles.get(RoleTypeName.REPORTER);
     }
 
     public Master getMaster() {
-        for(Role role:getRoles()){
-            if(role instanceof Master){
-                return (Master) role;
-            }
-        }
-        return null;
+
+        return (Master) hmRoles.get(RoleTypeName.MASTER);
     }
 
     public RdbServer getRdbServer() {
-        for(Role role:getRoles()){
-            if(role instanceof RdbServer){
-                return (RdbServer) role;
-            }
-        }
-        return null;
+
+        return (RdbServer) hmRoles.get(RoleTypeName.RDB_SERVER);
     }
 
     public boolean isSetPropertiesByHand() {
@@ -151,15 +118,17 @@ public class Node implements Describable<Node> {
         return usePassword;
     }
 
-    public ArrayList<Role> getRoles() {
-        return roles;
+    public HashMap<RoleTypeName, Role> getHmRoles() {
+        return hmRoles;
     }
 
     private void fillRoles(Role ... roles) {
 
-        for(Role role : roles) {
+        hmRoles = new HashMap<RoleTypeName, Role>(roles.length);
+
+        for(Role role: roles){
             if(role != null){
-                this.roles.add(role);
+                hmRoles.put(role.getType(),role);
             }
         }
     }
@@ -224,11 +193,6 @@ public class Node implements Describable<Node> {
          * @param usePassword        usePassword
          * @param userPassword         userPassword
          * @param propertiesPath        propertiesPath
-//       * @param master               master
-//       * @param rdbServer             rdbServer
-//       * @param coordinationServer       coordinationServer
-//       * @param kernel       kernel
-//       * @param reporter            reporter
          * @return   OK if connect, ERROR if there are some fails
          */
         public FormValidation doTestConnection(@QueryParameter("serverAddress") final String serverAddress,
@@ -237,14 +201,10 @@ public class Node implements Describable<Node> {
                                                   @QueryParameter("usePassword") final boolean usePassword,
                                                   @QueryParameter("userPassword") final String userPassword,
                                                   @QueryParameter("propertiesPath") final String propertiesPath
-//                                                  ,@QueryParameter("master") final Master master,
-//                                                  @QueryParameter("rdbServer") final RdbServer rdbServer,
-//                                                  @QueryParameter("coordinationServer") final CoordinationServer coordinationServer,
-//                                                  @QueryParameter("kernel") final Kernel kernel,
-//                                                  @QueryParameter("reporter") final Reporter reporter
                                                 ) {
             try {
 
+                //not yet finished
                 final SSHClient ssh = new SSHClient();
 
                 ssh.addHostKeyVerifier(new HostKeyVerifier() {
@@ -274,16 +234,17 @@ public class Node implements Describable<Node> {
             }
         }
 
-        /**
-         * To test RdbConnection
-         * @param serverAddress     serverAddress
-         * @param rdbServer          rdbServer
-         * @return null if connection OK FormValidation otherwise
-         */
-        public FormValidation doCheckRdbConnection(String serverAddress, RdbServer rdbServer){
-
-            return  null;
-        }
+        //validation RDBServer config not yet implemented
+//        /**
+//         * To test RdbConnection
+//         * @param serverAddress     serverAddress
+//         * @param rdbServer          rdbServer
+//         * @return null if connection OK FormValidation otherwise
+//         */
+//        public FormValidation doCheckRdbConnection(String serverAddress, RdbServer rdbServer){
+//
+//            return  null;
+//        }
 
     }
 

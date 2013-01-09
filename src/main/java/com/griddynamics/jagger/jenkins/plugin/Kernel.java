@@ -26,6 +26,10 @@ public class Kernel implements Role, Describable<Kernel> {
         return "KERNEL";
     }
 
+    public RoleTypeName getType() {
+        return RoleTypeName.KERNEL;
+    }
+
     @Extension
     public static class DescriptorK extends Descriptor<Kernel>{
 
