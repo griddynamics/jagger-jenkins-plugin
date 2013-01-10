@@ -69,11 +69,6 @@
             <version>6.0.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>ch.ethz.ganymed</groupId>
-            <artifactId>ganymed-ssh2</artifactId>
-            <version>build209</version>
-        </dependency>
 
         <dependency>
             <groupId>net.schmizz</groupId>

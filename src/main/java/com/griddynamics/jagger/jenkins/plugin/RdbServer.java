@@ -62,7 +62,7 @@ public class RdbServer implements Role, Describable<RdbServer> {
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
-    public RoleTypeName getType() {
+    public RoleTypeName getRoleType() {
         return RoleTypeName.RDB_SERVER;
     }
 

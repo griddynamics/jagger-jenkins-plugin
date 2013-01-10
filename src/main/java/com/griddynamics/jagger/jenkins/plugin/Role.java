@@ -7,7 +7,7 @@ public interface Role {
     /**
      * @return type of particular Role
      */
-    public RoleTypeName getType();
+    public RoleTypeName getRoleType();
 }
 
 

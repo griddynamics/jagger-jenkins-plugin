@@ -25,7 +25,7 @@ public class CoordinationServer implements Role, Describable<CoordinationServer>
         return port;
     }
 
-    public RoleTypeName getType() {
+    public RoleTypeName getRoleType() {
         return RoleTypeName.COORDINATION_SERVER;
     }
 

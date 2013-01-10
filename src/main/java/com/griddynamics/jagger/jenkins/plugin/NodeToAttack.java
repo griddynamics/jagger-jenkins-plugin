@@ -1,12 +1,6 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
 
-import ch.ethz.ssh2.*;
-//import com.jcraft.jsch.JSch;
-//import com.jcraft.jsch.JSchException;
-//import com.jcraft.jsch.Session;
-//import com.jcraft.jsch.UserInfo;
-import ch.ethz.ssh2.Session;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -129,11 +123,29 @@ public class NodeToAttack implements Describable<NodeToAttack> {
                     return FormValidation.error("Set Address");
                 }
 
-//                if(value.matches("\\$\\{\\.+\\}")){
-//                    value = getPropertyType(value).displayName;
-//                }
+        /*        !!important!!
 
-                Process p1 = java.lang.Runtime.getRuntime().exec("ping -c 1 "+value);
+                http://mindprod.com/jgloss/ping.html
+
+                JAVA itself do not support  ICMP , that is why I see two ways
+                something like this
+                        Process p1 = java.lang.Runtime.getRuntime().exec("ping -c 1 "+value);
+                not multi platform
+
+                or like this
+                    new Socket("address",port)  - guessing what port will answer
+
+                both variants no good
+
+        */
+                String cmd = "";
+                if(System.getProperty("os.name").startsWith("Windows")){
+                    cmd = "ping -n 1 " + value;
+                } else {
+                    cmd = "ping -c 1 " + value;
+                }
+
+                Process p1 = java.lang.Runtime.getRuntime().exec(cmd);
 
                 if(p1.waitFor() == 0) {
                     return FormValidation.ok();
@@ -152,7 +164,7 @@ public class NodeToAttack implements Describable<NodeToAttack> {
         }
 
         /**
-         * For test ssh connection
+         * For test ssh connection / permissions to make 'magic'
          * @param serverAddress   STRING host address
          * @param userName        STRING user name
          * @param sshKeyPath      STRING path of ssh Key

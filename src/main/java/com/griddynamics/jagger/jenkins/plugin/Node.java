@@ -15,6 +15,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 
 /**
@@ -129,7 +132,7 @@ public class Node implements Describable<Node> {
 
         for(Role role: roles){
             if(role != null){
-                hmRoles.put(role.getType(),role);
+                hmRoles.put(role.getRoleType(),role);
             }
         }
     }
@@ -146,6 +149,11 @@ public class Node implements Describable<Node> {
             return "Node";
         }
 
+        /**
+         * For test Server Address if it available
+         * @param value String from Server Address form
+         * @return OK if ping, ERROR otherwise
+         */
         public FormValidation doCheckServerAddress(@QueryParameter String value) {
 
             try {
@@ -154,7 +162,15 @@ public class Node implements Describable<Node> {
                     return FormValidation.error("Set Address");
                 }
 
-                Process p1 = java.lang.Runtime.getRuntime().exec("ping -c 1 "+value);
+                String cmd = "";
+
+                if(System.getProperty("os.name").startsWith("windows")){
+                    cmd = "ping -n 1 " + value;
+                } else {
+                    cmd = "ping -c 1 " + value;
+                }
+
+                Process p1 = java.lang.Runtime.getRuntime().exec(cmd);
 
                 if(p1.waitFor() == 0) {
                     return FormValidation.ok();
@@ -172,6 +188,12 @@ public class Node implements Describable<Node> {
             }
         }
 
+        /**
+         * Checking properties path
+         * @param setPropertiesByHand boolean from form
+         * @param propertiesPath String from form
+         * @return Form Validation OK / ERROR
+         */
         public FormValidation doCheckPropertiesPath(@QueryParameter("setPropertiesByHand") final boolean setPropertiesByHand,
                                                 @QueryParameter("propertiesPath")final String propertiesPath) {
 
@@ -196,7 +218,6 @@ public class Node implements Describable<Node> {
          * @param sshKeyPath        sshKeyPath
          * @param usePassword        usePassword
          * @param userPassword         userPassword
-         * @param propertiesPath        propertiesPath
          * @return   OK if connect, ERROR if there are some fails
          */
         public FormValidation doTestConnection(@QueryParameter("serverAddress") final String serverAddress,
@@ -204,10 +225,10 @@ public class Node implements Describable<Node> {
                                                   @QueryParameter("sshKeyPath") final String sshKeyPath,
                                                   @QueryParameter("usePassword") final boolean usePassword,
                                                   @QueryParameter("userPassword") final String userPassword,
-                                                  @QueryParameter("propertiesPath") final String propertiesPath
+                                                  @QueryParameter("rdbServer") final RdbServer rdbServer
                                                 ) {
             try {
-                //not yet finished
+
                 final SSHClient ssh = new SSHClient();
 
                 ssh.addHostKeyVerifier(new HostKeyVerifier() {
@@ -221,33 +242,59 @@ public class Node implements Describable<Node> {
                     if (usePassword){
                         ssh.authPassword(userName,userPassword);
                     } else {
-                        ssh.authPublickey(userName);
+                        ssh.authPublickey(userName,sshKeyPath);
                     }
-                    final Session session = ssh.startSession();
-                    session.close();
+
+                    net.schmizz.sshj.connection.channel.direct.Session session = null;
+                    try{
+                        session = ssh.startSession();
+                    } finally {
+                        if(session != null){
+                            session.close();
+                        }
+                    }
 
                 } finally {
                     ssh.disconnect();
                 }
 
-                return FormValidation.ok();
+                if(!checkRDBConnection(serverAddress,rdbServer)){
+                    return FormValidation.error("rdb connection error");
+                }
 
+                return FormValidation.ok("ok");
+
+            } catch (ConnectException e) {
+                return FormValidation.error("can't make even connection");
             } catch (IOException e) {
                 return FormValidation.error("Can't connect with such configuration\n"+e.getLocalizedMessage());
             }
         }
 
         //validation RDBServer config not yet implemented
-//        /**
-//         * To test RdbConnection
-//         * @param serverAddress     serverAddress
-//         * @param rdbServer          rdbServer
-//         * @return null if connection OK FormValidation otherwise
-//         */
-//        public FormValidation doCheckRdbConnection(String serverAddress, RdbServer rdbServer){
-//
-//            return  null;
-//        }
+        /**
+         * To test RdbConnection
+         * @param serverAddress     serverAddress
+         * @param rdbServer          rdbServer
+         * @return null if connection OK FormValidation otherwise
+         */
+        public boolean checkRDBConnection(final String serverAddress, final RdbServer rdbServer){
+
+//            StringBuilder url;
+//            try {
+//                url  = new StringBuilder();
+//                url.append("jdbc:odbc://");
+//                url.append(InetAddress.getByName(serverAddress).getHostAddress());
+//                url.append(":");
+//                url.append(rdbServer.getRdbPort());
+//                Connection connection = DriverManager.getConnection(url.toString(),rdbServer.getRdbUserName(),rdbServer.getRdbPassword());
+//            } catch (SQLException e) {
+//                return false;
+//            } catch (UnknownHostException e) {
+//                return false;
+//            }
+            return  true;
+        }
 
     }
 

@@ -26,7 +26,7 @@ public class Kernel implements Role, Describable<Kernel> {
         return "KERNEL";
     }
 
-    public RoleTypeName getType() {
+    public RoleTypeName getRoleType() {
         return RoleTypeName.KERNEL;
     }
 
