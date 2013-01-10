@@ -11,6 +11,7 @@ import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
@@ -181,7 +182,10 @@ public class Node implements Describable<Node> {
                 if(propertiesPath.matches("\\s*")){
                     return FormValidation.error("Set Properties Path, or Set Properties By Hand");
                 }
-                return FormValidation.warning("not yet implemented : "+propertiesPath);
+                    if(! new File("path").exists()){
+                        return FormValidation.error("File not exist");
+                    }
+                return FormValidation.ok();
             }
         }
 
@@ -203,7 +207,6 @@ public class Node implements Describable<Node> {
                                                   @QueryParameter("propertiesPath") final String propertiesPath
                                                 ) {
             try {
-
                 //not yet finished
                 final SSHClient ssh = new SSHClient();
 

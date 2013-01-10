@@ -147,7 +147,7 @@ public class NodeToAttack implements Describable<NodeToAttack> {
 
                 return FormValidation.error("Server With That Address Unavailable");
             } catch (InterruptedException e) {
-                return FormValidation.error("");
+                return FormValidation.error("Interrupted Exception");
             }
         }
 
@@ -183,8 +183,14 @@ public class NodeToAttack implements Describable<NodeToAttack> {
                         ssh.authPublickey(userName,sshKeyPath);
                     }
 
-                    final net.schmizz.sshj.connection.channel.direct.Session session = ssh.startSession();
-                    session.close();
+                    net.schmizz.sshj.connection.channel.direct.Session session = null;
+                    try{
+                        session = ssh.startSession();
+                    } finally {
+                        if(session != null){
+                            session.close();
+                        }
+                    }
 
                 } finally {
                     ssh.disconnect();
