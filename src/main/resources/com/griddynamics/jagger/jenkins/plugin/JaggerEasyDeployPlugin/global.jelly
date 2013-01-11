@@ -22,15 +22,19 @@
     </f:section>
 
     <f:section title = "Adding Nodes To Do Work">
-        <f:entry field="nodList">
+        <f:entry name = "nodList">
              <f:repeatableProperty field = "nodList" minimum = "1" />
         </f:entry>
     </f:section>
 
+
 <!--
+   <f:submit value = "Submit" />
+
+
     <f:validateButton
        title="${%Test Validation of Nodes}" progress="${%Testing...}"
-       method="testNodList" with="nodList" />
+       method="testNodList" with="${instance.nodList}" />
 -->
 
 </j:jelly>

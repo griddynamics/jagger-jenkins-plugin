@@ -8,6 +8,7 @@ import hudson.util.FormValidation;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
+import org.jfree.util.Log;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -159,33 +160,41 @@ public class Node implements Describable<Node> {
             try {
 
                 if(value == null || value.matches("\\s*")) {
-                    return FormValidation.error("Set Address");
+                    return FormValidation.warning("Set Address");
                 }
 
-                String cmd = "";
+                new Socket(value,22).close();
 
-                if(System.getProperty("os.name").startsWith("windows")){
-                    cmd = "ping -n 1 " + value;
-                } else {
-                    cmd = "ping -c 1 " + value;
-                }
-
-                Process p1 = java.lang.Runtime.getRuntime().exec(cmd);
-
-                if(p1.waitFor() == 0) {
-                    return FormValidation.ok();
-                } else {
-                    return FormValidation.error("Server unreachable");
-                }
-            } catch(UnknownHostException e){
-
-                return FormValidation.error("Bad Server Address");
+//                String cmd = "";
+//
+//                if(System.getProperty("os.name").startsWith("windows")){
+//                    cmd = "ping -n 1 " + value;
+//                } else {
+//                    cmd = "ping -c 1 " + value;
+//                }
+//
+//                Process p1 = java.lang.Runtime.getRuntime().exec(cmd);
+//
+//                if(p1.waitFor() == 0) {
+//                    return FormValidation.ok();
+//                } else {
+//                    return FormValidation.error("Server unreachable");
+//                }
+//            } catch(UnknownHostException e){
+//
+//                return FormValidation.error("Bad Server Address");
+//            } catch (IOException e) {
+//
+//                return FormValidation.error("Server With That Address Unavailable");
+//            } catch (InterruptedException e) {
+//                return FormValidation.error("");
+//
+            } catch (UnknownHostException e) {
+                return FormValidation.error("Unknown Host");
             } catch (IOException e) {
-
-                return FormValidation.error("Server With That Address Unavailable");
-            } catch (InterruptedException e) {
-                return FormValidation.error("");
+                return FormValidation.error("Can't Reach Host on 22 port");
             }
+            return FormValidation.ok();
         }
 
         /**
@@ -224,9 +233,9 @@ public class Node implements Describable<Node> {
                                                   @QueryParameter("userName") final String userName,
                                                   @QueryParameter("sshKeyPath") final String sshKeyPath,
                                                   @QueryParameter("usePassword") final boolean usePassword,
-                                                  @QueryParameter("userPassword") final String userPassword,
-                                                  @QueryParameter("rdbServer") final RdbServer rdbServer
-                                                ) {
+                                                  @QueryParameter("userPassword") final String userPassword
+                                                )
+        {
             try {
 
                 final SSHClient ssh = new SSHClient();
@@ -258,12 +267,7 @@ public class Node implements Describable<Node> {
                     ssh.disconnect();
                 }
 
-                if(!checkRDBConnection(serverAddress,rdbServer)){
-                    return FormValidation.error("rdb connection error");
-                }
-
                 return FormValidation.ok("ok");
-
             } catch (ConnectException e) {
                 return FormValidation.error("can't make even connection");
             } catch (IOException e) {
@@ -271,30 +275,6 @@ public class Node implements Describable<Node> {
             }
         }
 
-        //validation RDBServer config not yet implemented
-        /**
-         * To test RdbConnection
-         * @param serverAddress     serverAddress
-         * @param rdbServer          rdbServer
-         * @return null if connection OK FormValidation otherwise
-         */
-        public boolean checkRDBConnection(final String serverAddress, final RdbServer rdbServer){
-
-//            StringBuilder url;
-//            try {
-//                url  = new StringBuilder();
-//                url.append("jdbc:odbc://");
-//                url.append(InetAddress.getByName(serverAddress).getHostAddress());
-//                url.append(":");
-//                url.append(rdbServer.getRdbPort());
-//                Connection connection = DriverManager.getConnection(url.toString(),rdbServer.getRdbUserName(),rdbServer.getRdbPassword());
-//            } catch (SQLException e) {
-//                return false;
-//            } catch (UnknownHostException e) {
-//                return false;
-//            }
-            return  true;
-        }
 
     }
 

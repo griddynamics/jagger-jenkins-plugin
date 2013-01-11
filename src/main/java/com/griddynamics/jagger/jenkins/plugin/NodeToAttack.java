@@ -115,52 +115,39 @@ public class NodeToAttack implements Describable<NodeToAttack> {
          * @param value String from Server Address form
          * @return OK if ping, ERROR otherwise
          */
-        public FormValidation doCheckServerAddress(@QueryParameter String value) {
+        public FormValidation doCheckServerAddress(@QueryParameter String value,@QueryParameter("installAgent") boolean installAgent) {
 
             try {
 
                 if(value == null || value.matches("\\s*")) {
-                    return FormValidation.error("Set Address");
+                    return FormValidation.warning("Set Address");
                 }
 
-        /*        !!important!!
-
-                http://mindprod.com/jgloss/ping.html
-
-                JAVA itself do not support  ICMP , that is why I see two ways
-                something like this
-                        Process p1 = java.lang.Runtime.getRuntime().exec("ping -c 1 "+value);
-                not multi platform
-
-                or like this
-                    new Socket("address",port)  - guessing what port will answer
-
-                both variants no good
-
-        */
-                String cmd = "";
-                if(System.getProperty("os.name").startsWith("Windows")){
-                    cmd = "ping -n 1 " + value;
+                if(installAgent){
+                    new Socket(value,22).close();
                 } else {
-                    cmd = "ping -c 1 " + value;
+
+                    String cmd = "";
+                    if(System.getProperty("os.name").startsWith("windows")){
+                        cmd = "ping -n 1 " + value;
+                    } else {
+                        cmd = "ping -c 1 " + value;
+                    }
+                    Process p1 = java.lang.Runtime.getRuntime().exec(cmd);
+                    if(p1.waitFor() == 0) {
+                        return FormValidation.ok();
+                    } else {
+                        return FormValidation.error("Server unreachable");
+                    }
                 }
-
-                Process p1 = java.lang.Runtime.getRuntime().exec(cmd);
-
-                if(p1.waitFor() == 0) {
-                    return FormValidation.ok();
-                } else {
-                    return FormValidation.error("Server unreachable");
-                }
-            } catch(UnknownHostException e){
-
-                return FormValidation.error("Bad Server Address");
+            } catch (UnknownHostException e) {
+                return FormValidation.error("Unknown Host\t"+value+"\t"+e.getLocalizedMessage());
             } catch (IOException e) {
-
-                return FormValidation.error("Server With That Address Unavailable");
+                return FormValidation.error("Can't Reach Host on 22 port");
             } catch (InterruptedException e) {
-                return FormValidation.error("Interrupted Exception");
+                return FormValidation.error("Interrapted Exception");
             }
+            return FormValidation.ok();
         }
 
         /**

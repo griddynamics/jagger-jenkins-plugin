@@ -10,8 +10,10 @@ import hudson.model.Descriptor;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -119,7 +121,7 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
 
-   //    validation for nodeList not yet implemented
+////    validation for nodeList not yet implemented
 //        /**
 //         * To test number of each role
 //         * @param nodList whole list of nodes that do work
@@ -138,7 +140,7 @@ public class JaggerEasyDeployPlugin extends Builder
 //            try{
 //
 //                for(Node node:(List<Node>)nodList){
-//                    for(Role role:node.getRoles()){
+//                    for(Role role:node.getHmRoles().values()){
 //                        if (role instanceof Kernel){
 //                            numberOfKernels ++;
 //                        } else if (role instanceof Master){
@@ -183,7 +185,7 @@ public class JaggerEasyDeployPlugin extends Builder
 //                    return FormValidation.error("no KERNEL was found");
 //                }
 //
-//                return FormValidation.ok();
+//                return FormValidation.ok(nodList.getClass().getName());
 //            } catch (Exception e) {
 //                return FormValidation.error("something wrong");
 //            }
