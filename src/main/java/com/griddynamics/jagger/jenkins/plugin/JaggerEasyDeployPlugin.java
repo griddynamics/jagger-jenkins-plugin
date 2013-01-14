@@ -3,10 +3,8 @@ package com.griddynamics.jagger.jenkins.plugin;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.Proc;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Descriptor;
+import hudson.console.ConsoleNote;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
@@ -14,11 +12,16 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.w3c.dom.NodeList;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class JaggerEasyDeployPlugin extends Builder
@@ -54,6 +57,57 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
     /**
+     * To load EnvVars and change
+     * @param build .
+     * @param listener .
+     * @return true
+     */
+    @Override
+    public boolean prebuild(Build build, BuildListener listener) {
+
+        Map<String,String> ev = build.getEnvVars();
+        String address;
+
+        for(Node node: nodList){
+            address = node.getServerAddress();
+            if(address.matches("\\$.+")) {
+
+                address = address.substring(1,address.length());
+
+                if(address.matches("\\{.+\\}")){
+                    address = address.substring(1,address.length()-1);
+                }
+
+                if(ev.containsKey(address)){
+                    node.setServerAddressActual(ev.get(address));
+                }
+            }
+        }
+
+        for(NodeToAttack node : nodesToAttack){
+
+            address = node.getServerAddress();
+            if(address.matches("\\$.+")) {
+
+                address = address.substring(1,address.length());
+
+                if(address.matches("\\{.+\\}")){
+                    address = address.substring(1,address.length()-1);
+                }
+
+                if(ev.containsKey(address)){
+                    node.setServerAddressActual(ev.get(address));
+                }
+            }
+        }
+
+     //   listener.getLogger().println(System.getProperties().stringPropertyNames());
+
+        return true;
+    }
+
+
+    /**
      * This method will be called in build time (when you build job)
      * @param build   .
      * @param launcher .
@@ -70,6 +124,7 @@ public class JaggerEasyDeployPlugin extends Builder
         logger.println("\n______DEBUG_INFORMATION_NODES_WITH_ROLES______\n");
 
         try{
+
             for(NodeToAttack node:nodesToAttack){
                 logger.println("-------------------------");
                 logger.println(node.toString());
@@ -78,20 +133,46 @@ public class JaggerEasyDeployPlugin extends Builder
 
             for(Node node:nodList){
                 logger.println("-------------------------");
-                logger.println("Node address : "+node.getServerAddress());
+                logger.println("Node address : "+node.getServerAddressActual());
                 logger.println("-------------------------");
                 logger.println("Node's roles : ");
-                for(Role role: node.getHmRoles().values()){
-                    logger.println(role.toString());
+                if(!node.getHmRoles().isEmpty()){
+                    for(Role role: node.getHmRoles().values()){
+                        logger.println(role.toString());
+                    }
+                } else {
+                    logger.println(node.getPropertiesPath());
                 }
                 logger.println("-------------------------\n-------------------------");
 
             }
 
+            Launcher.ProcStarter procStarter = launcher.new ProcStarter();
+
+            procStarter.cmds("ssh -i ~/.ssh/id_rsa amikryukov@amikryukov-ws ls".split("\\s"));
+            //procStarter.envs(build.getEnvVars());
+            procStarter.envs();
+            procStarter.pwd(build.getWorkspace());   ///home/amikryukov/temp/
+
+            Proc proc = launcher.launch(procStarter);
+            logger.println(proc.getStdout());
+            int exitCode = proc.join();
+            if(exitCode != 0){
+                logger.println("launcher.launch code " + exitCode);
+                return false;
+            }
+
+           logger.println(build.getBuildVariables());
+
+
+
+
+
+
             return true;
 
         }catch (Exception e){
-            logger.println("Troubles : " +e.getLocalizedMessage() );
+            logger.println("Troubles : " +e);
         }
             return false;
     }

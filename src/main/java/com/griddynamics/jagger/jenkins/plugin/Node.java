@@ -30,6 +30,8 @@ public class Node implements Describable<Node> {
 
     private final String serverAddress;
 
+    private String serverAddressActual;
+
     private final String userName;
 
     private final String userPassword;
@@ -42,20 +44,20 @@ public class Node implements Describable<Node> {
 
     private final boolean setPropertiesByHand;
 
-    private HashMap<RoleTypeName, Role> hmRoles ;
+    private HashMap<RoleTypeName, Role> hmRoles;
 
     @DataBoundConstructor
     public Node(String serverAddress, String userName,
-                String sshKeyPath, boolean usePassword,String userPassword, String propertiesPath,
+                String sshKeyPath, boolean usePassword, String userPassword, String propertiesPath,
                 boolean setPropertiesByHand,
 
                 Master master,
                 RdbServer rdbServer,
                 CoordinationServer coordinationServer,
                 Kernel kernel,
-                Reporter reporter
+                Reporter reporter,
 
-    ) {
+                String serverAddressName) {
 
         this.serverAddress = serverAddress;
         this.userName = userName;
@@ -64,6 +66,8 @@ public class Node implements Describable<Node> {
         this.usePassword = usePassword;
         this.propertiesPath = propertiesPath;
         this.setPropertiesByHand = setPropertiesByHand;
+        this.serverAddressActual = serverAddress;
+        hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
 
         if (setPropertiesByHand){
             fillRoles(master, rdbServer , coordinationServer, kernel, reporter );
@@ -78,6 +82,10 @@ public class Node implements Describable<Node> {
     public Kernel getKernel() {
 
         return (Kernel) hmRoles.get(RoleTypeName.KERNEL);
+    }
+
+    public String getServerAddressActual() {
+        return serverAddressActual;
     }
 
     public Reporter getReporter() {
@@ -129,8 +137,6 @@ public class Node implements Describable<Node> {
 
     private void fillRoles(Role ... roles) {
 
-        hmRoles = new HashMap<RoleTypeName, Role>(roles.length);
-
         for(Role role: roles){
             if(role != null){
                 hmRoles.put(role.getRoleType(),role);
@@ -140,6 +146,10 @@ public class Node implements Describable<Node> {
 
     public Descriptor<Node> getDescriptor() {
         return Hudson.getInstance().getDescriptor(getClass());
+    }
+
+    public void setServerAddressActual(String s) {
+        serverAddressActual = s;
     }
 
     @Extension
@@ -165,30 +175,6 @@ public class Node implements Describable<Node> {
 
                 new Socket(value,22).close();
 
-//                String cmd = "";
-//
-//                if(System.getProperty("os.name").startsWith("windows")){
-//                    cmd = "ping -n 1 " + value;
-//                } else {
-//                    cmd = "ping -c 1 " + value;
-//                }
-//
-//                Process p1 = java.lang.Runtime.getRuntime().exec(cmd);
-//
-//                if(p1.waitFor() == 0) {
-//                    return FormValidation.ok();
-//                } else {
-//                    return FormValidation.error("Server unreachable");
-//                }
-//            } catch(UnknownHostException e){
-//
-//                return FormValidation.error("Bad Server Address");
-//            } catch (IOException e) {
-//
-//                return FormValidation.error("Server With That Address Unavailable");
-//            } catch (InterruptedException e) {
-//                return FormValidation.error("");
-//
             } catch (UnknownHostException e) {
                 return FormValidation.error("Unknown Host");
             } catch (IOException e) {

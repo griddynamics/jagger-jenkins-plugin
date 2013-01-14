@@ -17,8 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.CheckedInputStream;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,7 +34,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class NodeToAttack implements Describable<NodeToAttack> {
 
-    private final String serverAddress;
+    private final String serverAddress;   //to view in Jenkins - could be $Parametr for example
+
+    private String serverAddressActual;  //actual address
 
     private final boolean installAgent;
 
@@ -52,13 +56,28 @@ public class NodeToAttack implements Describable<NodeToAttack> {
 //        if(serverAddress.matches("\\$\\{\\.+\\}")){
 //            this.serverAddress
 //        }
-
+        this.serverAddressActual = serverAddress;
         this.serverAddress = serverAddress;
         this.installAgent = installAgent;
         this.userName = userName;
         this.sshKeyPath = sshKeyPath;
         this.usePassword = usePassword;
         this.userPassword = userPassword;
+    }
+
+//    private String checkForEnv(String serverAddress) {
+//        if(serverAddress.startsWith("$")){
+//            serverAddress = serverAddress.substring(1,serverAddress.length());
+//            if(serverAddress.startsWith("{")){
+//                serverAddress = serverAddress.substring(1,serverAddress.length()-1);
+//            }
+//        }
+//        return serverAddress;
+//    }
+
+
+    public String getServerAddressActual() {
+        return serverAddressActual;
     }
 
     public String getUserName() {
@@ -93,13 +112,17 @@ public class NodeToAttack implements Describable<NodeToAttack> {
     @Override
     public String toString() {
         return "NodeToAttack{" +
-                "serverAddress='" + serverAddress + '\'' +
+                "serverAddress='" + serverAddressActual + '\'' +
                 ", installAgent=" + installAgent +
                 ", userName='" + userName + '\'' +
                 ", userPassword='" + userPassword + '\'' +
                 ", sshKeyPath='" + sshKeyPath + '\'' +
                 ", usePassword=" + usePassword +
                 '}';
+    }
+
+    public void setServerAddressActual(String s) {
+        serverAddressActual = s;
     }
 
     @Extension
@@ -121,6 +144,10 @@ public class NodeToAttack implements Describable<NodeToAttack> {
 
                 if(value == null || value.matches("\\s*")) {
                     return FormValidation.warning("Set Address");
+                }
+
+                if(value.startsWith("$")){
+                    return FormValidation.ok("using vars");
                 }
 
                 if(installAgent){
