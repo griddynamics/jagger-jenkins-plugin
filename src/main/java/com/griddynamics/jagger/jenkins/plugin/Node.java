@@ -38,7 +38,7 @@ public class Node implements Describable<Node> {
 
     private final String sshKeyPath ;
 
-    private final String propertiesPath;
+    private String propertiesPath;
 
     private final boolean usePassword;
 
@@ -133,6 +133,10 @@ public class Node implements Describable<Node> {
 
     public HashMap<RoleTypeName, Role> getHmRoles() {
         return hmRoles;
+    }
+
+    public void setPropertiesPath(String propertiesPath) {
+        this.propertiesPath = propertiesPath;
     }
 
     private void fillRoles(Role ... roles) {

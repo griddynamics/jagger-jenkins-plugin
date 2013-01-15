@@ -76,8 +76,6 @@ public class RdbServer implements Role, Describable<RdbServer> {
         }
     }
 
-
-
     @Override
     public String toString() {
         return "RDB_SERVER{" +
