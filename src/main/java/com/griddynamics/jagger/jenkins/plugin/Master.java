@@ -11,7 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * User: Andrey
  * Date: 20/12/12
  */
-public class Master extends Role implements Describable<Master> {
+public class Master implements Role, Describable<Master> {
 
     @DataBoundConstructor
     public Master(){}
@@ -25,9 +25,13 @@ public class Master extends Role implements Describable<Master> {
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
+    public RoleTypeName getRoleType() {
+        return RoleTypeName.MASTER;
+    }
+
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<Master>{
+    public static class DescriptorM extends Descriptor<Master>{
 
         @Override
         public String getDisplayName() {

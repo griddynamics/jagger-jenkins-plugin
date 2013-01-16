@@ -3,12 +3,15 @@
 <f:block>
      <table>
 
-      <f:entry title="Rdb Driver">
+<!--   <f:entry title="Rdb Driver">
             <f:textbox field="rdbDrver" default = "com.mysql.jdbc.Driver"/>
                       </f:entry>
+-->
+
       <f:entry title="Rdb Port">
                   <f:textbox field="rdbPort" />
                             </f:entry>
+<!--
        <f:entry title="Data Base Name">
                      <f:textbox field="rdbName" />
                                </f:entry>
@@ -21,6 +24,7 @@
       <f:entry title="Rdb Dialect">
                 <f:textbox field="rdbDialect" default = "org.hibernate.dialect.MySQL5Dialect"/>
                     </f:entry>
+-->
 
 
    </table>

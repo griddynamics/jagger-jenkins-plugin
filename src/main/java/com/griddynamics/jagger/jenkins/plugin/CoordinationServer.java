@@ -11,7 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * User: amikryukov
  * Date: 12/21/12
  */
-public class CoordinationServer extends Role implements Describable<CoordinationServer> {
+public class CoordinationServer implements Role, Describable<CoordinationServer> {
 
     private final String port;
 
@@ -25,8 +25,12 @@ public class CoordinationServer extends Role implements Describable<Coordination
         return port;
     }
 
+    public RoleTypeName getRoleType() {
+        return RoleTypeName.COORDINATION_SERVER;
+    }
+
     @Extension
-    public static class DescriptorImpl extends Descriptor<CoordinationServer>{
+    public static class DescriptorCS extends Descriptor<CoordinationServer>{
 
         @Override
         public String getDisplayName() {

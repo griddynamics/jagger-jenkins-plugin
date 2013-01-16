@@ -11,7 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * User: amikryukov
  * Date: 12/21/12
  */
-public class Kernel extends Role implements Describable<Kernel> {
+public class Kernel implements Role, Describable<Kernel> {
 
 
     @DataBoundConstructor
@@ -26,8 +26,12 @@ public class Kernel extends Role implements Describable<Kernel> {
         return "KERNEL";
     }
 
+    public RoleTypeName getRoleType() {
+        return RoleTypeName.KERNEL;
+    }
+
     @Extension
-    public static class DescriptorImpl extends Descriptor<Kernel>{
+    public static class DescriptorK extends Descriptor<Kernel>{
 
         @Override
         public String getDisplayName() {

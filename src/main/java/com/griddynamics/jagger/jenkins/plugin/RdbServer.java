@@ -12,7 +12,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * Date: 20/12/12
  */
 
-public class RdbServer extends Role implements Describable<RdbServer> {
+public class RdbServer implements Role, Describable<RdbServer> {
 
     private final String rdbDriver,
             rdbPort,
@@ -62,17 +62,19 @@ public class RdbServer extends Role implements Describable<RdbServer> {
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
+    public RoleTypeName getRoleType() {
+        return RoleTypeName.RDB_SERVER;
+    }
+
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<RdbServer>{
+    public static class DescriptorRDBS extends Descriptor<RdbServer>{
 
         @Override
         public String getDisplayName() {
             return "RDB_SERVER";
         }
     }
-
-
 
     @Override
     public String toString() {

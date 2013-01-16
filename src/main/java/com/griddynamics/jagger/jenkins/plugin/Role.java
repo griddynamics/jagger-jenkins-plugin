@@ -1,12 +1,13 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
 /**
- * Created with IntelliJ IDEA.
- * User: amikryukov
- * Date: 12/19/12
+ * Flag For Roles
  */
-public class Role {
-
+public interface Role {
+    /**
+     * @return type of particular Role
+     */
+    public RoleTypeName getRoleType();
 }
 
 
