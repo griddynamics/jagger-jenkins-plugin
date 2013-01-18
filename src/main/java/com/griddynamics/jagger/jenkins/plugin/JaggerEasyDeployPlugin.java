@@ -7,10 +7,9 @@ import hudson.console.ConsoleNote;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import hudson.util.FormValidation;
-import hudson.util.LogTaskListener;
-import hudson.util.StreamTaskListener;
+import hudson.util.*;
 import net.sf.json.JSONObject;
+import org.apache.tools.ant.taskdefs.Java;
 import org.kohsuke.args4j.NamedOptionDef;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -51,6 +50,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
         this.nodesToAttack = nodesToAttack;
         this.nodList = nodList;
+
+        setUpCommonProperties();
     }
 
     public ArrayList<NodeToAttack> getNodesToAttack() {
@@ -62,7 +63,7 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
     /**
-     * To load EnvVars and create properties_files
+     * Loading EnvVars and create properties_files
      * @param build .
      * @param listener .
      * @return true
@@ -70,14 +71,11 @@ public class JaggerEasyDeployPlugin extends Builder
     @Override
     public boolean prebuild(Build build, BuildListener listener) {
 
-        commonProperties = new MyProperties();
-
         PrintStream logger = listener.getLogger();
 
         try {
-            checkAddressesOnBuildVars(build.getEnvVars());//build.getEnvVars() this works, but deprecated
 
-            setUpCommonProperties();
+            checkAddressesOnBuildVars(build.getEnvVars());//build.getEnvVars() this works, but deprecated
 
             //create folder to collect properties files
             File folder = new File(build.getWorkspace()+PROPERTIES_PATH);
@@ -86,10 +84,17 @@ public class JaggerEasyDeployPlugin extends Builder
 
             for(Node node: nodList){
 
-                if(node.isSetPropertiesByHand()){ //then we should generate property file
+//
+//                if(!node.getPropertiesPath().matches("\\s*")) { //if there is something not spaces
+//
+//                   //folder = new File(node.getPropertiesPath());
+//                    if(node.isSetPropertiesByHand()){
+//                        supplementPropertiesFile(node, node.getPropertiesPath());
+//                    }
+//                } else if (node.isSetPropertiesByHand()){ //then we should generate property file
 
                     generatePropertiesFile(node,folder);
-                }
+               // }
             }
 
         } catch (Exception e) {
@@ -150,6 +155,8 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void setUpCommonProperties() {
 
+        commonProperties = new MyProperties();
+
         for(Node node : nodList) {
             if(node.getRdbServer() != null) {
                 setUpRdbProperties(node);
@@ -162,25 +169,7 @@ public class JaggerEasyDeployPlugin extends Builder
         for(NodeToAttack node : nodesToAttack) {
             setUpNodeToAttack(node);
         }
-//        for(Node node : nodList) {
-//            if (node.getRdbServer() != null){
-//                propTemp.fsDefaultName = "hdfs://" + node.getServerAddressActual() + "/";
-//                propTemp.rdbClientUrl = "jdbc:h2:tcp://" + node.getServerAddressActual() + ":" +
-//                        node.getRdbServer().getRdbPort() + "/" + node.getRdbServer().getRdbName();
-//            }
-//
-//            if(node.getCoordinationServer() != null) {
-//                propTemp.coordinatorZookeeperEndpoint = node.getServerAddress() +
-//                        "/" + node.getCoordinationServer().getPort();
-//            }
-//
-//        }
-//
-//        for(NodeToAttack node : nodesToAttack) {
-//            //! ports for attacking endpoints
-//                propTemp.serviceEndPoints.add("http://" + node.getServerAddress());
-//            //+ maybe port of environment that we try to Attack
-//        }
+
     }
 
     /**
@@ -236,11 +225,17 @@ public class JaggerEasyDeployPlugin extends Builder
 
         //file to store properties
         File filePath = new File(folder+"/"+node.getServerAddressActual()+".properties");
-        if(filePath.exists()) {
-            if(!filePath.delete()){
+//        if(filePath.exists()) {
+//            if(!filePath.delete()){
+//
+//            }
+//        }
 
-            }
+        if(!node.getPropertiesPath().matches("\\s*")) {
+            return;
+      //      new FileOutputStream(filePath).write(new FileInputStream(node.getPropertiesPath()).read());//
         }
+
         MyProperties properties = new MyProperties();
 
         if(node.getMaster() != null){
@@ -338,6 +333,8 @@ public class JaggerEasyDeployPlugin extends Builder
         }
     }
 
+
+
     /**
      * Adding Master Properties
      * @param node  Node instance
@@ -353,7 +350,7 @@ public class JaggerEasyDeployPlugin extends Builder
             properties.addValueWithComma(key,node.getMaster().getRoleType().toString());
         }
         //Http coordinator will always be on Master node (on port 8089?)!
-        properties.addValueWithComma(key,"HTTP_COORDINATION_SERVER");
+        properties.addValueWithComma(key, "HTTP_COORDINATION_SERVER");
 
         key = "chassis.coordinator.zookeeper.endpoint";
         properties.setProperty(key, commonProperties.getProperty(key));
@@ -367,6 +364,12 @@ public class JaggerEasyDeployPlugin extends Builder
         properties.setProperty(key, commonProperties.getProperty(key));
     }
 
+
+
+    /**
+     * Adding Data Base Properties
+     * @param properties    property of specified Node
+     */
     private void addDBProperties(MyProperties properties) {
 
         String key;
@@ -387,6 +390,11 @@ public class JaggerEasyDeployPlugin extends Builder
         properties.setProperty(key, commonProperties.getProperty(key));
     }
 
+
+    // Start's processes on machine
+    private Launcher.ProcStarter procStarter ;
+
+
     /**
      * This method will be called in build time (when you build job)
      * @param build   .
@@ -405,50 +413,17 @@ public class JaggerEasyDeployPlugin extends Builder
 
         try{
 
-            for(NodeToAttack node:nodesToAttack){
-                logger.println("-------------------------");
-                logger.println(node.toString());
-                }
-                logger.println("-------------------------\n\n");
+        //    logInfoAboutNodes(logger);
 
-            for(Node node:nodList){
-                logger.println("-------------------------");
-                logger.println("Node address : "+node.getServerAddressActual());
-                logger.println("-------------------------");
-                logger.println("Node properties path : "+node.getPropertiesPath());
-                logger.println("-------------------------");
-                logger.println("Node's roles : ");
-                if(!node.getHmRoles().isEmpty()){
-                    for(Role role: node.getHmRoles().values()){
-                        logger.println(role.toString());
-                    }
-                } else {
-                    logger.println(node.getPropertiesPath());
-                }
-                logger.println("-------------------------\n-------------------------");
+            setUpProcStarter(launcher,build);
 
-            }
+//            doOnVmSSH("amikryukov","amikryukov-ws","~/.ssh/id_rsa","mkdir 22222222 ; mkdir 2222222122");
+//            doOnVmSSHDaemon("amikryukov","amikryukov-ws","~/.ssh/id_rsa","mkdir 11111111 ; mkdir 111111211");
 
-            StringBuilder scriptToExecute = new StringBuilder();
-            scriptToExecute.append("ls");
 
-            Launcher.ProcStarter procStarter = launcher.new ProcStarter();
+          //   BufferedReader asd = new BufferedReader(new InputStreamReader(proc.getStderr()));
 
-            procStarter.cmds(scriptToExecute.toString());
-            //procStarter.envs(build.getEnvVars());
-            procStarter.envs();
-            procStarter.pwd(build.getWorkspace());   ///home/amikryukov/temp/
-
-            Proc proc = launcher.launch(procStarter);
-            logger.println(proc.getStdout());
-            int exitCode = proc.join();
-            if(exitCode != 0){
-                logger.println("launcher.launch code " + exitCode);
-                return false;
-            }
-
-           logger.println(build.getBuildVariables());
-
+       //    logger.println(build.getEnvVars());
 
             return true;
 
@@ -456,6 +431,114 @@ public class JaggerEasyDeployPlugin extends Builder
             logger.println("Troubles : " +e);
         }
             return false;
+    }
+
+
+    private void setUpProcStarter(Launcher launcher, AbstractBuild<?, ?> build) {
+
+        procStarter = launcher.new ProcStarter();
+        procStarter.envs();
+        procStarter.pwd(build.getWorkspace());
+    }
+
+
+
+    /**
+     * do commands on remote machine via ssh using public key authorisation
+     *
+     * @param userName user name
+     * @param address address of machine
+     * @param keyPath path to private key
+     * @param commandString command
+     * @return exitCode
+     * @throws java.io.IOException start()
+     * @throws InterruptedException join()
+     */
+    private int doOnVmSSH(String userName, String address, String keyPath, String commandString)
+            throws IOException, InterruptedException {
+
+        return procStarter.cmds(stringToCmds("ssh -i " + keyPath + " " + userName + "@" + address + " " + commandString)).start().join();
+    }
+
+
+
+    /**
+     * not yet implemented
+     * do commands on remote machine via ssh using password key authorisation
+     *
+     * @param userName /                 look doOnVmSSh(...)
+     * @param address   /
+     * @param password   password of user
+     * @param commandString /
+     * @return               /
+     * @throws java.io.IOException /
+     * @throws InterruptedException /
+     */
+    private void doOnVmSSHPass(String userName, String address, String password, String commandString) throws IOException, InterruptedException {
+       //not yet implemented
+        procStarter.cmds(stringToCmds("ssh " + userName + "@" + address + " " + commandString));
+    }
+
+
+
+    /**
+     * do commands daemon on remote machine via ssh using public key authorisation
+     *
+     * @param userName user name
+     * @param address address of machine
+     * @param keyPath path to private key
+     * @param commandString command
+     * @return exitCode
+     * @throws java.io.IOException start()
+     * @throws InterruptedException join()
+     */
+    private int doOnVmSSHDaemon(String userName, String address, String keyPath, String commandString)
+            throws IOException, InterruptedException {
+
+       return procStarter.cmds(stringToCmds("ssh -f -i " + keyPath + " " + userName + "@" + address + " " + commandString)).start().join();
+    }
+
+
+
+    /**
+     * String to array
+     * cd directory >> [cd, directory]
+     * @param str commands in ine string
+     * @return array of commands
+     */
+    private String[] stringToCmds(String str){
+        return QuotedStringTokenizer.tokenize(str);
+    }
+
+
+    /**
+     *  log information about all Nodes
+     * @param logger listener.getLogger from perform method
+     */
+    private void logInfoAboutNodes(PrintStream logger) {
+
+        for(NodeToAttack node:nodesToAttack){
+                logger.println("-------------------------");
+                logger.println(node.toString());
+                }
+                logger.println("-------------------------\n\n");
+
+        for(Node node:nodList){
+            logger.println("-------------------------");
+            logger.println("Node address : "+node.getServerAddressActual());
+            logger.println("-------------------------");
+            logger.println("Node properties path : "+node.getPropertiesPath());
+            logger.println("-------------------------");
+            logger.println("Node's roles : ");
+            if(!node.getHmRoles().isEmpty()){
+                for(Role role: node.getHmRoles().values()){
+                    logger.println(role.toString());
+                }
+            } else {
+                logger.println(node.getPropertiesPath());
+            }
+            logger.println("-------------------------\n-------------------------");
+        }
     }
 
     /**
