@@ -40,6 +40,8 @@ public class Node implements Describable<Node> {
 
     private String propertiesPath;
 
+    private String finalPropertiesPath;
+
     private final boolean usePassword;
 
     private final boolean setPropertiesByHand;
@@ -107,6 +109,14 @@ public class Node implements Describable<Node> {
         return setPropertiesByHand;
     }
 
+    public String getFinalPropertiesPath() {
+        return finalPropertiesPath;
+    }
+
+    public void setFinalPropertiesPath(String finalPropertiesPath) {
+        this.finalPropertiesPath = finalPropertiesPath;
+    }
+
     public String getPropertiesPath() {
         return propertiesPath;
     }
@@ -133,10 +143,6 @@ public class Node implements Describable<Node> {
 
     public HashMap<RoleTypeName, Role> getHmRoles() {
         return hmRoles;
-    }
-
-    public void setPropertiesPath(String propertiesPath) {
-        this.propertiesPath = propertiesPath;
     }
 
     private void fillRoles(Role ... roles) {
