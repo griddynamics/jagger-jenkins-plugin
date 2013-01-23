@@ -1,6 +1,5 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
-import com.griddynamics.jagger.jenkins.plugin.util.CommandTokenizer;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -14,7 +13,6 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.xml.bind.PropertyException;
 import java.io.*;
-import java.nio.channels.FileChannel;
 import java.util.*;
 
 
@@ -27,15 +25,15 @@ public class JaggerEasyDeployPlugin extends Builder
     //the collect nodes to attack in one field.
     private ArrayList<NodeToAttack> nodesToAttack = new ArrayList<NodeToAttack>();
 
-    private final String PROPERTIES_PATH = "/properties";    // where we will store properties for Jagger for each node
+    // where we will store properties for Jagger for each node
+    private final String PROPERTIES_PATH = "/properties";
 
     private MyProperties commonProperties ;
 
     private StringBuilder deploymentScript;
 
-    private final String jaggerTestSuitePath;           //path to Jagger Test Suit .zip
-
-    private String VERSION = "1.1.3-SNAPSHOT";
+    //path to Jagger Test Suit .zip
+    private final String jaggerTestSuitePath;
 
     private String baseDir = "pwd";
 
@@ -72,14 +70,6 @@ public class JaggerEasyDeployPlugin extends Builder
         return deploymentScript;
     }
 
-    public String getVERSION() {
-        return VERSION;
-    }
-
-    public void setVERSION(String VERSION) {
-        this.VERSION = VERSION;
-    }
-
     /**
      * Loading EnvVars and create properties_files
      * @param build .
@@ -113,14 +103,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
         } catch (Exception e) {
             logger.println("Exception in preBuild: " + e );
-//            for(StackTraceElement str : e.getStackTrace()) {
-//                System.out.println(str.getMethodName() + "\t" + str.getLineNumber());
-//            }
-
 
         }
-
-     //   listener.getLogger().println(System.getProperties().stringPropertyNames());
 
         return true;
     }
@@ -134,11 +118,6 @@ public class JaggerEasyDeployPlugin extends Builder
         StringBuilder script = new StringBuilder();
         script.append("#!/bin/bash\n\n");
         script.append("TimeStart=`date +%y/%m/%d_%H:%M`\n\n");
-
-     //   downloadTestsToRepo(script);
-
-        //what should we do in this key
-      //  installTestEnvironment(script);
 
         killOldJagger(script);
 
@@ -155,61 +134,6 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("zip -9 report.zip report.pdf result.xml\n");
 
         deploymentScript = script;
-
-    }
-
-    private void installTestEnvironment(StringBuilder script) {
-
-        script.append("echo Stopping tested environments\n");
-        for(NodeToAttack node : nodesToAttack) {
-
-            String userName = node.getUserName();
-            String address = node.getServerAddressActual();
-            String keyPath = node.getSshKeyPath();
-
-            if(node.isInstallAgent()){
-                doOnVmSSH(userName, address, keyPath, "/opt/tomcat-7.0.32/tomcat-1/bin/shutdown.sh", script);
-                doOnVmSSH(userName, address, keyPath, "/opt/tomcat-7.0.32/tomcat-2/bin/shutdown.sh", script);
-            } else {
-                //throw new exception
-            }
-        }
-
-        script.append("\necho Deploying tested environments\n");
-        for(NodeToAttack node : nodesToAttack) {
-
-            String userName = node.getUserName();
-            String address = node.getServerAddressActual();
-            String keyPath = node.getSshKeyPath();
-
-            if(node.isInstallAgent()){
-                scpSendKey(userName, address, keyPath,
-                        "~/.m2/repository/com/griddynamics/jagger/test-target/" + VERSION + "/test-target-" + VERSION + ".war",
-                        "/opt/tomcat-7.0.32/tomcat-1/webapps/ROOT.war ",
-                        script);
-                scpSendKey(userName, address, keyPath,
-                        "~/.m2/repository/com/griddynamics/jagger/test-target/" + VERSION + "/test-target-" + VERSION + ".war",
-                        "/opt/tomcat-7.0.32/tomcat-2/webapps/ROOT.war ",
-                        script);
-            } else {
-                //throw new exception
-            }
-        }
-
-        script.append("\necho Starting tested environments\n");
-        for(NodeToAttack node : nodesToAttack) {
-
-            String userName = node.getUserName();
-            String address = node.getServerAddressActual();
-            String keyPath = node.getSshKeyPath();
-
-            if(node.isInstallAgent()){
-                doOnVmSSH(userName, address, keyPath, "/opt/tomcat-7.0.32/tomcat-1/bin/startup.sh", script);
-                doOnVmSSH(userName, address, keyPath, "/opt/tomcat-7.0.32/tomcat-2/bin/startup.sh", script);
-            } else {
-                //throw new exception
-            }
-        }
 
     }
 
@@ -265,8 +189,6 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-
-
     private void copyReports(StringBuilder script) {
 
         for(Node node : nodList){
@@ -297,6 +219,7 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
     }
+
 
     /**
      * Starting Nodes with specific property file for each
@@ -346,8 +269,8 @@ public class JaggerEasyDeployPlugin extends Builder
         } else {
             //throw new IllegalArgumentException("no coordinator");
         }
-
     }
+
 
     /**
      * Starting Agents, if it declared
@@ -389,6 +312,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     }
 
+
     private void killOldJagger1(String userName, String serverAddress, String keyPath, String jaggerHome, StringBuilder script){
 
         script.append("echo TRYING TO DEPLOY NODE ").append(userName).append("@").append(serverAddress).append("\n");
@@ -417,21 +341,6 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("\n");
     }
 
-
-
-    /**
-     * @param script main deployment script
-     */
-    private void downloadTestsToRepo(StringBuilder script) {
-
-        script.append("# download tests to repo\n");
-
-        script.append("mvn org.apache.maven.plugins:maven-dependency-plugin:2.4:get -Dartifact=com.griddynamics.jagger:jagger-test:");
-        script.append(VERSION).append(":zip:full -DrepoUrl=https://nexus.griddynamics.net/nexus/content/repositories#/jagger-snapshots/\n");
-
-        script.append("mvn org.apache.maven.plugins:maven-dependency-plugin:2.4:get -Dartifact=com.griddynamics.jagger:test-target:");
-        script.append(VERSION).append(":war -DrepoUrl=https://nexus.griddynamics.net/nexus/content/repositories/jagger-snapshots/\n\n");
-    }
 
     /**
      * Check if Build Variables contain addresses , or VERSION (of Jagger)
@@ -474,10 +383,8 @@ public class JaggerEasyDeployPlugin extends Builder
                 }
             }
         }
-
-        checkVersionOnBuildVars(ev);
-
     }
+
 
     /**
      * rewriting fields on special class foe properties
@@ -545,6 +452,7 @@ public class JaggerEasyDeployPlugin extends Builder
         //if external bd ...
     }
 
+
     /**
      * Generating properties file for Node
      * @param node specified node
@@ -563,10 +471,6 @@ public class JaggerEasyDeployPlugin extends Builder
             properties.load(new FileInputStream(node.getPropertiesPath()));
         }
 
-//        if(filePath.exists()){
-//            properties.load(new FileInputStream(filePath));
-//        }
-
         if(node.getMaster() != null){
             addMasterProperties(node, properties);
         }
@@ -584,34 +488,11 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
         properties.store(new FileOutputStream(filePath), "generated automatically");
-        node.setFinalPropertiesPath(filePath.toString());        //finalPropertiesPath - Path that Jenkins will use to run start.sh
+        node.setFinalPropertiesPath(filePath.toString());
+        //finalPropertiesPath - Path that Jenkins will use to run start.sh
 
     }
 
-
-//    //Copy File
-//    public static void copyFile(File sourceFile, File destFile) throws IOException {
-//        if(!destFile.exists()) {
-//            destFile.createNewFile();
-//        }
-//
-//        FileChannel source = null;
-//        FileChannel destination = null;
-//
-//        try {
-//            source = new FileInputStream(sourceFile).getChannel();
-//            destination = new FileOutputStream(destFile).getChannel();
-//            destination.transferFrom(source, 0, source.size());
-//        }
-//        finally {
-//            if(source != null) {
-//                source.close();
-//            }
-//            if(destination != null) {
-//                destination.close();
-//            }
-//        }
-//    }
 
     /**
      * Adding Reporter Server Properties
@@ -639,6 +520,7 @@ public class JaggerEasyDeployPlugin extends Builder
         properties.setProperty(key, commonProperties.getProperty(key));
     }
 
+
     /**
      * Adding Reporter Server Properties
      * @param node  Node instance
@@ -653,6 +535,7 @@ public class JaggerEasyDeployPlugin extends Builder
             properties.addValueWithComma(key,node.getReporter().getRoleType().toString());
         }
     }
+
 
     /**
      * Adding RDB Server Properties
@@ -670,6 +553,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     }
 
+
     /**
      * Adding Coordination Server Properties
      * @param node  Node instance
@@ -684,7 +568,6 @@ public class JaggerEasyDeployPlugin extends Builder
             properties.addValueWithComma(key,node.getCoordinationServer().getRoleType().toString());
         }
     }
-
 
 
     /**
@@ -716,6 +599,7 @@ public class JaggerEasyDeployPlugin extends Builder
         properties.setProperty(key, commonProperties.getProperty(key));
     }
 
+
     /**
      * Adding Data Base Properties
      * @param properties    property of specified Node
@@ -741,7 +625,7 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-    // Start's processes on machine     ProcStarter is not serializeble
+    // Start's processes on computer where jenkins run ProcStarter is not serializable
     transient private Launcher.ProcStarter procStarter = null;
 
 
@@ -760,16 +644,14 @@ public class JaggerEasyDeployPlugin extends Builder
         PrintStream logger = listener.getLogger();
         logger.println("\n______Jagger_Easy_Deploy_Started______\n");
    //     logger.println("\n______DEBUG_INFORMATION_NODES_WITH_ROLES______\n");
-
+    //    logInfoAboutNodes(logger);
         try{
 
             setUpProcStarter(launcher,build);
 
             createScriptFile(build.getWorkspace());
-        //    logInfoAboutNodes(logger);
 
-
-            procStarter.cmds("./deploy-script.sh").start();
+            procStarter.cmds(stringToCmds("./deploy-script.sh")).start();
 
             return true;
 
@@ -783,23 +665,24 @@ public class JaggerEasyDeployPlugin extends Builder
     /**
      * creating script file to execute later
      * @throws FileNotFoundException  wow
-     * @param workspace path of job that run this build-step
+     * @param workspace
      */
-    private void createScriptFile(FilePath workspace) throws IOException {
+    private void createScriptFile(FilePath workspace) throws IOException, InterruptedException {
 
       //  new File(System.getProperty("user.home") + "/deploy-script.sh").createNewFile();
         PrintWriter fw = null;
         try{
             fw = new PrintWriter(new FileOutputStream(workspace + "/deploy-script.sh"));
-            fw.write("#!/bin/bash\n");  //deploymentScript.toString()
+            fw.write("#!/bin/bash\n");  //<<-- deploymentScript.toString()
             fw.write("mkdir YYYYEEESSSS");
+
         } finally {
             if(fw != null){
                 fw.close();
             }
         }
 
-        procStarter.cmds("chmod","+x","deploy-script.sh").start();
+        procStarter.cmds(stringToCmds("chmod +x deploy-script.sh")).start();
     }
 
 
@@ -852,25 +735,12 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-    /**
-     *  if Version of Jagger given in variables of environment (if can't find - uses default version)
-     *  it should be given as VERSION
-     * @param envVars variables of environment
-     */
-    private void checkVersionOnBuildVars(Map<String, String> envVars) {
-
-        if(envVars.containsKey("VERSION")){
-            setVERSION(envVars.get("VERSION"));
-        }
-    }
-
     private void setUpProcStarter(Launcher launcher, AbstractBuild<?, ?> build) {
 
         procStarter = launcher.new ProcStarter();
         procStarter.envs();
-        procStarter.pwd(System.getProperty("user.home"));
+        procStarter.pwd(build.getWorkspace());
     }
-
 
 
     /**
@@ -888,16 +758,13 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-
     /**
      * not yet implemented
      * do commands on remote machine via ssh using password key authorisation
-     *
      * @param userName /                 look doOnVmSSh(...)
      * @param address   /
      * @param password   password of user
      * @param commandString /
-     * @return               /
      * @throws java.io.IOException /
      * @throws InterruptedException /
      */
@@ -905,7 +772,6 @@ public class JaggerEasyDeployPlugin extends Builder
        //not yet implemented
         procStarter.cmds(stringToCmds("ssh " + userName + "@" + address + " " + commandString)).start().join();
     }
-
 
 
     /**
@@ -921,7 +787,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         script.append("ssh -f -i ").append(keyPath).append(" ").append(userName).append("@").append(address).append(" ").append(commandString).append("\n");
     }
-
 
 
     /**
@@ -965,6 +830,7 @@ public class JaggerEasyDeployPlugin extends Builder
         }
     }
 
+
     /**
      * Unnecessary, but recommended for more type safety
      * @return Descriptor of this class
@@ -1005,75 +871,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
             return FormValidation.ok();
         }
-////    validation for nodeList not yet implemented
-//        /**
-//         * To test number of each role
-//         * @param nodList whole list of nodes that do work
-//         * @return OK if it's OK, ERROR otherwise
-//         */
-//        public FormValidation doCheckNodList(@QueryParameter final ArrayList<Node> nodList){
-//
-//
-//
-//            int numberOfMasters = 0,
-//                numberOfCoordServers = 0,
-//                numberOfKernels = 0,
-//                numberOfRdbServers = 0,
-//                numberOfReporters = 0;
-//
-//            try{
-//
-//                for(Node node:(List<Node>)nodList){
-//                    for(Role role:node.getHmRoles().values()){
-//                        if (role instanceof Kernel){
-//                            numberOfKernels ++;
-//                        } else if (role instanceof Master){
-//                            numberOfMasters ++;
-//                        } else if (role instanceof CoordinationServer){
-//                            numberOfCoordServers ++;
-//                        } else if (role instanceof Reporter){
-//                            numberOfReporters ++;
-//                        } else if (role instanceof RdbServer){
-//                            numberOfRdbServers ++;
-//                        } else {
-//                            throw new Exception("Where this come from? Not role!"); //temporary decision
-//                        }
-//                    }
-//                }
-//
-//                if(numberOfCoordServers == 0){
-//                    return FormValidation.error("no COORDINATION_SERVER was found");
-//                } else if (numberOfCoordServers > 1){
-//                    return FormValidation.error("more then one COORDINATION_SERVER was found");
-//                }
-//
-//                if(numberOfMasters == 0){
-//                    return FormValidation.error("no MASTER was found");
-//                } else if (numberOfMasters > 1) {
-//                    return FormValidation.error("more then one MASTER was found");
-//                }
-//
-//                if(numberOfRdbServers == 0){
-//                    return FormValidation.error("no RDB_SERVER was found");
-//                } else if (numberOfRdbServers > 1){
-//                    return FormValidation.error("more then one RDB_SERVER was found");
-//                }
-//
-//                if(numberOfReporters == 0){
-//                    return FormValidation.error("no REPORTER was found");
-//                } else if (numberOfReporters > 1){
-//                    return FormValidation.error("more then one REPORTER was found");
-//                }
-//
-//                if(numberOfKernels == 0){
-//                    return FormValidation.error("no KERNEL was found");
-//                }
-//
-//                return FormValidation.ok(nodList.getClass().getName());
-//            } catch (Exception e) {
-//                return FormValidation.error("something wrong");
-//            }
-//        }
+
     }
 
 }
