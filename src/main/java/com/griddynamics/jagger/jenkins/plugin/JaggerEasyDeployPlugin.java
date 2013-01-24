@@ -137,9 +137,13 @@ public class JaggerEasyDeployPlugin extends Builder
 
         killOldJagger(script);
 
+        script.append("sleep 5\n");
+
         startAgents(script);
 
         startNodes(script);
+
+        script.append("sleep 5\n");
 
         copyReports(script);
 
@@ -169,7 +173,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         for(NodeToAttack node : nodesToAttack) {
             if(node != null && node.isInstallAgent()) {
-                script.append("\necho Copy agents logs\n");
+                script.append("\necho \"Copy agents logs\"\n");
                 copyLogs(node.getUserName(), node.getServerAddressActual(), node.getSshKeyPath(), script);
             }
         }
@@ -178,8 +182,8 @@ public class JaggerEasyDeployPlugin extends Builder
     private void copyKernelsLogs(StringBuilder script) {
 
         for (Node node: nodList) {
-            if(node != null && node.getKernel() != null) {
-                script.append("\necho Copy kernels logs\n");
+            if(node != null && node.getKernel() != null && node.getMaster() == null) {
+                script.append("\necho \"Copy kernels logs\"\n");
                 copyLogs(node.getUserName(), node.getServerAddressActual(), node.getSshKeyPath(), script);
             }
         }
@@ -189,7 +193,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         for (Node node: nodList) {
             if(node != null && node.getMaster() != null) {
-                script.append("\necho Copy kernels logs\n");
+                script.append("\necho \"Copy master logs\"\n");
                 copyLogs(node.getUserName(), node.getServerAddressActual(), node.getSshKeyPath(), script);
             }
         }
@@ -201,7 +205,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 String jaggerHome = "/home/" + userName + "/runned_jagger";
 
                 doOnVmSSH(userName, address, keyPath, "cd " + jaggerHome + "; zip -9 " + address + ".logs.zip jagger.log*", script);
-                scpGetKey(userName, address, keyPath, jaggerHome + "/" + address + ".logs.zip", baseDir, script);
+                scpGetKey(userName, address, keyPath, jaggerHome + "/" + address + ".logs.zip", baseDir, script);// + + + ++ + ++  ++ + + ++
     }
 
 
@@ -217,7 +221,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 String jaggerHome = "/home/" + userName + "/runned_jagger";
 
 
-                script.append("\n\necho Copy reports\n");
+                script.append("\n\necho \"Copy reports\"\n");
                 scpGetKey(userName,
                         address,
                         keyPath,
@@ -245,7 +249,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         //here we should run start.sh with properties file that on our computer, not on Nodes.
         //it means that first - we should transfer it to Node
-        script.append("\nCopying properties to remote Nodes and start\n\n");
+        script.append("\necho \"Copying properties to remote Nodes and start\"\n\n");
 
         Node coordinator = null; //COORDINATION_SERVER should start in very last order
 
@@ -254,7 +258,7 @@ public class JaggerEasyDeployPlugin extends Builder
             String address = node.getServerAddressActual();
             String keyPath = node.getSshKeyPath();
             String jaggerHome = "/home/" + userName + "/runned_jagger";
-            String newPropPath = jaggerHome + "/tempProperiesToDeploy";
+            String newPropPath = jaggerHome + "/tempPropertiesToDeploy.property";
 
             File property = new File(newPropPath);
             if(!property.exists()){
@@ -262,13 +266,13 @@ public class JaggerEasyDeployPlugin extends Builder
                 property.mkdirs();
             }
             scpSendKey(userName, address, keyPath, node.getFinalPropertiesPath(), newPropPath,script);
-            node.setFinalPropertiesPath(newPropPath + "/" + node.getServerAddressActual() + ".properties");
+            node.setFinalPropertiesPath(newPropPath);
 
             if(node.getCoordinationServer() != null) {
                 coordinator = node;
             } else {
-                script.append("echo ").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh property_file\n");
-                doOnVmSSHDaemon(userName, address, keyPath, "cd " + jaggerHome + "; ./start.sh " + node.getFinalPropertiesPath(), script);
+                script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh property_file\"\n");
+                doOnVmSSHDaemon(userName, address, keyPath, "source /etc/profile; cd " + jaggerHome + "; ./start.sh " + node.getFinalPropertiesPath(), script);   //----------------------------
                 script.append("> /dev/null\n\n");
             }
         }
@@ -279,8 +283,8 @@ public class JaggerEasyDeployPlugin extends Builder
             String keyPath = coordinator.getSshKeyPath();
             String jaggerHome = "/home/" + userName + "/runned_jagger";
 
-            script.append("echo ").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh ").append("properties_file\n");
-            doOnVmSSH(userName, address, keyPath, "cd " + jaggerHome + "; ./start.sh " + coordinator.getFinalPropertiesPath(), script);
+            script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh ").append("properties_file\"\n");
+            doOnVmSSH(userName, address, keyPath, "source /etc/profile; cd " + jaggerHome + "; ./start.sh " + coordinator.getFinalPropertiesPath(), script);  //==================================
             script.append("> /dev/null\n\n");
         } else {
             //throw new IllegalArgumentException("no coordinator");
@@ -300,7 +304,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
                 killOldJagger1(node.getUserName(), node.getServerAddressActual(), node.getSshKeyPath(), jaggerHome, script);
 
-                script.append("\necho Starting Agents\n");
+                script.append("\necho \"Starting Agents\"\n");
                 script.append("echo \"").append(node.getServerAddressActual()).append(" : cd ").append(jaggerHome).append("; ./start_agent.sh\"\n");
 
                 String command = "cd " + jaggerHome + "; ./start_agent.sh -Dchassis.coordination.http.url=" + commonProperties.get("chassis.coordination.http.url");
@@ -318,7 +322,7 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void killOldJagger(StringBuilder script) {
 
-        script.append("\necho Killing old jagger\n\n");
+        script.append("\necho \"Killing old jagger\"\n\n");
         for(Node node:nodList){
 
             String jaggerHome = "/home/" + node.getUserName() + "/runned_jagger";
@@ -331,7 +335,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void killOldJagger1(String userName, String serverAddress, String keyPath, String jaggerHome, StringBuilder script){
 
-        script.append("echo TRYING TO DEPLOY NODE ").append(userName).append("@").append(serverAddress).append("\n");
+        script.append("echo \"TRYING TO DEPLOY NODE\"").append(userName).append("@").append(serverAddress).append("\n");
         doOnVmSSH(userName, serverAddress, keyPath, "rm -rf " + jaggerHome, script);
         doOnVmSSH(userName, serverAddress, keyPath, "mkdir " + jaggerHome, script);
 
@@ -350,7 +354,7 @@ public class JaggerEasyDeployPlugin extends Builder
         doOnVmSSH(userName, serverAddress, keyPath,
                 "unzip " + jaggerHome + "/" + jaggerFileName + " -d " + jaggerHome, script);
 
-        script.append("\necho KILLING PREVIOUS PROCESS ").append(userName).append("@").append(serverAddress).append("\n");
+        script.append("\necho \"KILLING PREVIOUS PROCESS\"").append(userName).append("@").append(serverAddress).append("\n");
         doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + "/stop.sh", script);
         doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + "/stop_agent.sh", script);
         doOnVmSSH(userName, serverAddress, keyPath, "rm -rf /home/" + userName + "/jaggerdb", script);
@@ -660,17 +664,21 @@ public class JaggerEasyDeployPlugin extends Builder
         logger.println("\n______Jagger_Easy_Deploy_Started______\n");
         String pathToDeploymentScript = build.getWorkspace() + "/deploy-script.sh";
 
-        createBaseDir();
+
 
         try{
 
             setUpProcStarter(launcher,build,listener);
 
+            createBaseDir();
+
             createScriptFile(pathToDeploymentScript);
 
             logger.println("\n-----------------Deploying--------------------\n\n");
 
-            procStarter.cmds(stringToCmds("./deploy-script.sh")).start();
+            logger.println("exit code : " + procStarter.cmds(stringToCmds("./deploy-script.sh")).start().join());
+
+           // listener.getLogger().flush();
 
             logger.println("\n\n----------------------------------------------\n\n");
 
@@ -691,10 +699,11 @@ public class JaggerEasyDeployPlugin extends Builder
         return false;
     }
 
-    private void createBaseDir() {
+    private void createBaseDir() throws IOException {
 
-        File dir = new File(baseDir);
-        dir.mkdirs();
+        procStarter.cmds(stringToCmds("mkdir "+baseDir)).start();
+
+
     }
 
 
@@ -790,7 +799,6 @@ public class JaggerEasyDeployPlugin extends Builder
     private void doOnVmSSH(String userName, String address, String keyPath, String commandString,StringBuilder script) {
 
         script.append("ssh -i ").append(keyPath).append(" ").append(userName).append("@").append(address).append(" \"").append(commandString).append("\"\n");
-
     }
 
 
