@@ -80,14 +80,17 @@ public class JaggerEasyDeployPlugin extends Builder
     public boolean prebuild(Build build, BuildListener listener) {
 
         PrintStream logger = listener.getLogger();
+        //create folder to collect properties files
+        File folder = new File(build.getWorkspace() + PROPERTIES_PATH);
 
         try {
 
             checkAddressesOnBuildVars(build.getEnvVars());//build.getEnvVars() this works, but deprecated
 
-            //create folder to collect properties files
-            File folder = new File(build.getWorkspace() + PROPERTIES_PATH);
-            if(!folder.exists()) {folder.mkdirs();}
+            //delete previous build properties
+            folder.delete();
+            //make dirs if they not exists
+            folder.mkdirs();
 
             logger.println("\nFOLDER WORKSPACE\n"+folder.toString()+"\n\n");
 
@@ -99,11 +102,22 @@ public class JaggerEasyDeployPlugin extends Builder
 
             generateScriptToDeploy();
 
+            logger.println("\n-------------Deployment-Script-------------------\n\n");
             logger.println(deploymentScript.toString());
+            logger.println("\n\n-------------------------------------------------\n\n");
 
         } catch (Exception e) {
-            logger.println("Exception in preBuild: " + e );
 
+            logger.println("Exception in preBuild: " + e );
+            for(StackTraceElement element : e.getStackTrace()) {
+                logger.println(element.getMethodName() + "\t" + element.getLineNumber());
+            }
+
+            if(folder.exists()){
+                folder.delete();
+            }
+
+            return false;
         }
 
         return true;
@@ -463,6 +477,7 @@ public class JaggerEasyDeployPlugin extends Builder
     private void generatePropertiesFile(Node node, File folder) throws PropertyException, IOException {
 
         File filePath = new File(folder+"/"+node.getServerAddressActual()+".properties");
+  //      if(filePath.exists()){ filePath.delete();}
 
         MyProperties properties = new MyProperties();
 
@@ -649,14 +664,33 @@ public class JaggerEasyDeployPlugin extends Builder
 
             setUpProcStarter(launcher,build);
 
-            createScriptFile(build.getWorkspace());
+         //   createScriptFile(build.getWorkspace());
 
-            procStarter.cmds(stringToCmds("./deploy-script.sh")).start();
+            Proc proc = procStarter.cmds(stringToCmds("./deploy-script.sh")).start();
 
+            String str;
+            BufferedReader pw;
+            procStarter.stderr(logger);
+            procStarter.stdout(logger);
+            if(proc.getStdout() != null){
+
+                pw = new BufferedReader(new InputStreamReader(proc.getStdout()));
+                while((str = pw.readLine()) != null) {
+                    logger.println(str);
+                }
+            }
+
+            if(proc.getStderr() != null) {
+
+                pw = new BufferedReader(new InputStreamReader(proc.getStderr()));
+                while((str = pw.readLine()) != null) {
+                    logger.println(str);
+                }
+            }
             return true;
 
         }catch (Exception e){
-            logger.println("Troubles : " +e);
+            logger.println("Troubles : " +e+"\n"+e.getMessage());
             return false;
         }
 
@@ -665,7 +699,8 @@ public class JaggerEasyDeployPlugin extends Builder
     /**
      * creating script file to execute later
      * @throws FileNotFoundException  wow
-     * @param workspace
+     * @param workspace 5
+     * @throws InterruptedException 5
      */
     private void createScriptFile(FilePath workspace) throws IOException, InterruptedException {
 
@@ -673,8 +708,7 @@ public class JaggerEasyDeployPlugin extends Builder
         PrintWriter fw = null;
         try{
             fw = new PrintWriter(new FileOutputStream(workspace + "/deploy-script.sh"));
-            fw.write("#!/bin/bash\n");  //<<-- deploymentScript.toString()
-            fw.write("mkdir YYYYEEESSSS");
+            fw.write(deploymentScript.toString());  //<<-- deploymentScript.toString()
 
         } finally {
             if(fw != null){
@@ -753,7 +787,7 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void doOnVmSSH(String userName, String address, String keyPath, String commandString,StringBuilder script) {
 
-        script.append("ssh -i ").append(keyPath).append(" ").append(userName).append("@").append(address).append(" ").append(commandString).append("\n");
+        script.append("ssh -i ").append(keyPath).append(" ").append(userName).append("@").append(address).append(" \"").append(commandString).append("\"\n");
 
     }
 
@@ -770,7 +804,7 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void doOnVmSSHPass(String userName, String address, String password, String commandString) throws IOException, InterruptedException {
        //not yet implemented
-        procStarter.cmds(stringToCmds("ssh " + userName + "@" + address + " " + commandString)).start().join();
+       // procStarter.cmds(stringToCmds("ssh " + userName + "@" + address + " " + commandString)).start().join();
     }
 
 
@@ -785,7 +819,7 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void doOnVmSSHDaemon(String userName, String address, String keyPath, String commandString,StringBuilder script) {
 
-        script.append("ssh -f -i ").append(keyPath).append(" ").append(userName).append("@").append(address).append(" ").append(commandString).append("\n");
+        script.append("ssh -f -i ").append(keyPath).append(" ").append(userName).append("@").append(address).append(" \"").append(commandString).append("\"\n");
     }
 
 
