@@ -8,6 +8,8 @@ import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.log4j.helpers.LogLog;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -86,14 +88,10 @@ public class JaggerEasyDeployPlugin extends Builder
         try {
 
             checkAddressesOnBuildVars(build.getEnvVars());//build.getEnvVars() this works, but deprecated
-
             //delete previous build properties
-            folder.delete();
+            FileUtils.deleteDirectory(folder);
             //make dirs if they not exists
-            folder.mkdirs();
-
-            logger.println("\nFOLDER WORKSPACE\n"+folder.toString()+"\n\n");
-
+            FileUtils.forceMkdir(folder);
 
             for(Node node: nodList){
 
@@ -102,19 +100,23 @@ public class JaggerEasyDeployPlugin extends Builder
 
             generateScriptToDeploy();
 
-            logger.println("\n-------------Deployment-Script-------------------\n\n");
+            logger.println("\n-------------Deployment-Script-------------------\n");
             logger.println(deploymentScript.toString());
-            logger.println("\n\n-------------------------------------------------\n\n");
+            logger.println("\n-------------------------------------------------\n\n");
 
-        } catch (Exception e) {
+        } catch (IOException e) {
 
-            logger.println("Exception in preBuild: " + e );
+            logger.println("!!!\nWhile generating properties files\nException in preBuild: " + e );
             for(StackTraceElement element : e.getStackTrace()) {
                 logger.println(element.getMethodName() + "\t" + element.getLineNumber());
             }
 
             if(folder.exists()){
-                folder.delete();
+                try {
+                    FileUtils.deleteDirectory(folder);
+                } catch (IOException e1) {
+                    logger.println("Can`t delete " + folder + " after failed prebuild");
+                }
             }
 
             return false;
@@ -211,7 +213,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
                 String userName = node.getUserName();
                 String address = node.getServerAddressActual();
-                String keyPath = node.getFinalPropertiesPath();
+                String keyPath = node.getSshKeyPath();
                 String jaggerHome = "/home/" + userName + "/runned_jagger";
 
 
@@ -351,7 +353,7 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("\necho KILLING PREVIOUS PROCESS ").append(userName).append("@").append(serverAddress).append("\n");
         doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + "/stop.sh", script);
         doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + "/stop_agent.sh", script);
-        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + " rm -rf /home/" + userName + "/jaggerdb", script);
+        doOnVmSSH(userName, serverAddress, keyPath, "rm -rf /home/" + userName + "/jaggerdb", script);
         script.append("\n");
     }
 
@@ -472,9 +474,8 @@ public class JaggerEasyDeployPlugin extends Builder
      * @param node specified node
      * @param folder where to write file
      * @throws java.io.IOException /
-     * @throws javax.xml.bind.PropertyException /
      */
-    private void generatePropertiesFile(Node node, File folder) throws PropertyException, IOException {
+    private void generatePropertiesFile(Node node, File folder) throws IOException {
 
         File filePath = new File(folder+"/"+node.getServerAddressActual()+".properties");
   //      if(filePath.exists()){ filePath.delete();}
@@ -589,9 +590,8 @@ public class JaggerEasyDeployPlugin extends Builder
      * Adding Master Properties
      * @param node  Node instance
      * @param properties    property of specified Node
-     * @throws javax.xml.bind.PropertyException /
      */
-    private void addMasterProperties(Node node, MyProperties properties) throws PropertyException {
+    private void addMasterProperties(Node node, MyProperties properties) {
 
         String key = "chassis.roles";
         if(properties.getProperty(key) == null){
@@ -654,60 +654,61 @@ public class JaggerEasyDeployPlugin extends Builder
      * @throws IOException
      */
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)  throws InterruptedException, IOException {
 
         PrintStream logger = listener.getLogger();
         logger.println("\n______Jagger_Easy_Deploy_Started______\n");
-   //     logger.println("\n______DEBUG_INFORMATION_NODES_WITH_ROLES______\n");
-    //    logInfoAboutNodes(logger);
+        String pathToDeploymentScript = build.getWorkspace() + "/deploy-script.sh";
+
+        createBaseDir();
+
         try{
 
-            setUpProcStarter(launcher,build);
+            setUpProcStarter(launcher,build,listener);
 
-         //   createScriptFile(build.getWorkspace());
+            createScriptFile(pathToDeploymentScript);
 
-            Proc proc = procStarter.cmds(stringToCmds("./deploy-script.sh")).start();
+            logger.println("\n-----------------Deploying--------------------\n\n");
 
-            String str;
-            BufferedReader pw;
-            procStarter.stderr(logger);
-            procStarter.stdout(logger);
-            if(proc.getStdout() != null){
+            procStarter.cmds(stringToCmds("./deploy-script.sh")).start();
 
-                pw = new BufferedReader(new InputStreamReader(proc.getStdout()));
-                while((str = pw.readLine()) != null) {
-                    logger.println(str);
-                }
-            }
+            logger.println("\n\n----------------------------------------------\n\n");
 
-            if(proc.getStderr() != null) {
-
-                pw = new BufferedReader(new InputStreamReader(proc.getStderr()));
-                while((str = pw.readLine()) != null) {
-                    logger.println(str);
-                }
-            }
             return true;
 
-        }catch (Exception e){
-            logger.println("Troubles : " +e+"\n"+e.getMessage());
-            return false;
+        } catch (IOException e) {
+
+            logger.println("!!!\nException in perform " + e +
+                    "can't create script file or run script");
+
+            if(new File(pathToDeploymentScript).delete()) {
+                logger.println(pathToDeploymentScript + " has been deleted");
+            } else {
+                logger.println(pathToDeploymentScript + " haven't been created");
+            }
         }
 
+        return false;
     }
+
+    private void createBaseDir() {
+
+        File dir = new File(baseDir);
+        dir.mkdirs();
+    }
+
 
     /**
      * creating script file to execute later
-     * @throws FileNotFoundException  wow
-     * @param workspace 5
-     * @throws InterruptedException 5
+     * @throws IOException  if can't create file  or ru cmds.
+     * @param file 5
      */
-    private void createScriptFile(FilePath workspace) throws IOException, InterruptedException {
+    private void createScriptFile(String file) throws IOException {
 
       //  new File(System.getProperty("user.home") + "/deploy-script.sh").createNewFile();
         PrintWriter fw = null;
         try{
-            fw = new PrintWriter(new FileOutputStream(workspace + "/deploy-script.sh"));
+            fw = new PrintWriter(new FileOutputStream(file));
             fw.write(deploymentScript.toString());  //<<-- deploymentScript.toString()
 
         } finally {
@@ -716,7 +717,7 @@ public class JaggerEasyDeployPlugin extends Builder
             }
         }
 
-        procStarter.cmds(stringToCmds("chmod +x deploy-script.sh")).start();
+        procStarter.cmds(stringToCmds("chmod +x " + file)).start();
     }
 
 
@@ -769,11 +770,12 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-    private void setUpProcStarter(Launcher launcher, AbstractBuild<?, ?> build) {
+    private void setUpProcStarter(Launcher launcher, AbstractBuild<?, ?> build, BuildListener listener) {
 
         procStarter = launcher.new ProcStarter();
         procStarter.envs();
         procStarter.pwd(build.getWorkspace());
+        procStarter.stdout(listener);
     }
 
 
