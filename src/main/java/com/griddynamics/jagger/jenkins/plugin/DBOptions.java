@@ -12,38 +12,38 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * Date: 20/12/12
  */
 
-public class RdbServer implements Role, Describable<RdbServer> {
+public class DBOptions implements Describable<DBOptions> {
 
-    private final String rdbDriver,
-            rdbPort,
-            rdbName,
-            rdbUserName,
-            rdbPassword,
-            rdbDialect;
+    private final boolean doUseH2;
+    private final String rdbDriver;
+    private final String rdbClientUrl;
+    private final String rdbUserName;
+    private final String rdbPassword;
+    private final String rdbDialect;
+
 
     @DataBoundConstructor
-    public RdbServer(String rdbDriver, String rdbPort, String rdbName,
-              String rdbUserName, String rdbPassword, String rdbDialect){
+    public DBOptions(String rdbDriver, String rdbClientUrl,
+                     String rdbUserName, String rdbPassword, String rdbDialect, boolean doUseH2){
 
+        this.doUseH2 = doUseH2;
         this.rdbDriver = rdbDriver;
-        this.rdbPort = rdbPort;
-        this.rdbName = rdbName;
+        this.rdbClientUrl = rdbClientUrl;
         this.rdbUserName = rdbUserName;
         this.rdbPassword = rdbPassword;
         this.rdbDialect = rdbDialect;
     }
 
+    public boolean isDoUseH2() {
+        return doUseH2;
+    }
 
     public String getRdbDriver() {
         return rdbDriver;
     }
 
-    public String getRdbPort() {
-        return rdbPort;
-    }
-
-    public String getRdbName() {
-        return rdbName;
+    public String getRdbClientUrl() {
+        return rdbClientUrl;
     }
 
     public String getRdbUserName() {
@@ -58,7 +58,7 @@ public class RdbServer implements Role, Describable<RdbServer> {
         return rdbDialect;
     }
 
-    public Descriptor<RdbServer> getDescriptor() {
+    public Descriptor<DBOptions> getDescriptor() {
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
@@ -68,7 +68,7 @@ public class RdbServer implements Role, Describable<RdbServer> {
 
 
     @Extension
-    public static class DescriptorRDBS extends Descriptor<RdbServer>{
+    public static class DescriptorRDBS extends Descriptor<DBOptions>{
 
         @Override
         public String getDisplayName() {
@@ -80,8 +80,7 @@ public class RdbServer implements Role, Describable<RdbServer> {
     public String toString() {
         return "RDB_SERVER{" +
                 "rdbDriver='" + rdbDriver + '\'' +
-                ", rdbPort='" + rdbPort + '\'' +
-                ", rdbName='" + rdbName + '\'' +
+                ", rdbClientUrl='" + rdbClientUrl + '\'' +
                 ", rdbUserName='" + rdbUserName + '\'' +
                 ", rdbPassword='" + rdbPassword + '\'' +
                 ", rdbDialect='" + rdbDialect + '\'' +

@@ -23,6 +23,16 @@ public class JaggerEasyDeployPlugin extends Builder
     //the collect nodes to attack in one field.
     private ArrayList<SuT> sutsList = new ArrayList<SuT>();
 
+    private final DBOptions dbOptions;
+
+//    private final boolean doUseH2;
+//    private final String rdbDriver;
+//    private final String rdbClientUrl;
+//    private final String rdbUserName;
+//    private final String rdbPassword;
+//    private final String rdbDialect;
+
+
     // where we will store properties for Jagger for each node
     private final String PROPERTIES_PATH = "/properties";
 
@@ -42,16 +52,61 @@ public class JaggerEasyDeployPlugin extends Builder
      * @param nodList
      *               List of nodes to do work
      * @param jaggerTestSuitePath test suite path
+//     * @param doUseH2    /
+//     * @param rdbDriver /
+//     * @param rdbClientUrl/   Data Base Configuration
+//     * @param rdbPassword  /
+//     * @param rdbUserName   /
+//     * @param rdbDialect     /
      */
     @DataBoundConstructor
-    public JaggerEasyDeployPlugin(ArrayList<SuT> sutsList, ArrayList<Node> nodList, String jaggerTestSuitePath){
+    public JaggerEasyDeployPlugin(ArrayList<SuT> sutsList, ArrayList<Node> nodList, String jaggerTestSuitePath, DBOptions dbOptions
+                                 // boolean doUseH2, String rdbDriver, String rdbClientUrl, String rdbPassword, String rdbUserName, String rdbDialect
+    ){
 
+        this.dbOptions = dbOptions;
         this.sutsList = sutsList;
         this.nodList = nodList;
         this.jaggerTestSuitePath = jaggerTestSuitePath;
 
+//        this.doUseH2 = doUseH2;
+//        this.rdbDriver = rdbDriver;
+//        this.rdbClientUrl = rdbClientUrl;
+//        this.rdbPassword = rdbPassword;
+//        this.rdbUserName = rdbUserName;
+//        this.rdbDialect = rdbDialect;
+
         setUpCommonProperties();
     }
+
+    public DBOptions getDbOptions() {
+        return dbOptions;
+    }
+
+
+//    public boolean isDoUseH2() {
+//        return doUseH2;
+//    }
+//
+//    public String getRdbDriver() {
+//        return rdbDriver;
+//    }
+//
+//    public String getRdbClientUrl() {
+//        return rdbClientUrl;
+//    }
+//
+//    public String getRdbUserName() {
+//        return rdbUserName;
+//    }
+//
+//    public String getRdbPassword() {
+//        return rdbPassword;
+//    }
+//
+//    public String getRdbDialect() {
+//        return rdbDialect;
+//    }
 
     public String getJaggerTestSuitePath() {
         return jaggerTestSuitePath;
@@ -419,10 +474,10 @@ public class JaggerEasyDeployPlugin extends Builder
 
         commonProperties = new MyProperties();
 
+        setUpRdbProperties();
+
         for(Node node : nodList) {
-            if(node.getRdbServer() != null) {
-                setUpRdbProperties(node);
-            }
+
             if(node.getCoordinationServer() !=  null) {
                 setUpCoordinationServerPropeties(node);
             }
@@ -464,16 +519,45 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      * Setting up Common Properties for Nodes
-     * @param node Node that play RdbServer Role
      */
-    private void setUpRdbProperties(Node node) {
-        //if using H2 !!!
-        commonProperties.setProperty("chassis.storage.rdb.client.driver", "org.h2.Driver");
-        commonProperties.setProperty("chassis.storage.rdb.client.url","jdbc:h2:tcp://" +
-                        node.getServerAddressActual() + ":" + node.getRdbServer().getRdbPort() +"/jaggerdb/db");
-        commonProperties.setProperty("chassis.storage.rdb.username","jagger");
-        commonProperties.setProperty("chassis.storage.rdb.password","rocks");
-        commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
+    private void setUpRdbProperties() {
+
+        if(dbOptions.isDoUseH2()){
+
+            String address = "NO_MASTER_DETECTED";
+            int port = 8043;
+            //
+
+            for(Node node: nodList) {
+                if(node.getMaster() != null) {
+                    address = node.getServerAddressActual();
+                    break;
+                }
+            }
+
+            commonProperties.setProperty("chassis.storage.rdb.client.driver", "org.h2.Driver");
+            commonProperties.setProperty("chassis.storage.rdb.client.url","jdbc:h2:tcp://" +
+                            address + ":" + port +"/jaggerdb/db");
+            commonProperties.setProperty("chassis.storage.rdb.username","jagger");
+            commonProperties.setProperty("chassis.storage.rdb.password","rocks");
+            commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
+
+        } else {
+
+            commonProperties.setProperty("chassis.storage.rdb.client.driver", dbOptions.getRdbDriver());
+            commonProperties.setProperty("chassis.storage.rdb.client.url", dbOptions.getRdbClientUrl());
+            commonProperties.setProperty("chassis.storage.rdb.username", dbOptions.getRdbUserName());
+            commonProperties.setProperty("chassis.storage.rdb.password", dbOptions.getRdbPassword());
+            commonProperties.setProperty("chassis.storage.hibernate.dialect", dbOptions.getRdbDialect());
+        }
+
+//        //if using H2 !!!
+//        commonProperties.setProperty("chassis.storage.rdb.client.driver", "org.h2.Driver");
+//        commonProperties.setProperty("chassis.storage.rdb.client.url","jdbc:h2:tcp://" +
+//                        node.getServerAddressActual() + ":" + node.getRdbServer().getRdbClientUrl() +"/jaggerdb/db");
+//        commonProperties.setProperty("chassis.storage.rdb.username","jagger");
+//        commonProperties.setProperty("chassis.storage.rdb.password","rocks");
+//        commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
         //standard port 8043 ! can it be changed? or hard code for ever?
         //if external bd ...
     }
@@ -503,9 +587,9 @@ public class JaggerEasyDeployPlugin extends Builder
         if(node.getCoordinationServer() != null){
             addCoordinationServerProperties(node, properties);
         }
-        if(node.getRdbServer() != null){
-            addRdbServerProperties(node, properties);
-        }
+//        if(node.getRdbServer() != null){
+//            addRdbServerProperties(node, properties);
+//        }
         if(node.getReporter() != null){
             addReporterServerProperties(node,properties);
         }
@@ -563,21 +647,21 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-    /**
+ /*   *//**
      * Adding RDB Server Properties
      * @param node  Node instance
      * @param properties    property of specified Node
-     */
+     *//*
     private void addRdbServerProperties(Node node, MyProperties properties) {
 
-        String key = "chassis.roles";
-        if(properties.get(key) == null){
-            properties.setProperty(key, node.getRdbServer().getRoleType().toString());
-        } else if (!properties.getProperty(key).contains(node.getRdbServer().getRoleType().toString())) {
-            properties.addValueWithComma(key,node.getRdbServer().getRoleType().toString());
-        }
+//        String key = "chassis.roles";
+//        if(properties.get(key) == null){
+//            properties.setProperty(key, node.getRdbServer().getRoleType().toString());
+//        } else if (!properties.getProperty(key).contains(node.getRdbServer().getRoleType().toString())) {
+//            properties.addValueWithComma(key,node.getRdbServer().getRoleType().toString());
+//        }
 
-    }
+    }*/
 
 
     /**
@@ -614,6 +698,12 @@ public class JaggerEasyDeployPlugin extends Builder
             properties.addValueWithComma(key, "HTTP_COORDINATION_SERVER");
         }
 
+        if (dbOptions.isDoUseH2()) {
+            if(properties.getProperty(key) != null && !properties.getProperty(key).contains("RDB_SERVER")){
+                properties.addValueWithComma(key,"RDB_SERVER");
+            }
+        }
+
         key = "chassis.coordinator.zookeeper.endpoint";
         properties.setProperty(key, commonProperties.getProperty(key));
 
@@ -633,22 +723,22 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void addDBProperties(MyProperties properties) {
 
-//        String key;
-//
-//        key = "chassis.storage.rdb.client.driver";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.rdb.client.url";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.rdb.username";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.rdb.password";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.hibernate.dialect";
-//        properties.setProperty(key, commonProperties.getProperty(key));
+        String key;
+
+        key = "chassis.storage.rdb.client.driver";
+        properties.setProperty(key, commonProperties.getProperty(key));
+
+        key = "chassis.storage.rdb.client.url";
+        properties.setProperty(key, commonProperties.getProperty(key));
+
+        key = "chassis.storage.rdb.username";
+        properties.setProperty(key, commonProperties.getProperty(key));
+
+        key = "chassis.storage.rdb.password";
+        properties.setProperty(key, commonProperties.getProperty(key));
+
+        key = "chassis.storage.hibernate.dialect";
+        properties.setProperty(key, commonProperties.getProperty(key));
     }
 
 
@@ -682,9 +772,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
             logger.println("\n-----------------Deploying--------------------\n\n");
 
-            logger.println("exit code : " + procStarter.cmds(stringToCmds("./deploy-script.sh")).start().join());
+         //   logger.println("exit code : " + procStarter.cmds(stringToCmds("./deploy-script.sh")).start().join());
 
-            listener.getLogger().flush();
+        //    listener.getLogger().flush();
 
             logger.println("\n\n----------------------------------------------\n\n");
 
