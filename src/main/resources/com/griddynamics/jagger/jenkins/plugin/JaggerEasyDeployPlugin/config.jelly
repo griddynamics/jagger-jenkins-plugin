@@ -6,9 +6,9 @@
         </f:entry>
     </f:section>
 
-   <f:section title = "Adding Nodes To Attack">
+   <f:section title = "Systems Under Test">
          <f:entry >
-                 <f:repeatableProperty field = "nodesToAttack" minimum = "1" />
+                 <f:repeatableProperty field = "sutsList" minimum = "1" />
           </f:entry>
     </f:section>
 
