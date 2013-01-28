@@ -59,6 +59,7 @@ public class JaggerEasyDeployPlugin extends Builder
 //     * @param rdbUserName   /
 //     * @param rdbDialect     /
      * @param dbOptions  properties for Data Base
+     * @throws java.io.IOException s
      */
     @DataBoundConstructor
     public JaggerEasyDeployPlugin(ArrayList<SuT> sutsList, ArrayList<Node> nodList, String jaggerTestSuitePath, DBOptions dbOptions
@@ -70,13 +71,6 @@ public class JaggerEasyDeployPlugin extends Builder
         this.nodList = nodList;
         this.jaggerTestSuitePath = jaggerTestSuitePath;
 
-//        this.doUseH2 = doUseH2;
-//        this.rdbDriver = rdbDriver;
-//        this.rdbClientUrl = rdbClientUrl;
-//        this.rdbPassword = rdbPassword;
-//        this.rdbUserName = rdbUserName;
-//        this.rdbDialect = rdbDialect;
-
         setUpCommonProperties();
     }
 
@@ -84,30 +78,6 @@ public class JaggerEasyDeployPlugin extends Builder
         return dbOptions;
     }
 
-
-//    public boolean isDoUseH2() {
-//        return doUseH2;
-//    }
-//
-//    public String getRdbDriver() {
-//        return rdbDriver;
-//    }
-//
-//    public String getRdbClientUrl() {
-//        return rdbClientUrl;
-//    }
-//
-//    public String getRdbUserName() {
-//        return rdbUserName;
-//    }
-//
-//    public String getRdbPassword() {
-//        return rdbPassword;
-//    }
-//
-//    public String getRdbDialect() {
-//        return rdbDialect;
-//    }
 
     public String getJaggerTestSuitePath() {
         return jaggerTestSuitePath;
@@ -472,16 +442,20 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      * rewriting fields on special class foe properties
-     * @throws java.io.IOException
+     * @throws java.io.IOException  f
      */
     private void setUpCommonProperties() throws IOException {
 
         commonProperties = new MyProperties();
 
-
+        int minAgents = 0;
+        int minKernels = 0;
 
         for(Node node : nodList) {
 
+            if(node.getKernel() != null) {
+                minKernels ++;
+            }
             if(node.getCoordinationServer() !=  null) {
                 setUpCoordinationServerPropeties(node);
             }
@@ -492,19 +466,25 @@ public class JaggerEasyDeployPlugin extends Builder
 
         setUpRdbProperties();
 
-
         for(SuT node : sutsList) {
+            if(node.isInstallAgent()) {
+                minAgents ++;
+            }
             setUpNodeToAttack(node);
         }
+
+        commonProperties.setProperty("chassis.conditions.min.agents.count", String.valueOf(minAgents));
+        commonProperties.setProperty("chassis.conditions.min.kernels.count",String.valueOf(minKernels));
 
     }
 
     private void setUpMasterProperties(Node node) throws IOException {
 
         try {
-            String key = "tcpPort" ;
             if(dbOptions.isDoUseH2()) {
                 if(!node.getPropertiesPath().matches("\\s*")) {
+
+                    String key = "tcpPort" ;
                     Properties prope = new Properties();
                     prope.load(new FileInputStream(node.getPropertiesPath()));
                     String temp = prope.getProperty(key);
@@ -560,8 +540,9 @@ public class JaggerEasyDeployPlugin extends Builder
             String port = commonProperties.getProperty("tcpPort");
             if(port == null) {
                 port = "8043";
+                commonProperties.setProperty("tcpPort",port);
             }
-            commonProperties.setProperty("tcpPort","8043");
+
             for(Node node: nodList) {
                 if(node.getMaster() != null) {
                     address = node.getServerAddressActual();
@@ -666,23 +647,6 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
- /*   *//**
-     * Adding RDB Server Properties
-     * @param node  Node instance
-     * @param properties    property of specified Node
-     *//*
-    private void addRdbServerProperties(Node node, MyProperties properties) {
-
-//        String key = "chassis.roles";
-//        if(properties.get(key) == null){
-//            properties.setProperty(key, node.getRdbServer().getRoleType().toString());
-//        } else if (!properties.getProperty(key).contains(node.getRdbServer().getRoleType().toString())) {
-//            properties.addValueWithComma(key,node.getRdbServer().getRoleType().toString());
-//        }
-
-    }*/
-
-
     /**
      * Adding Coordination Server Properties
      * @param node  Node instance
@@ -696,6 +660,11 @@ public class JaggerEasyDeployPlugin extends Builder
         } else if (!properties.getProperty(key).contains(node.getCoordinationServer().getRoleType().toString())) {
             properties.addValueWithComma(key,node.getCoordinationServer().getRoleType().toString());
         }
+
+        key = "chassis.conditions.min.kernels.count";
+        properties.setProperty(key,commonProperties.getProperty(key));
+        key = "chassis.conditions.min.agents.count";
+        properties.setProperty(key,commonProperties.getProperty(key));
     }
 
 
@@ -733,6 +702,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
         key = "test.service.endpoints";
         properties.setProperty(key, commonProperties.getProperty(key));
+
+        key = "tcpPort";
+        properties.setProperty(key,commonProperties.getProperty(key));
     }
 
 
@@ -854,19 +826,20 @@ public class JaggerEasyDeployPlugin extends Builder
      * @param keyPath   path of private key
      * @param filePathFrom  file path that we want to copy
      * @param filePathTo  path where we want to store file
+     * @param script  s
      */
-    private void scpGetKey(String userName, String address, String keyPath, String filePathFrom, String filePathTo, StringBuilder scripr) {
+    private void scpGetKey(String userName, String address, String keyPath, String filePathFrom, String filePathTo, StringBuilder script) {
 
-        scripr.append("scp -i ");
-        scripr.append(keyPath);
-        scripr.append(" ");
-        scripr.append(userName);
-        scripr.append("@");
-        scripr.append(address);
-        scripr.append(":");
-        scripr.append(filePathFrom);
-        scripr.append(" ");
-        scripr.append(filePathTo).append("\n");
+        script.append("scp -i ");
+        script.append(keyPath);
+        script.append(" ");
+        script.append(userName);
+        script.append("@");
+        script.append(address);
+        script.append(":");
+        script.append(filePathFrom);
+        script.append(" ");
+        script.append(filePathTo).append("\n");
 
     }
 
@@ -929,10 +902,10 @@ public class JaggerEasyDeployPlugin extends Builder
      * @throws java.io.IOException /
      * @throws InterruptedException /
      */
-    private void doOnVmSSHPass(String userName, String address, String password, String commandString) throws IOException, InterruptedException {
-       //not yet implemented
-       // procStarter.cmds(stringToCmds("ssh " + userName + "@" + address + " " + commandString)).start().join();
-    }
+//    private void doOnVmSSHPass(String userName, String address, String password, String commandString) throws IOException, InterruptedException {
+//       //not yet implemented
+//       // procStarter.cmds(stringToCmds("ssh " + userName + "@" + address + " " + commandString)).start().join();
+//    }
 
 
     /**
