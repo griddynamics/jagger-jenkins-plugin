@@ -11,10 +11,12 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
 import java.util.HashMap;
+import java.util.Properties;
 
 /**
  * Created with IntelliJ IDEA.
@@ -49,12 +51,10 @@ public class Node implements Describable<Node> {
                 boolean setPropertiesByHand,
 
                 Master master,
-         //       DBOptions rdbServer,
                 CoordinationServer coordinationServer,
                 Kernel kernel,
                 Reporter reporter
-       //     ,                           String serverAddressName
-    ) {
+    ) throws IOException {
 
         this.serverAddress = serverAddress;
         this.userName = userName;
@@ -66,10 +66,50 @@ public class Node implements Describable<Node> {
         this.serverAddressActual = serverAddress;
         hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
 
+
+        //check this !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if(!propertiesPath.matches("\\s*")) {
+
+            Properties properties = new Properties();
+            properties.load(new FileInputStream(getPropertiesPath()));
+            fillRoles(properties);
+        }
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (setPropertiesByHand){
             fillRoles(master, coordinationServer, kernel, reporter );
         }
+
+
+
     }
+
+    private void fillRoles(Properties properties) {
+
+        String temp;
+        if((temp = properties.getProperty("chassis.roles")) != null) {
+
+            if(temp.contains(RoleTypeName.KERNEL.toString())) {
+                hmRoles.put(RoleTypeName.KERNEL,new Kernel());
+            }
+
+            if(temp.contains(RoleTypeName.COORDINATION_SERVER.toString())) {
+                String port = properties.getProperty("chassis.coordination.http.port");
+                if(port == null) {
+                    port = "8089";
+                }
+                hmRoles.put(RoleTypeName.COORDINATION_SERVER,new CoordinationServer(port));
+            }
+
+            if(temp.contains(RoleTypeName.MASTER.toString())) {
+                hmRoles.put(RoleTypeName.MASTER,new Master());
+            }
+
+            if(temp.contains(RoleTypeName.REPORTER.toString())) {
+                hmRoles.put(RoleTypeName.REPORTER,new Reporter());
+            }
+        }
+    }
+
 
     public CoordinationServer getCoordinationServer() {
 
@@ -78,7 +118,7 @@ public class Node implements Describable<Node> {
 
     public Kernel getKernel() {
 
-        return (Kernel) hmRoles.get(RoleTypeName.KERNEL);
+            return (Kernel) hmRoles.get(RoleTypeName.KERNEL);
     }
 
     public String getServerAddressActual() {
