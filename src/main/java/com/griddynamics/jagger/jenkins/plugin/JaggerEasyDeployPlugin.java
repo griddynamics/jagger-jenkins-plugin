@@ -37,7 +37,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private final String PROPERTIES_PATH = "/properties";
 
-    private MyProperties commonProperties = new MyProperties();;
+    private MyProperties commonProperties ;
 
     /**
      * Constructor where fields from *.jelly will be passed
@@ -51,7 +51,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         this.nodesToAttack = nodesToAttack;
         this.nodList = nodList;
-        commonProperties = new MyProperties();
     }
 
     public ArrayList<NodeToAttack> getNodesToAttack() {
@@ -70,6 +69,8 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     @Override
     public boolean prebuild(Build build, BuildListener listener) {
+
+        commonProperties = new MyProperties();
 
         PrintStream logger = listener.getLogger();
 
