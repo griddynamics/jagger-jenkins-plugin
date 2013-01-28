@@ -63,7 +63,7 @@ public class JaggerEasyDeployPlugin extends Builder
     @DataBoundConstructor
     public JaggerEasyDeployPlugin(ArrayList<SuT> sutsList, ArrayList<Node> nodList, String jaggerTestSuitePath, DBOptions dbOptions
                                  // boolean doUseH2, String rdbDriver, String rdbClientUrl, String rdbPassword, String rdbUserName, String rdbDialect
-    ){
+    ) throws IOException {
 
         this.dbOptions = dbOptions;
         this.sutsList = sutsList;
@@ -472,24 +472,52 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      * rewriting fields on special class foe properties
+     * @throws java.io.IOException
      */
-    private void setUpCommonProperties() {
+    private void setUpCommonProperties() throws IOException {
 
         commonProperties = new MyProperties();
 
-        setUpRdbProperties();
+
 
         for(Node node : nodList) {
 
             if(node.getCoordinationServer() !=  null) {
                 setUpCoordinationServerPropeties(node);
             }
+            if(node.getMaster() != null) {
+                setUpMasterProperties(node);
+            }
         }
+
+        setUpRdbProperties();
+
 
         for(SuT node : sutsList) {
             setUpNodeToAttack(node);
         }
 
+    }
+
+    private void setUpMasterProperties(Node node) throws IOException {
+
+        try {
+            String key = "tcpPort" ;
+            if(dbOptions.isDoUseH2()) {
+                if(!node.getPropertiesPath().matches("\\s*")) {
+                    Properties prope = new Properties();
+                    prope.load(new FileInputStream(node.getPropertiesPath()));
+                    String temp = prope.getProperty(key);
+                    if(temp == null) {
+                        commonProperties.setProperty(key, "8043");
+                    } else {
+                        commonProperties.setProperty(key, temp);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new IOException("Exception in reading " + node.getPropertiesPath() + "\t");
+        }
     }
 
     /**
@@ -528,9 +556,12 @@ public class JaggerEasyDeployPlugin extends Builder
         if(dbOptions.isDoUseH2()){
 
             String address = "NO_MASTER_DETECTED";
-            int port = 8043;
-            //
 
+            String port = commonProperties.getProperty("tcpPort");
+            if(port == null) {
+                port = "8043";
+            }
+            commonProperties.setProperty("tcpPort","8043");
             for(Node node: nodList) {
                 if(node.getMaster() != null) {
                     address = node.getServerAddressActual();
@@ -554,15 +585,6 @@ public class JaggerEasyDeployPlugin extends Builder
             commonProperties.setProperty("chassis.storage.hibernate.dialect", dbOptions.getRdbDialect());
         }
 
-//        //if using H2 !!!
-//        commonProperties.setProperty("chassis.storage.rdb.client.driver", "org.h2.Driver");
-//        commonProperties.setProperty("chassis.storage.rdb.client.url","jdbc:h2:tcp://" +
-//                        node.getServerAddressActual() + ":" + node.getRdbServer().getRdbClientUrl() +"/jaggerdb/db");
-//        commonProperties.setProperty("chassis.storage.rdb.username","jagger");
-//        commonProperties.setProperty("chassis.storage.rdb.password","rocks");
-//        commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
-        //standard port 8043 ! can it be changed? or hard code for ever?
-        //if external bd ...
     }
 
 
@@ -575,7 +597,6 @@ public class JaggerEasyDeployPlugin extends Builder
     private void generatePropertiesFile(Node node, File folder) throws IOException {
 
         File filePath = new File(folder+"/"+node.getServerAddressActual()+".properties");
-  //      if(filePath.exists()){ filePath.delete();}
 
         MyProperties properties = new MyProperties();
 
@@ -590,9 +611,6 @@ public class JaggerEasyDeployPlugin extends Builder
         if(node.getCoordinationServer() != null){
             addCoordinationServerProperties(node, properties);
         }
-//        if(node.getRdbServer() != null){
-//            addRdbServerProperties(node, properties);
-//        }
         if(node.getReporter() != null){
             addReporterServerProperties(node,properties);
         }
@@ -629,8 +647,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         addDBProperties(properties);
 
-//        key = "test.service.endpoints";
-//        properties.setProperty(key, commonProperties.getProperty(key));
     }
 
 
