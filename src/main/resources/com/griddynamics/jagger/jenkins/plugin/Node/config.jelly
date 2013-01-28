@@ -56,12 +56,13 @@
              </table>
              </f:block>
 
+<!--
             <f:block>
                <table>
                    <f:optionalProperty field = "rdbServer" title = "RDB_SERVER" />
                </table>
             </f:block>
-
+-->
 
             <f:block>
                 <table>

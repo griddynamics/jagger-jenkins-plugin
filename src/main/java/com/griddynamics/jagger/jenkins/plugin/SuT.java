@@ -7,20 +7,13 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
 import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.common.IOUtils;
-import net.schmizz.sshj.connection.channel.direct.*;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.CheckedInputStream;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,7 +25,7 @@ import java.util.zip.CheckedInputStream;
 /**
  * To Make Object of Server that we want to test
  */
-public class NodeToAttack implements Describable<NodeToAttack> {
+public class SuT implements Describable<SuT> {
 
     private final String serverAddress;   //to view in Jenkins - could be $Parametr for example
 
@@ -50,8 +43,8 @@ public class NodeToAttack implements Describable<NodeToAttack> {
 
 
     @DataBoundConstructor
-    public NodeToAttack(String serverAddress , boolean installAgent, String userName, String sshKeyPath,
-                        boolean usePassword, String userPassword){
+    public SuT(String serverAddress, boolean installAgent, String userName, String sshKeyPath,
+               boolean usePassword, String userPassword){
 //
 //        if(serverAddress.matches("\\$\\{\\.+\\}")){
 //            this.serverAddress
@@ -104,14 +97,14 @@ public class NodeToAttack implements Describable<NodeToAttack> {
         return installAgent;
     }
 
-    public Descriptor<NodeToAttack> getDescriptor() {
+    public Descriptor<SuT> getDescriptor() {
 
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
     @Override
     public String toString() {
-        return "NodeToAttack{" +
+        return "SuT{" +
                 "serverAddress='" + serverAddressActual + '\'' +
                 ", installAgent=" + installAgent +
                 ", userName='" + userName + '\'' +
@@ -126,11 +119,11 @@ public class NodeToAttack implements Describable<NodeToAttack> {
     }
 
     @Extension
-    public static class DescriptorNTA extends Descriptor<NodeToAttack>{
+    public static class DescriptorNTA extends Descriptor<SuT>{
 
         @Override
         public String getDisplayName() {
-            return "NodeToAttack";
+            return "SuT";
         }
 
         /**

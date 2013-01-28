@@ -6,9 +6,7 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
 import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
-import org.jfree.util.Log;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -16,9 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.HashMap;
 
 /**
@@ -40,6 +35,8 @@ public class Node implements Describable<Node> {
 
     private String propertiesPath;
 
+    private String finalPropertiesPath;
+
     private final boolean usePassword;
 
     private final boolean setPropertiesByHand;
@@ -52,12 +49,12 @@ public class Node implements Describable<Node> {
                 boolean setPropertiesByHand,
 
                 Master master,
-                RdbServer rdbServer,
+         //       DBOptions rdbServer,
                 CoordinationServer coordinationServer,
                 Kernel kernel,
-                Reporter reporter,
-
-                String serverAddressName) {
+                Reporter reporter
+       //     ,                           String serverAddressName
+    ) {
 
         this.serverAddress = serverAddress;
         this.userName = userName;
@@ -70,7 +67,7 @@ public class Node implements Describable<Node> {
         hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
 
         if (setPropertiesByHand){
-            fillRoles(master, rdbServer , coordinationServer, kernel, reporter );
+            fillRoles(master, coordinationServer, kernel, reporter );
         }
     }
 
@@ -98,13 +95,21 @@ public class Node implements Describable<Node> {
         return (Master) hmRoles.get(RoleTypeName.MASTER);
     }
 
-    public RdbServer getRdbServer() {
-
-        return (RdbServer) hmRoles.get(RoleTypeName.RDB_SERVER);
-    }
+//    public DBOptions getRdbServer() {
+//
+//        return (DBOptions) hmRoles.get(RoleTypeName.RDB_SERVER);
+//    }
 
     public boolean isSetPropertiesByHand() {
         return setPropertiesByHand;
+    }
+
+    public String getFinalPropertiesPath() {
+        return finalPropertiesPath;
+    }
+
+    public void setFinalPropertiesPath(String finalPropertiesPath) {
+        this.finalPropertiesPath = finalPropertiesPath;
     }
 
     public String getPropertiesPath() {
@@ -133,10 +138,6 @@ public class Node implements Describable<Node> {
 
     public HashMap<RoleTypeName, Role> getHmRoles() {
         return hmRoles;
-    }
-
-    public void setPropertiesPath(String propertiesPath) {
-        this.propertiesPath = propertiesPath;
     }
 
     private void fillRoles(Role ... roles) {
