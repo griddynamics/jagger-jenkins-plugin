@@ -95,11 +95,6 @@ public class Node implements Describable<Node> {
         return (Master) hmRoles.get(RoleTypeName.MASTER);
     }
 
-//    public DBOptions getRdbServer() {
-//
-//        return (DBOptions) hmRoles.get(RoleTypeName.RDB_SERVER);
-//    }
-
     public boolean isSetPropertiesByHand() {
         return setPropertiesByHand;
     }
@@ -188,6 +183,7 @@ public class Node implements Describable<Node> {
             return FormValidation.ok();
         }
 
+
         /**
          * Checking properties path
          * @param setPropertiesByHand boolean from form
@@ -211,7 +207,9 @@ public class Node implements Describable<Node> {
             }
         }
 
+
         /**
+         * May be we don't need such verification
          * For testing Connection to remote machine(ssh, rdb connection ... )
          * @param  serverAddress         serverAddress
          * @param userName      userName

@@ -25,14 +25,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private final DBOptions dbOptions;
 
-//    private final boolean doUseH2;
-//    private final String rdbDriver;
-//    private final String rdbClientUrl;
-//    private final String rdbUserName;
-//    private final String rdbPassword;
-//    private final String rdbDialect;
-
-
     // where we will store properties for Jagger for each node
     private final String PROPERTIES_PATH = "/properties";
 
@@ -45,6 +37,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private String baseDir = "pwd";
 
+
     /**
      * Constructor where fields from *.jelly will be passed
      * @param sutsList
@@ -52,29 +45,15 @@ public class JaggerEasyDeployPlugin extends Builder
      * @param nodList
      *               List of nodes to do work
      * @param jaggerTestSuitePath test suite path
-//     * @param doUseH2    /
-//     * @param rdbDriver /
-//     * @param rdbClientUrl/   Data Base Configuration
-//     * @param rdbPassword  /
-//     * @param rdbUserName   /
-//     * @param rdbDialect     /
+     * @param dbOptions options for Data Base
      */
     @DataBoundConstructor
-    public JaggerEasyDeployPlugin(ArrayList<SuT> sutsList, ArrayList<Node> nodList, String jaggerTestSuitePath, DBOptions dbOptions
-                                 // boolean doUseH2, String rdbDriver, String rdbClientUrl, String rdbPassword, String rdbUserName, String rdbDialect
-    ){
+    public JaggerEasyDeployPlugin(ArrayList<SuT> sutsList, ArrayList<Node> nodList, String jaggerTestSuitePath, DBOptions dbOptions){
 
         this.dbOptions = dbOptions;
         this.sutsList = sutsList;
         this.nodList = nodList;
         this.jaggerTestSuitePath = jaggerTestSuitePath;
-
-//        this.doUseH2 = doUseH2;
-//        this.rdbDriver = rdbDriver;
-//        this.rdbClientUrl = rdbClientUrl;
-//        this.rdbPassword = rdbPassword;
-//        this.rdbUserName = rdbUserName;
-//        this.rdbDialect = rdbDialect;
 
         setUpCommonProperties();
     }
@@ -82,31 +61,6 @@ public class JaggerEasyDeployPlugin extends Builder
     public DBOptions getDbOptions() {
         return dbOptions;
     }
-
-
-//    public boolean isDoUseH2() {
-//        return doUseH2;
-//    }
-//
-//    public String getRdbDriver() {
-//        return rdbDriver;
-//    }
-//
-//    public String getRdbClientUrl() {
-//        return rdbClientUrl;
-//    }
-//
-//    public String getRdbUserName() {
-//        return rdbUserName;
-//    }
-//
-//    public String getRdbPassword() {
-//        return rdbPassword;
-//    }
-//
-//    public String getRdbDialect() {
-//        return rdbDialect;
-//    }
 
     public String getJaggerTestSuitePath() {
         return jaggerTestSuitePath;
@@ -153,7 +107,7 @@ public class JaggerEasyDeployPlugin extends Builder
             generateScriptToDeploy();
 
             logger.println("\n-------------Deployment-Script-------------------\n");
-            logger.println(deploymentScript.toString());
+            logger.println(getDeploymentScript().toString());
             logger.println("\n-------------------------------------------------\n\n");
 
         } catch (IOException e) {
@@ -291,7 +245,6 @@ public class JaggerEasyDeployPlugin extends Builder
                         script);
             }
         }
-
     }
 
 
@@ -343,7 +296,7 @@ public class JaggerEasyDeployPlugin extends Builder
             doOnVmSSH(userName, address, keyPath, "source /etc/profile; cd " + jaggerHome + "; ./start.sh " + coordinator.getFinalPropertiesPath(), script);  //==================================
             script.append(" > /dev/null\n\n");
         } else {
-            //throw new IllegalArgumentException("no coordinator");
+            throw new IllegalArgumentException("no coordinator");
         }
     }
 
@@ -550,16 +503,6 @@ public class JaggerEasyDeployPlugin extends Builder
             commonProperties.setProperty("chassis.storage.rdb.password", dbOptions.getRdbPassword());
             commonProperties.setProperty("chassis.storage.hibernate.dialect", dbOptions.getRdbDialect());
         }
-
-//        //if using H2 !!!
-//        commonProperties.setProperty("chassis.storage.rdb.client.driver", "org.h2.Driver");
-//        commonProperties.setProperty("chassis.storage.rdb.client.url","jdbc:h2:tcp://" +
-//                        node.getServerAddressActual() + ":" + node.getRdbServer().getRdbClientUrl() +"/jaggerdb/db");
-//        commonProperties.setProperty("chassis.storage.rdb.username","jagger");
-//        commonProperties.setProperty("chassis.storage.rdb.password","rocks");
-//        commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
-        //standard port 8043 ! can it be changed? or hard code for ever?
-        //if external bd ...
     }
 
 
@@ -572,7 +515,6 @@ public class JaggerEasyDeployPlugin extends Builder
     private void generatePropertiesFile(Node node, File folder) throws IOException {
 
         File filePath = new File(folder+"/"+node.getServerAddressActual()+".properties");
-  //      if(filePath.exists()){ filePath.delete();}
 
         MyProperties properties = new MyProperties();
 
@@ -587,9 +529,6 @@ public class JaggerEasyDeployPlugin extends Builder
         if(node.getCoordinationServer() != null){
             addCoordinationServerProperties(node, properties);
         }
-//        if(node.getRdbServer() != null){
-//            addRdbServerProperties(node, properties);
-//        }
         if(node.getReporter() != null){
             addReporterServerProperties(node,properties);
         }
@@ -645,23 +584,6 @@ public class JaggerEasyDeployPlugin extends Builder
             properties.addValueWithComma(key,node.getReporter().getRoleType().toString());
         }
     }
-
-
- /*   *//**
-     * Adding RDB Server Properties
-     * @param node  Node instance
-     * @param properties    property of specified Node
-     *//*
-    private void addRdbServerProperties(Node node, MyProperties properties) {
-
-//        String key = "chassis.roles";
-//        if(properties.get(key) == null){
-//            properties.setProperty(key, node.getRdbServer().getRoleType().toString());
-//        } else if (!properties.getProperty(key).contains(node.getRdbServer().getRoleType().toString())) {
-//            properties.addValueWithComma(key,node.getRdbServer().getRoleType().toString());
-//        }
-
-    }*/
 
 
     /**
@@ -742,7 +664,7 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-    // Start's processes on computer where jenkins run ProcStarter is not serializable
+    // Start's processes on computer where jenkins runs. ProcStarter is not serializable
     transient private Launcher.ProcStarter procStarter = null;
 
 
@@ -772,8 +694,10 @@ public class JaggerEasyDeployPlugin extends Builder
 
             logger.println("\n-----------------Deploying--------------------\n\n");
 
+         //   commented to check how properties and script file has been created.
          //   logger.println("exit code : " + procStarter.cmds(stringToCmds("./deploy-script.sh")).start().join());
 
+        //    show terminal output while executing script
         //    listener.getLogger().flush();
 
             logger.println("\n\n----------------------------------------------\n\n");
@@ -812,11 +736,10 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void createScriptFile(String file) throws IOException {
 
-      //  new File(System.getProperty("user.home") + "/deploy-script.sh").createNewFile();
         PrintWriter fw = null;
         try{
             fw = new PrintWriter(new FileOutputStream(file));
-            fw.write(deploymentScript.toString());  //<<-- deploymentScript.toString()
+            fw.write(getDeploymentScript().toString());
 
         } finally {
             if(fw != null){
@@ -835,19 +758,20 @@ public class JaggerEasyDeployPlugin extends Builder
      * @param keyPath   path of private key
      * @param filePathFrom  file path that we want to copy
      * @param filePathTo  path where we want to store file
+     * @param script StringBuilder that collecting script commands
      */
-    private void scpGetKey(String userName, String address, String keyPath, String filePathFrom, String filePathTo, StringBuilder scripr) {
+    private void scpGetKey(String userName, String address, String keyPath, String filePathFrom, String filePathTo, StringBuilder script) {
 
-        scripr.append("scp -i ");
-        scripr.append(keyPath);
-        scripr.append(" ");
-        scripr.append(userName);
-        scripr.append("@");
-        scripr.append(address);
-        scripr.append(":");
-        scripr.append(filePathFrom);
-        scripr.append(" ");
-        scripr.append(filePathTo).append("\n");
+        script.append("scp -i ");
+        script.append(keyPath);
+        script.append(" ");
+        script.append(userName);
+        script.append("@");
+        script.append(address);
+        script.append(":");
+        script.append(filePathFrom);
+        script.append(" ");
+        script.append(filePathTo).append("\n");
 
     }
 
@@ -859,7 +783,7 @@ public class JaggerEasyDeployPlugin extends Builder
      * @param keyPath   path of private key
      * @param filePathFrom  file path that we want to copy
      * @param filePathTo  path where we want to store file
-     * @param script String Builder for deployment script
+     * @param script StringBuilder for deployment script
      */
     private void scpSendKey(String userName, String address, String keyPath, String filePathFrom, String filePathTo, StringBuilder script) {
 
@@ -918,7 +842,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      * do commands daemon on remote machine via ssh using public key authorisation
-     *
      * @param userName user name
      * @param address address of machine
      * @param keyPath path to private key
@@ -944,6 +867,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      *  log information about all Nodes
+     *  helpful while debugging
      * @param logger listener.getLogger from perform method
      */
     private void logInfoAboutNodes(PrintStream logger) {
