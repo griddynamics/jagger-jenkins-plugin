@@ -45,10 +45,12 @@ public class JaggerEasyDeployPlugin extends Builder
      * @param nodList
      *               List of nodes to do work
      * @param jaggerTestSuitePath test suite path
-     * @param dbOptions options for Data Base
+     * @param dbOptions  properties for Data Base
+     * @throws java.io.IOException s
      */
     @DataBoundConstructor
-    public JaggerEasyDeployPlugin(ArrayList<SuT> sutsList, ArrayList<Node> nodList, String jaggerTestSuitePath, DBOptions dbOptions){
+    public JaggerEasyDeployPlugin(ArrayList<SuT> sutsList, ArrayList<Node> nodList, String jaggerTestSuitePath, DBOptions dbOptions
+    ) throws IOException {
 
         this.dbOptions = dbOptions;
         this.sutsList = sutsList;
@@ -86,6 +88,8 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     @Override
     public boolean prebuild(Build build, BuildListener listener) {
+
+        commonProperties = new MyProperties();
 
         PrintStream logger = listener.getLogger();
         //create folder to collect properties files
@@ -422,24 +426,62 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      * rewriting fields on special class foe properties
+     * @throws java.io.IOException  f
      */
-    private void setUpCommonProperties() {
+    private void setUpCommonProperties() throws IOException {
 
         commonProperties = new MyProperties();
 
-        setUpRdbProperties();
+        int minAgents = 0;
+        int minKernels = 0;
 
         for(Node node : nodList) {
 
+            if(node.getKernel() != null) {
+                minKernels ++;
+            }
             if(node.getCoordinationServer() !=  null) {
                 setUpCoordinationServerPropeties(node);
             }
+            if(node.getMaster() != null) {
+                setUpMasterProperties(node);
+            }
         }
 
+        setUpRdbProperties();
+
         for(SuT node : sutsList) {
+            if(node.isInstallAgent()) {
+                minAgents ++;
+            }
             setUpNodeToAttack(node);
         }
 
+        commonProperties.setProperty("chassis.conditions.min.agents.count", String.valueOf(minAgents));
+        commonProperties.setProperty("chassis.conditions.min.kernels.count",String.valueOf(minKernels));
+
+    }
+
+    private void setUpMasterProperties(Node node) throws IOException {
+
+        try {
+            if(dbOptions.isDoUseH2()) {
+                if(!node.getPropertiesPath().matches("\\s*")) {
+
+                    String key = "tcpPort" ;
+                    Properties prope = new Properties();
+                    prope.load(new FileInputStream(node.getPropertiesPath()));
+                    String temp = prope.getProperty(key);
+                    if(temp == null) {
+                        commonProperties.setProperty(key, "8043");
+                    } else {
+                        commonProperties.setProperty(key, temp);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new IOException("Exception in reading " + node.getPropertiesPath() + "\t");
+        }
     }
 
     /**
@@ -478,8 +520,12 @@ public class JaggerEasyDeployPlugin extends Builder
         if(dbOptions.isDoUseH2()){
 
             String address = "NO_MASTER_DETECTED";
-            int port = 8043;
-            //
+
+            String port = commonProperties.getProperty("tcpPort");
+            if(port == null) {
+                port = "8043";
+                commonProperties.setProperty("tcpPort",port);
+            }
 
             for(Node node: nodList) {
                 if(node.getMaster() != null) {
@@ -565,8 +611,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         addDBProperties(properties);
 
-//        key = "test.service.endpoints";
-//        properties.setProperty(key, commonProperties.getProperty(key));
     }
 
 
@@ -599,6 +643,11 @@ public class JaggerEasyDeployPlugin extends Builder
         } else if (!properties.getProperty(key).contains(node.getCoordinationServer().getRoleType().toString())) {
             properties.addValueWithComma(key,node.getCoordinationServer().getRoleType().toString());
         }
+
+        key = "chassis.conditions.min.kernels.count";
+        properties.setProperty(key,commonProperties.getProperty(key));
+        key = "chassis.conditions.min.agents.count";
+        properties.setProperty(key,commonProperties.getProperty(key));
     }
 
 
@@ -636,6 +685,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
         key = "test.service.endpoints";
         properties.setProperty(key, commonProperties.getProperty(key));
+
+        key = "tcpPort";
+        properties.setProperty(key,commonProperties.getProperty(key));
     }
 
 
@@ -758,7 +810,11 @@ public class JaggerEasyDeployPlugin extends Builder
      * @param keyPath   path of private key
      * @param filePathFrom  file path that we want to copy
      * @param filePathTo  path where we want to store file
+<<<<<<< HEAD
      * @param script StringBuilder that collecting script commands
+=======
+     * @param script  s
+>>>>>>> 8a0633949d00000889a205698e7044bd9afbff92
      */
     private void scpGetKey(String userName, String address, String keyPath, String filePathFrom, String filePathTo, StringBuilder script) {
 
@@ -834,10 +890,10 @@ public class JaggerEasyDeployPlugin extends Builder
      * @throws java.io.IOException /
      * @throws InterruptedException /
      */
-    private void doOnVmSSHPass(String userName, String address, String password, String commandString) throws IOException, InterruptedException {
-       //not yet implemented
-       // procStarter.cmds(stringToCmds("ssh " + userName + "@" + address + " " + commandString)).start().join();
-    }
+//    private void doOnVmSSHPass(String userName, String address, String password, String commandString) throws IOException, InterruptedException {
+//       //not yet implemented
+//       // procStarter.cmds(stringToCmds("ssh " + userName + "@" + address + " " + commandString)).start().join();
+//    }
 
 
     /**
