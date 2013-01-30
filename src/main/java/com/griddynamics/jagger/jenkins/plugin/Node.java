@@ -54,7 +54,7 @@ public class Node implements Describable<Node> {
                 CoordinationServer coordinationServer,
                 Kernel kernel,
                 Reporter reporter
-    ) throws IOException {
+    ) {
 
         this.serverAddress = serverAddress;
         this.userName = userName;
@@ -67,14 +67,19 @@ public class Node implements Describable<Node> {
         hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
 
 
-        //check this !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //check if roles pointed in properties file
         if(!propertiesPath.matches("\\s*")) {
 
-            Properties properties = new Properties();
-            properties.load(new FileInputStream(getPropertiesPath()));
-            fillRoles(properties);
+            try {
+                Properties properties = new Properties();
+                properties.load(new FileInputStream(getPropertiesPath()));
+                fillRoles(properties);
+            } catch (IOException e) {
+                System.err.println("Can't read " + getPropertiesPath() + " file, please check if it available");
+            }
+
         }
-        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         if (setPropertiesByHand){
             fillRoles(master, coordinationServer, kernel, reporter );
         }
@@ -92,7 +97,8 @@ public class Node implements Describable<Node> {
                 hmRoles.put(RoleTypeName.KERNEL,new Kernel());
             }
 
-            if(temp.contains(RoleTypeName.COORDINATION_SERVER.toString())) {
+            if(temp.contains("," + RoleTypeName.COORDINATION_SERVER.toString()) ||
+                     temp.contains("=" + RoleTypeName.COORDINATION_SERVER.toString())) {
                 String port = properties.getProperty("chassis.coordination.http.port");
                 if(port == null) {
                     port = "8089";
@@ -240,7 +246,7 @@ public class Node implements Describable<Node> {
                 if(propertiesPath.matches("\\s*")){
                     return FormValidation.error("Set Properties Path, or Set Properties By Hand");
                 }
-                    if(! new File("path").exists()){
+                    if(! new File(propertiesPath).exists()){
                         return FormValidation.error("File not exist");
                     }
                 return FormValidation.ok();

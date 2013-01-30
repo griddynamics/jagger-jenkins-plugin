@@ -14,7 +14,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class DBOptions implements Describable<DBOptions> {
 
-    private final boolean doUseH2;
+    public boolean useExternalDB = true;
     private final String rdbDriver;
     private final String rdbClientUrl;
     private final String rdbUserName;
@@ -24,9 +24,9 @@ public class DBOptions implements Describable<DBOptions> {
 
     @DataBoundConstructor
     public DBOptions(String rdbDriver, String rdbClientUrl,
-                     String rdbUserName, String rdbPassword, String rdbDialect, boolean doUseH2){
+                     String rdbUserName, String rdbPassword, String rdbDialect, boolean useExternalDB){
 
-        this.doUseH2 = doUseH2;
+        this.useExternalDB = useExternalDB;
         this.rdbDriver = rdbDriver;
         this.rdbClientUrl = rdbClientUrl;
         this.rdbUserName = rdbUserName;
@@ -34,8 +34,8 @@ public class DBOptions implements Describable<DBOptions> {
         this.rdbDialect = rdbDialect;
     }
 
-    public boolean isDoUseH2() {
-        return doUseH2;
+    public boolean isUseExternalDB() {
+        return useExternalDB;
     }
 
     public String getRdbDriver() {

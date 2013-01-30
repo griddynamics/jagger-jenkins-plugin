@@ -4,12 +4,12 @@
         <f:entry title = "Jagger Test Suite *.zip" field = "jaggerTestSuitePath">
              <f:textbox  />
         </f:entry>
+    </f:section>
 
+    <f:section title = "Data Base Options">
         <f:entry>
              <f:property field="dbOptions" />
         </f:entry>
-
-
     </f:section>
 
    <f:section title = "Systems Under Test">
