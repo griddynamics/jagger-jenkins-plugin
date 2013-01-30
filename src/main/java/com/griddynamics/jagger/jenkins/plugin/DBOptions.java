@@ -14,7 +14,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class DBOptions implements Describable<DBOptions> {
 
-    public boolean useExternalDB = true;
+    private final boolean useExternalDB;
     private final String rdbDriver;
     private final String rdbClientUrl;
     private final String rdbUserName;
