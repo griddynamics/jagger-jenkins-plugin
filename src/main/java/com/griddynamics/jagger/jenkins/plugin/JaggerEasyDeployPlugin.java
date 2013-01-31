@@ -63,7 +63,7 @@ public class JaggerEasyDeployPlugin extends Builder
     @DataBoundConstructor
     public JaggerEasyDeployPlugin(ArrayList<SuT> sutsList, ArrayList<Node> nodList, String jaggerTestSuitePath, DBOptions dbOptions
                                  // boolean doUseH2, String rdbDriver, String rdbClientUrl, String rdbPassword, String rdbUserName, String rdbDialect
-    ){
+    ) throws IOException {
 
         this.dbOptions = dbOptions;
         this.sutsList = sutsList;
@@ -295,9 +295,9 @@ public class JaggerEasyDeployPlugin extends Builder
             if(node.getCoordinationServer() != null) {
                 coordinator = node;
             } else {
-                script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh property_file\"\n");
-
-                doOnVmSSHDaemon(userName, address, keyPath, "cd " + jaggerHome + "; ./start.sh " + node.getFinalPropertiesPath(), script);
+                script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
+//!!!                                                        //for testing
+                doOnVmSSHDaemon(userName, address, keyPath, "source /etc/profile ; cd " + jaggerHome + "; ./start.sh " + node.getFinalPropertiesPath(), script);
                 script.append(" > /dev/null\n\n");
             }
         }
@@ -312,7 +312,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
                                                                                                                     //-Xmx1550m -Xms1550m
             doOnVmSSH(userName, address, keyPath,
-                    "cd " + jaggerHome + "; ./start.sh " + coordinator.getFinalPropertiesPath(), script);
+//!!!                 //for testing
+                    "source /etc/profile ;cd " + jaggerHome + "; ./start.sh " + coordinator.getFinalPropertiesPath(), script);
             script.append(" > /dev/null\n\n");
         } else {
             throw new IllegalArgumentException("no coordinator");
@@ -334,8 +335,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
                 script.append("\necho \"Starting Agent\"\n");
                 script.append("echo \"").append(node.getServerAddressActual()).append(" : cd ").append(jaggerHome).append("; ./start_agent.sh\"\n");
-
-                String command = "cd " + jaggerHome + "; ./start_agent.sh -Dchassis.coordination.http.url=" + commonProperties.get("chassis.coordination.http.url");
+//!!!                           //for testing
+                String command = "source /etc/profile  ;cd " + jaggerHome + "; ./start_agent.sh -Dchassis.coordination.http.url=" + commonProperties.get("chassis.coordination.http.url");
                 doOnVmSSHDaemon(node.getUserName(), node.getServerAddress(), node.getSshKeyPath(), command, script);
                 script.append("> /dev/null\n");
 
@@ -350,7 +351,7 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void killOldJagger(StringBuilder script) {
 
-        script.append("\necho \"Killing old jagger\"\n\n");
+        script.append("\necho \"KILLING old jagger\"\n\n");
         for(Node node:nodList){
 
             String jaggerHome = "/home/" + node.getUserName() + "/runned_jagger";
@@ -385,7 +386,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 "unzip " + jaggerHome + "/" + jaggerFileName + " -d " + jaggerHome, script);
         script.append(" > /dev/null");
 
-        script.append("\n\necho \"Killing previous processes ").append(userName).append("@").append(serverAddress).append("\"\n");
+        script.append("\n\necho \"KILLING previous processes ").append(userName).append("@").append(serverAddress).append("\"\n");
         doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + "/stop.sh", script);
         script.append("\n");
         doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + "/stop_agent.sh", script);
@@ -442,7 +443,7 @@ public class JaggerEasyDeployPlugin extends Builder
     /**
      * rewriting fields on special class foe properties
      */
-    private void setUpCommonProperties() {
+    private void setUpCommonProperties() throws IOException {
 
         commonProperties = new MyProperties();
 
@@ -460,6 +461,14 @@ public class JaggerEasyDeployPlugin extends Builder
             if(node.getKernel() != null) {
                 minKernels ++;
             }
+
+            if(node.getMaster() != null) {
+                setUpMasterProperties(node);
+            }
+
+            if(node.getReporter() != null) {
+                setUpReporter(node);
+            }
         }
 
         for(SuT node : sutsList) {
@@ -476,8 +485,38 @@ public class JaggerEasyDeployPlugin extends Builder
 
     }
 
+
+    //Set Up Reporter properties //file name; format - html, pdf;
+    private void setUpReporter(Node node) {
+        //To change body of created methods use File | Settings | File Templates.
+    }
+
+
+    //set Up Master Properties
+    private void setUpMasterProperties(Node node) throws IOException {
+
+        try {
+            if(!dbOptions.isUseExternalDB()) {
+                if(!node.getPropertiesPath().matches("\\s*")) {
+
+                    String key = "tcpPort" ;
+                    Properties prope = new Properties();
+                    prope.load(new FileInputStream(node.getPropertiesPath()));
+                    String temp = prope.getProperty(key);
+                    if(temp == null) {
+                        commonProperties.setProperty(key, "8043");
+                    } else {
+                        commonProperties.setProperty(key, temp);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new IOException("Exception in reading " + node.getPropertiesPath() + "\t");
+        }
+    }
+
     /**
-     * Setting up Common Properties for Nodes
+     * Setting up Common Properties for SUTes
      * @param node node to attack
      */
     private void setUpNodeToAttack(SuT node) {
@@ -512,8 +551,13 @@ public class JaggerEasyDeployPlugin extends Builder
         if(!dbOptions.isUseExternalDB()){
 
             String address = "NO_MASTER_DETECTED";
-            int port = 8043;
-            //
+
+            String port;// = 8043;
+            port = commonProperties.getProperty("tcpPort");
+
+            if(port == null) {
+                port = "8043";
+            }                            //
 
             for(Node node: nodList) {
                 if(node.getMaster() != null) {
@@ -641,7 +685,10 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
         key = "chassis.conditions.min.agents.count";
-        properties.setProperty(key, commonProperties.getProperty(key));
+        if(Integer.parseInt(commonProperties.getProperty(key)) > 0){
+            properties.setProperty("chassis.conditions.monitoring.enable","true");
+            properties.setProperty(key, commonProperties.getProperty(key));
+        }
 
         key = "chassis.conditions.min.kernels.count";
         properties.setProperty(key, commonProperties.getProperty(key));
@@ -667,9 +714,20 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
         if (!dbOptions.isUseExternalDB()) {
-            if(properties.getProperty(key) != null && !properties.getProperty(key).contains("RDB_SERVER")){
+
+            if(!properties.getProperty(key).contains("RDB_SERVER")){
                 properties.addValueWithComma(key,"RDB_SERVER");
             }
+
+            String port;
+            port = commonProperties.getProperty("tcpPort");
+
+            if(port == null){
+                properties.setProperty("tcpProperty","8043");
+            } else {
+                properties.setProperty("tcpProperty",port);
+            }
+
         }
 
         key = "chassis.coordinator.zookeeper.endpoint";
@@ -740,13 +798,15 @@ public class JaggerEasyDeployPlugin extends Builder
 
             logger.println("\n-----------------Deploying--------------------\n\n");
 
-            logger.println("exit code : " + procStarter.cmds(stringToCmds("./deploy-script.sh")).start().join());
-
-            listener.getLogger().flush();
+//            int exitCode = procStarter.cmds(stringToCmds("./deploy-script.sh")).start().join();
+//
+//            logger.println("exit code : " + exitCode);
+//
+//            listener.getLogger().flush();
 
             logger.println("\n\n----------------------------------------------\n\n");
 
-            return true;
+            return true;//exitCode == 0;
 
         } catch (IOException e) {
 

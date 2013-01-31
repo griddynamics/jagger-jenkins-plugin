@@ -39,10 +39,11 @@
 
                                       </table>
                                 </f:block>
-
+<!--
                                 <f:validateButton
                                    title="${%Test SSH Connection}" progress="${%Testing...}"
                                    method="testSSHConnection" with="serverAddress,userName,sshKeyPath,usePassword,userPassword" />
+-->
 
                              </f:block>
                         </f:optionalBlock>

@@ -1,6 +1,25 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
       <f:entry>
 
+        <f:entry name="format" title="Format Of Report" field="format">
+            <select name="format">
+                <j:choose>
+                    <j:when test="${instance.format == 'HTML'}">
+                        <option value="PDF">PDF</option>
+                        <option selected = "selected" value="HTML">HTML</option>
+                    </j:when>
+                    <j:otherwise>
+                        <option selected = "selected" value="PDF">PDF</option>
+                        <option value="HTML">HTML</option>
+                    </j:otherwise>
+                </j:choose>
+            </select>
+        </f:entry>
+
+        <f:entry title="File Name" field="fileName">
+            <f:textbox default="report.pdf" />
+        </f:entry>
+
       </f:entry>
 
 </j:jelly>
