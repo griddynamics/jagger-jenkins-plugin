@@ -3,9 +3,11 @@
 <f:block>
      <table>
 
+<!--
       <f:entry>
             <f:textbox field = "port" default = "8090" title = "Port" />
       </f:entry>
+-->
 
    </table>
 </f:block>

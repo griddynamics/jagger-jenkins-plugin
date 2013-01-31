@@ -31,11 +31,17 @@ public class Node implements Describable<Node> {
 
     private final String userName;
 
+    private String userNameActual;
+
     private final String userPassword;
 
     private final String sshKeyPath ;
 
-    private String propertiesPath;
+    private String sshKeyPathActual;
+
+    private final String propertiesPath;
+
+    private String propertiesPathActual;
 
     private String finalPropertiesPath;
 
@@ -67,18 +73,18 @@ public class Node implements Describable<Node> {
         hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
 
 
-        //check if roles pointed in properties file
-        if(!propertiesPath.matches("\\s*")) {
-
-            try {
-                Properties properties = new Properties();
-                properties.load(new FileInputStream(getPropertiesPath()));
-                fillRoles(properties);
-            } catch (IOException e) {
-                System.err.println("Can't read " + getPropertiesPath() + " file, please check if it available");
-            }
-
-        }
+//        //check if roles pointed in properties file
+//        if(!propertiesPath.matches("\\s*")) {
+//
+//            try {
+//                Properties properties = new Properties();
+//                properties.load(new FileInputStream(getPropertiesPath()));
+//                fillRoles(properties);
+//            } catch (IOException e) {
+//                System.err.println("Can't read " + getPropertiesPath() + " file, please check if it available");
+//            }
+//
+//        }
 
         if (setPropertiesByHand){
             fillRoles(master, coordinationServer, kernel, reporter );
@@ -88,33 +94,33 @@ public class Node implements Describable<Node> {
 
     }
 
-    private void fillRoles(Properties properties) {
-
-        String temp;
-        if((temp = properties.getProperty("chassis.roles")) != null) {
-
-            if(temp.contains(RoleTypeName.KERNEL.toString())) {
-                hmRoles.put(RoleTypeName.KERNEL,new Kernel());
-            }
-
-            if(temp.contains("," + RoleTypeName.COORDINATION_SERVER.toString()) ||
-                     temp.contains("=" + RoleTypeName.COORDINATION_SERVER.toString())) {
-                String port = properties.getProperty("chassis.coordination.http.port");
-                if(port == null) {
-                    port = "8089";
-                }
-                hmRoles.put(RoleTypeName.COORDINATION_SERVER,new CoordinationServer(port));
-            }
-
-            if(temp.contains(RoleTypeName.MASTER.toString())) {
-                hmRoles.put(RoleTypeName.MASTER,new Master());
-            }
-
-            if(temp.contains(RoleTypeName.REPORTER.toString())) {
-                hmRoles.put(RoleTypeName.REPORTER,new Reporter());
-            }
-        }
-    }
+//    private void fillRoles(Properties properties) {
+//
+//        String temp;
+//        if((temp = properties.getProperty("chassis.roles")) != null) {
+//
+//            if(temp.contains(RoleTypeName.KERNEL.toString())) {
+//                hmRoles.put(RoleTypeName.KERNEL,new Kernel());
+//            }
+//
+//            if(temp.contains("," + RoleTypeName.COORDINATION_SERVER.toString()) ||
+//                     temp.contains("=" + RoleTypeName.COORDINATION_SERVER.toString())) {
+//                String port = properties.getProperty("chassis.coordination.http.port");
+//                if(port == null) {
+//                    port = "8089";
+//                }
+//                hmRoles.put(RoleTypeName.COORDINATION_SERVER,new CoordinationServer(port));
+//            }
+//
+//            if(temp.contains(RoleTypeName.MASTER.toString())) {
+//                hmRoles.put(RoleTypeName.MASTER,new Master());
+//            }
+//
+//            if(temp.contains(RoleTypeName.REPORTER.toString())) {
+//                hmRoles.put(RoleTypeName.REPORTER,new Reporter());
+//            }
+//        }
+//    }
 
 
     public CoordinationServer getCoordinationServer() {
