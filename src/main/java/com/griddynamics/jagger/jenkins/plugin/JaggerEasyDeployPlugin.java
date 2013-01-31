@@ -442,6 +442,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      * rewriting fields on special class foe properties
+     * @throws java.io.IOException s
      */
     private void setUpCommonProperties() throws IOException {
 
@@ -466,6 +467,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 setUpMasterProperties(node);
             }
 
+
             if(node.getReporter() != null) {
                 setUpReporter(node);
             }
@@ -486,9 +488,15 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-    //Set Up Reporter properties //file name; format - html, pdf;
+    /**
+     * Set Up Reporter properties : file name, format - html, pdf;
+     * if Reporter wont be set, or set via properties file, default values ​​will be used
+     * @param node node that plays Reporter Role
+     */
     private void setUpReporter(Node node) {
-        //To change body of created methods use File | Settings | File Templates.
+
+        commonProperties.setProperty("chassis.master.reporting.report.format", node.getReporter().getFormat());
+        commonProperties.setProperty("chassis.master.reporting.report.file.name", node.getReporter().getFileName());
     }
 
 
@@ -666,6 +674,16 @@ public class JaggerEasyDeployPlugin extends Builder
         } else if (!properties.getProperty(key).contains(node.getReporter().getRoleType().toString())) {
             properties.addValueWithComma(key,node.getReporter().getRoleType().toString());
         }
+
+        key = "chassis.master.reporting.report.format";
+        //commonProperties can not contain one of properties *file.name , *format
+        if(commonProperties.containsKey(key)) {
+
+            properties.setProperty(key, commonProperties.getProperty(key));
+            key = "chassis.master.reporting.report.file.name";
+            properties.setProperty(key, commonProperties.getProperty(key));
+        }
+
     }
 
 
@@ -796,7 +814,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
             createScriptFile(pathToDeploymentScript);
 
-            logger.println("\n-----------------Deploying--------------------\n\n");
+//            logger.println("\n-----------------Deploying--------------------\n\n");
 
 //            int exitCode = procStarter.cmds(stringToCmds("./deploy-script.sh")).start().join();
 //
@@ -804,7 +822,7 @@ public class JaggerEasyDeployPlugin extends Builder
 //
 //            listener.getLogger().flush();
 
-            logger.println("\n\n----------------------------------------------\n\n");
+//            logger.println("\n\n----------------------------------------------\n\n");
 
             return true;//exitCode == 0;
 
