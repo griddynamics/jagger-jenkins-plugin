@@ -31,8 +31,6 @@ public class SuT implements Describable<SuT> {
 
     private String serverAddressActual;  //actual address
 
-    private final boolean installAgent;
-
     private final String userName;
 
     private final String userPassword;
@@ -43,7 +41,7 @@ public class SuT implements Describable<SuT> {
 
 
     @DataBoundConstructor
-    public SuT(String serverAddress, boolean installAgent, String userName, String sshKeyPath,
+    public SuT(String serverAddress, String userName, String sshKeyPath,
                boolean usePassword, String userPassword){
 //
 //        if(serverAddress.matches("\\$\\{\\.+\\}")){
@@ -51,7 +49,6 @@ public class SuT implements Describable<SuT> {
 //        }
         this.serverAddressActual = serverAddress;
         this.serverAddress = serverAddress;
-        this.installAgent = installAgent;
         this.userName = userName;
         this.sshKeyPath = sshKeyPath;
         this.usePassword = usePassword;
@@ -93,10 +90,6 @@ public class SuT implements Describable<SuT> {
         return serverAddress;
     }
 
-    public boolean isInstallAgent() {
-        return installAgent;
-    }
-
     public Descriptor<SuT> getDescriptor() {
 
         return Hudson.getInstance().getDescriptor(getClass());
@@ -106,7 +99,6 @@ public class SuT implements Describable<SuT> {
     public String toString() {
         return "SuT{" +
                 "serverAddress='" + serverAddressActual + '\'' +
-                ", installAgent=" + installAgent +
                 ", userName='" + userName + '\'' +
                 ", userPassword='" + userPassword + '\'' +
                 ", sshKeyPath='" + sshKeyPath + '\'' +

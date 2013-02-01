@@ -20,9 +20,9 @@
         </f:entry>
     </f:section>
 
-   <f:section title = "Systems Under Test">
+   <f:section title = "Agent Installation">
          <f:entry >
-                 <f:repeatableProperty field = "sutsList" minimum = "1" />
+                 <f:repeatableProperty field = "sutsList" minimum = "0" />
           </f:entry>
     </f:section>
 

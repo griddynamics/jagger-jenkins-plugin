@@ -6,49 +6,36 @@
             <table>
 
 
+                <f:entry title = "Address" >
+                    <f:textbox field = "serverAddress" />
+                </f:entry>
+
+                <f:entry title="User Name" field="userName">
+                    <f:textbox />
+                </f:entry>
+
+                <f:entry title="Ssh Key Path">
+                  <f:textbox field="sshKeyPath" />
+                </f:entry>
+
                 <f:block>
-                    <table>
-                        <f:entry title = "Address" >
-                            <f:textbox field = "serverAddress" />
-                        </f:entry>
-                    </table>
+                      <table>
+
+                        <f:optionalBlock field = "usePassword" checked="${instance.usePassword}" title="Use Password" inline="true">
+                          <f:entry title = "Password">
+                            <f:password field = "userPassword"/>
+                          </f:entry>
+                        </f:optionalBlock>
+
+                      </table>
                 </f:block>
-
-
-                  <f:block>
-                   <table>
-                        <f:optionalBlock field = "installAgent" checked = "${instance.installAgent}" title = "Install Agent" inline = "true" >
-                            <f:block>
-
-                                <f:entry title="User Name" field="userName">
-                                    <f:textbox />
-                                </f:entry>
-
-                                <f:entry title="Ssh Key Path">
-                                  <f:textbox field="sshKeyPath" />
-                                </f:entry>
-
-                                <f:block>
-                                      <table>
-
-                                        <f:optionalBlock field = "usePassword" checked="${instance.usePassword}" title="Use Password" inline="true">
-                                          <f:entry title = "Password">
-                                            <f:password field = "userPassword"/>
-                                          </f:entry>
-                                        </f:optionalBlock>
-
-                                      </table>
-                                </f:block>
 <!--
                                 <f:validateButton
                                    title="${%Test SSH Connection}" progress="${%Testing...}"
                                    method="testSSHConnection" with="serverAddress,userName,sshKeyPath,usePassword,userPassword" />
 -->
 
-                             </f:block>
-                        </f:optionalBlock>
-                    </table>
-                  </f:block>
+
 
             </table>
         </f:block>

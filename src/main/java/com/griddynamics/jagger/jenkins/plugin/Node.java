@@ -250,7 +250,7 @@ public class Node implements Describable<Node> {
             } else {
 
                 if(propertiesPath.matches("\\s*")){
-                    return FormValidation.error("Set Properties Path, or Set Properties By Hand");
+                    return FormValidation.warning("Set Properties Path, or Set Properties By Hand");
                 }
                     if(! new File(propertiesPath).exists()){
                         return FormValidation.error("File not exist");
