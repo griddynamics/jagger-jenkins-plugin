@@ -21,6 +21,12 @@ public class DBOptions implements Describable<DBOptions> {
     private final String rdbPassword;
     private final String rdbDialect;
 
+    private String rdbDriverActual;
+    private String rdbClientUrlActual;
+    private String rdbUserNameActual;
+    private String rdbPasswordActual;
+    private String rdbDialectActual;
+
 
     @DataBoundConstructor
     public DBOptions(String rdbDriver, String rdbClientUrl,

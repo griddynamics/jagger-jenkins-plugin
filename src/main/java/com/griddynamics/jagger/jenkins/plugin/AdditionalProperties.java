@@ -15,6 +15,7 @@ public class AdditionalProperties implements Describable<AdditionalProperties>{
 
     private final boolean declared;
     private final String textFromArea;
+    private String textFromAreaActual;
 
     @DataBoundConstructor
     public AdditionalProperties(boolean declared, String textFromArea) {

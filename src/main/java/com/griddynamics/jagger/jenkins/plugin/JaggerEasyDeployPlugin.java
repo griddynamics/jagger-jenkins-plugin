@@ -100,7 +100,14 @@ public class JaggerEasyDeployPlugin extends Builder
 
         PrintStream logger = listener.getLogger();
 
+
+
         try {
+
+            //checkUsesOfEnvironmentProperties(build.getEnvVars());
+            //where will be checked all Nodes, SUTs, DB options, additional envProperties, Jagger suit. !!!
+          //  checkAddressesOnBuildVars(build.getEnvVars());//build.getEnvVars() this works, but deprecated
+
             setUpCommonProperties();
          } catch (IOException e) {
             logger.println(e);
@@ -119,7 +126,7 @@ public class JaggerEasyDeployPlugin extends Builder
         try {
 
 
-            checkAddressesOnBuildVars(build.getEnvVars());//build.getEnvVars() this works, but deprecated
+
             //delete previous build properties
             FileUtils.deleteDirectory(folder);
             //make dirs if they not exists
@@ -188,12 +195,12 @@ public class JaggerEasyDeployPlugin extends Builder
 
         if(commonProperties.containsKey(key)) {
 
-            script.append("zip -9 ").append(baseDir).append("/").append(commonProperties.getProperty(key)).append(" ");
-            script.append(baseDir).append("/report.pdf ").append(baseDir).append("/result.xml\n");
+            script.append("zip -9 ").append(baseDir).append("/report.zip ").append(baseDir);
+            script.append("/").append(commonProperties.getProperty(key)).append(" ").append(baseDir).append("/result.xml\n");
         } else {
 
-            script.append("zip -9 ").append(baseDir).append("/report.zip ");
-            script.append(baseDir).append("/report.pdf ").append(baseDir).append("/result.xml\n");
+            script.append("zip -9 ").append(baseDir).append("/report.zip ").append(baseDir);
+            script.append("/report.pdf ").append(baseDir).append("/result.xml\n");
         }
 
         deploymentScript = script;

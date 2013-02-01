@@ -33,9 +33,13 @@ public class SuT implements Describable<SuT> {
 
     private final String userName;
 
+    private String userNameActual;
+
     private final String userPassword;
 
     private final String sshKeyPath ;
+
+    private String sshKeyPathActual;
 
     private final boolean usePassword;
 

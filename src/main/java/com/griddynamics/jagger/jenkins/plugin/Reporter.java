@@ -24,6 +24,8 @@ public class Reporter implements Role, Describable<Reporter> {
     private final String format;
     private final String fileName;
 
+    private String fileNameActual;
+
     @DataBoundConstructor
     public Reporter(String format, String fileName){
 
