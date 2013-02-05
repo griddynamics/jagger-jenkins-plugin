@@ -11,7 +11,6 @@ import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.omg.CORBA.StringValueHelper;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
