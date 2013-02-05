@@ -2,7 +2,7 @@
   <f:entry title="Path" field="path">
     <f:textbox />
   </f:entry>
-  <f:entry title="Ignore Errors" field="ignoreErrors">
+  <f:entry title="Ignore plugin errors" field="ignoreErrors">
     <f:checkbox default="checked"/>
   </f:entry>
 </j:jelly>

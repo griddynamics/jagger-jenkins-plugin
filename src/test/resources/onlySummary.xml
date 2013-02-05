@@ -3,11 +3,6 @@
     <summary>
         <executedTasks>2</executedTasks>
         <failedTasks>0</failedTasks>
-        <sessioStatus>FATAL</sessionStatus>
+        <sessionStatus>OK</sessionStatus>
     </summary>
-    <comparison>
-        <decision>OK</decision>
-        <baseline>67</baseline>
-        <current>67</current>
-    </comparison>
 </jagger>
