@@ -40,7 +40,8 @@ public class JaggerComparisonPlugin extends Builder {
         listener.getLogger().println("Jagger plugin started with file path: " + getPath());
         SessionDecision decision;
         try{
-            decision=SessionDecision.create(getPath(), listener.getLogger());
+            String filePath=build.getWorkspace().absolutize()+"/"+getPath();
+            decision=SessionDecision.create(filePath, listener.getLogger());
         } catch (Exception e){
             listener.getLogger().println("Plugin exception: "+e.toString());
             if (getIgnoreErrors()){
