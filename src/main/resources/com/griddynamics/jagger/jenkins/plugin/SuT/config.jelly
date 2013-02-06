@@ -16,6 +16,7 @@
                   <f:textbox field="sshKeyPath" />
                 </f:entry>
 
+<!--
                 <f:block>
                       <table>
 
@@ -27,7 +28,7 @@
 
                       </table>
                 </f:block>
-<!--
+
                                 <f:validateButton
                                    title="${%Test SSH Connection}" progress="${%Testing...}"
                                    method="testSSHConnection" with="serverAddress,userName,sshKeyPath,usePassword,userPassword" />
