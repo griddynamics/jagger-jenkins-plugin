@@ -2,10 +2,7 @@ package com.griddynamics.jagger.jenkins.plugin;
 
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
@@ -13,6 +10,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
+import java.io.File;
 import java.io.IOException;
 
 
@@ -36,14 +34,18 @@ public class JaggerComparisonPlugin extends Builder {
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-        listener.getLogger().println("Jagger plugin started with file path: " + getPath());
+    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
         SessionDecision decision;
         try{
-            String filePath=build.getWorkspace().absolutize()+"/"+getPath();
-            decision=SessionDecision.create(filePath, listener.getLogger());
+            String filePath = build.getEnvironment(listener).expand(getPath());
+            File  file=new File(filePath);
+            if(file.isAbsolute()){
+                decision=SessionDecision.create(file);
+            } else {
+                decision=SessionDecision.create(new File(String.valueOf(build.getWorkspace()),filePath));
+            }
         } catch (Exception e){
-            listener.getLogger().println("Plugin exception: "+e.toString());
+            listener.getLogger().println("Plugin exception: " + e.toString());
             if (getIgnoreErrors()){
                 listener.getLogger().println("Ignoring error");
                 return true;

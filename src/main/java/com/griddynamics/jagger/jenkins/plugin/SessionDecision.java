@@ -7,9 +7,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.*;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,9 +25,6 @@ public class SessionDecision {
     private Decision comparisonDecision;
     private Decision sessionDecision;
 
-    private SessionDecision(){
-    }
-
     /**
      * Reading decisions from XML file
      * @param path - path to xml file
@@ -38,33 +33,18 @@ public class SessionDecision {
      * @throws IOException
      * @throws SAXException
      */
-    public static SessionDecision create(String path) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
-        return create(path, null);
-    }
-
-    /**
-     * Reading decisions from XML file
-     * @param path - path to xml file
-     * @param logger - stream for logging
-     * @return SessionDecision, which contains decisions from xml
-     * @throws ParserConfigurationException
-     * @throws IOException
-     * @throws SAXException
-     */
-    public static SessionDecision create(String path, PrintStream logger) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+    public static SessionDecision create (File path) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         SessionDecision decision=new SessionDecision();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(true);
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(new FileInputStream(path));
-        try{
-            decision.setComparisonDecision(readDecision(doc, XPATH_COMPARISON_DECISION));
-        } catch (Exception e){
-            if(logger!=null){
-                logger.println("Exception while reading comparison decision: "+e);
-            }
+        decision.setComparisonDecision(readDecision(doc, XPATH_COMPARISON_DECISION));
+        Decision sessionDecision=readDecision(doc, XPATH_SESSION_DECISION);
+        if(sessionDecision==null){
+            throw new IllegalArgumentException("Session decision is not actually exists in file: " + path);
         }
-        decision.setSessionDecision(readDecision(doc, XPATH_SESSION_DECISION));
+        decision.setSessionDecision(sessionDecision);
         return decision;
     }
 
@@ -80,6 +60,9 @@ public class SessionDecision {
         XPath xpath = xPathFactory.newXPath();
         XPathExpression expr = xpath.compile(xpathString);
         String decisionString=expr.evaluate(doc, XPathConstants.STRING).toString();
+        if(decisionString.isEmpty()){
+            return null;
+        }
         return Decision.valueOf(decisionString);
     }
 
