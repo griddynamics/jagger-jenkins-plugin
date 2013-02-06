@@ -2,8 +2,6 @@
 
   <f:section title="Node">
 
-        <f:block>
-            <table>
 
 
                 <f:entry title = "Address" >
@@ -37,8 +35,6 @@
 
 
 
-            </table>
-        </f:block>
 
   </f:section>
 

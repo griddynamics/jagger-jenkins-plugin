@@ -21,31 +21,39 @@ import java.util.regex.Pattern;
  */
 public class Reporter implements Role, Describable<Reporter> {
 
-    private final String format;
-    private final String fileName;
+//    private final String format;
+//    private final String fileName;
 
-    private String fileNameActual;
+//    private String fileNameActual;
 
     @DataBoundConstructor
     public Reporter(String format, String fileName){
 
-        this.format = format;
-        this.fileName = fileName;
+//        this.format = format;
+//        this.fileName = fileName;
     }
 
     public Reporter(){
-        this.fileName = "report.pdf";
-        this.format = "PDF";
+//        this.fileName = "report.pdf";
+//        this.format = "PDF";
     }
 
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public String getFormat() {
-        return format;
-    }
+//
+//    public String getFileNameActual() {
+//        return fileNameActual;
+//    }
+//
+//    public void setFileNameActual(String fileNameActual) {
+//        this.fileNameActual = fileNameActual;
+//    }
+//
+//    public String getFileName() {
+//        return fileName;
+//    }
+//
+//    public String getFormat() {
+//        return format;
+//    }
 
     @Override
     public String toString() {

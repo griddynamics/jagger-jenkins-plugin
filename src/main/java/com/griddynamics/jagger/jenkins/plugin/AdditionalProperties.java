@@ -22,6 +22,7 @@ public class AdditionalProperties implements Describable<AdditionalProperties>{
 
         this.declared = declared;
         this.textFromArea = textFromArea;
+        this.textFromAreaActual = textFromArea;
     }
 
     public boolean isDeclared() {
@@ -34,6 +35,14 @@ public class AdditionalProperties implements Describable<AdditionalProperties>{
 
     public Descriptor<AdditionalProperties> getDescriptor() {
         return Hudson.getInstance().getDescriptor(getClass());
+    }
+
+    public String getTextFromAreaActual() {
+        return textFromAreaActual;
+    }
+
+    public void setTextFromAreaActual(String textFromAreaActual) {
+        this.textFromAreaActual = textFromAreaActual;
     }
 
     @Extension

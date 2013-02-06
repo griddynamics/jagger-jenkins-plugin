@@ -23,7 +23,7 @@ import java.util.Properties;
  * User: amikryukov
  * Date: 12/14/12
  */
-public class Node implements Describable<Node> {
+public class Node implements Describable<Node>, SshNode {
 
     private final String serverAddress;
 
@@ -53,9 +53,10 @@ public class Node implements Describable<Node> {
 
     @DataBoundConstructor
     public Node(String serverAddress, String userName,
-                String sshKeyPath, boolean usePassword, String userPassword, String propertiesPath,
-                boolean setPropertiesByHand,
+                String sshKeyPath, String propertiesPath
 
+             ,  boolean usePassword, String userPassword
+            ,   boolean setPropertiesByHand,
                 Master master,
                 CoordinationServer coordinationServer,
                 Kernel kernel,
@@ -63,64 +64,23 @@ public class Node implements Describable<Node> {
     ) {
 
         this.serverAddress = serverAddress;
-        this.userName = userName;
-        this.userPassword = userPassword;
-        this.sshKeyPath = sshKeyPath;
-        this.usePassword = usePassword;
-        this.propertiesPath = propertiesPath;
-        this.setPropertiesByHand = setPropertiesByHand;
         this.serverAddressActual = serverAddress;
+        this.userName = userName;
+        this.userNameActual = userName;
+        this.sshKeyPath = sshKeyPath;
+        this.sshKeyPathActual = sshKeyPath;
+        this.usePassword = usePassword;
+        this.userPassword = userPassword;
+        this.propertiesPath = propertiesPath;
+        this.propertiesPathActual = propertiesPath;
+        this.setPropertiesByHand = setPropertiesByHand;
+
         hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
-
-
-//        //check if roles pointed in properties file
-//        if(!propertiesPath.matches("\\s*")) {
-//
-//            try {
-//                Properties properties = new Properties();
-//                properties.load(new FileInputStream(getPropertiesPath()));
-//                fillRoles(properties);
-//            } catch (IOException e) {
-//                System.err.println("Can't read " + getPropertiesPath() + " file, please check if it available");
-//            }
-//
-//        }
 
         if (setPropertiesByHand){
             fillRoles(master, coordinationServer, kernel, reporter );
         }
-
-
-
     }
-
-//    private void fillRoles(Properties properties) {
-//
-//        String temp;
-//        if((temp = properties.getProperty("chassis.roles")) != null) {
-//
-//            if(temp.contains(RoleTypeName.KERNEL.toString())) {
-//                hmRoles.put(RoleTypeName.KERNEL,new Kernel());
-//            }
-//
-//            if(temp.contains("," + RoleTypeName.COORDINATION_SERVER.toString()) ||
-//                     temp.contains("=" + RoleTypeName.COORDINATION_SERVER.toString())) {
-//                String port = properties.getProperty("chassis.coordination.http.port");
-//                if(port == null) {
-//                    port = "8089";
-//                }
-//                hmRoles.put(RoleTypeName.COORDINATION_SERVER,new CoordinationServer(port));
-//            }
-//
-//            if(temp.contains(RoleTypeName.MASTER.toString())) {
-//                hmRoles.put(RoleTypeName.MASTER,new Master());
-//            }
-//
-//            if(temp.contains(RoleTypeName.REPORTER.toString())) {
-//                hmRoles.put(RoleTypeName.REPORTER,new Reporter());
-//            }
-//        }
-//    }
 
 
     public CoordinationServer getCoordinationServer() {
@@ -145,6 +105,30 @@ public class Node implements Describable<Node> {
     public Master getMaster() {
 
         return (Master) hmRoles.get(RoleTypeName.MASTER);
+    }
+
+    public String getUserNameActual() {
+        return userNameActual;
+    }
+
+    public void setUserNameActual(String userNameActual) {
+        this.userNameActual = userNameActual;
+    }
+
+    public String getSshKeyPathActual() {
+        return sshKeyPathActual;
+    }
+
+    public void setSshKeyPathActual(String sshKeyPathActual) {
+        this.sshKeyPathActual = sshKeyPathActual;
+    }
+
+    public String getPropertiesPathActual() {
+        return propertiesPathActual;
+    }
+
+    public void setPropertiesPathActual(String propertiesPathActual) {
+        this.propertiesPathActual = propertiesPathActual;
     }
 
     public boolean isSetPropertiesByHand() {
@@ -235,29 +219,29 @@ public class Node implements Describable<Node> {
             return FormValidation.ok();
         }
 
-
-        /**
-         * Checking properties path
-         * @param setPropertiesByHand boolean from form
-         * @param propertiesPath String from form
-         * @return Form Validation OK / ERROR
-         */
-        public FormValidation doCheckPropertiesPath(@QueryParameter("setPropertiesByHand") final boolean setPropertiesByHand,
-                                                @QueryParameter("propertiesPath")final String propertiesPath) {
-
-            if(setPropertiesByHand){
-                return FormValidation.ok();
-            } else {
-
-                if(propertiesPath.matches("\\s*")){
-                    return FormValidation.warning("Set Properties Path, or Set Properties By Hand");
-                }
-                    if(! new File(propertiesPath).exists()){
-                        return FormValidation.error("File not exist");
-                    }
-                return FormValidation.ok();
-            }
-        }
+//
+//        /**
+//         * Checking properties path
+//         * @param setPropertiesByHand boolean from form
+//         * @param propertiesPath String from form
+//         * @return Form Validation OK / ERROR
+//         */
+//        public FormValidation doCheckPropertiesPath(@QueryParameter("setPropertiesByHand") final boolean setPropertiesByHand,
+//                                                @QueryParameter("propertiesPath")final String propertiesPath) {
+//
+//            if(setPropertiesByHand){
+//                return FormValidation.ok();
+//            } else {
+//
+//                if(propertiesPath.matches("\\s*")){
+//                    return FormValidation.warning("Set Properties Path, or Set Properties By Hand");
+//                }
+//                    if(! new File(propertiesPath).exists()){
+//                        return FormValidation.error("File not exist");
+//                    }
+//                return FormValidation.ok();
+//            }
+//        }
 
 
         /**

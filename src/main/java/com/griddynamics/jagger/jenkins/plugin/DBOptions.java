@@ -24,7 +24,6 @@ public class DBOptions implements Describable<DBOptions> {
     private String rdbDriverActual;
     private String rdbClientUrlActual;
     private String rdbUserNameActual;
-    private String rdbPasswordActual;
     private String rdbDialectActual;
 
 
@@ -34,10 +33,48 @@ public class DBOptions implements Describable<DBOptions> {
 
         this.useExternalDB = useExternalDB;
         this.rdbDriver = rdbDriver;
+        this.rdbDriverActual = rdbDriver;
         this.rdbClientUrl = rdbClientUrl;
+        this.rdbClientUrlActual = rdbClientUrl;
         this.rdbUserName = rdbUserName;
+        this.rdbUserNameActual = rdbUserName;
         this.rdbPassword = rdbPassword;
         this.rdbDialect = rdbDialect;
+        this.rdbDialectActual = rdbDialect;
+    }
+
+
+    public String getRdbDriverActual() {
+        return rdbDriverActual;
+    }
+
+    public void setRdbDriverActual(String rdbDriverActual) {
+        this.rdbDriverActual = rdbDriverActual;
+    }
+
+    public String getRdbClientUrlActual() {
+        return rdbClientUrlActual;
+    }
+
+    public void setRdbClientUrlActual(String rdbClientUrlActual) {
+        this.rdbClientUrlActual = rdbClientUrlActual;
+    }
+
+    public String getRdbUserNameActual() {
+        return rdbUserNameActual;
+    }
+
+    public void setRdbUserNameActual(String rdbUserNameActual) {
+        this.rdbUserNameActual = rdbUserNameActual;
+    }
+
+
+    public String getRdbDialectActual() {
+        return rdbDialectActual;
+    }
+
+    public void setRdbDialectActual(String rdbDialectActual) {
+        this.rdbDialectActual = rdbDialectActual;
     }
 
     public boolean isUseExternalDB() {

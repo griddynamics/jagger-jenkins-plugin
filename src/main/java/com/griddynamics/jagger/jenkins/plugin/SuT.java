@@ -25,7 +25,7 @@ import java.security.PublicKey;
 /**
  * To Make Object of Server that we want to test
  */
-public class SuT implements Describable<SuT> {
+public class SuT implements Describable<SuT>, SshNode {
 
     private final String serverAddress;   //to view in Jenkins - could be $Parametr for example
 
@@ -47,32 +47,38 @@ public class SuT implements Describable<SuT> {
     @DataBoundConstructor
     public SuT(String serverAddress, String userName, String sshKeyPath,
                boolean usePassword, String userPassword){
-//
-//        if(serverAddress.matches("\\$\\{\\.+\\}")){
-//            this.serverAddress
-//        }
-        this.serverAddressActual = serverAddress;
+
         this.serverAddress = serverAddress;
+        this.serverAddressActual = serverAddress;
         this.userName = userName;
+        this.userNameActual = userName;
         this.sshKeyPath = sshKeyPath;
+        this.sshKeyPathActual = sshKeyPath;
         this.usePassword = usePassword;
         this.userPassword = userPassword;
     }
 
-//    private String checkForEnv(String serverAddress) {
-//        if(serverAddress.startsWith("$")){
-//            serverAddress = serverAddress.substring(1,serverAddress.length());
-//            if(serverAddress.startsWith("{")){
-//                serverAddress = serverAddress.substring(1,serverAddress.length()-1);
-//            }
-//        }
-//        return serverAddress;
-//    }
 
+    public String getUserNameActual() {
+        return userNameActual;
+    }
+
+    public void setUserNameActual(String userNameActual) {
+        this.userNameActual = userNameActual;
+    }
+
+    public String getSshKeyPathActual() {
+        return sshKeyPathActual;
+    }
+
+    public void setSshKeyPathActual(String sshKeyPathActual) {
+        this.sshKeyPathActual = sshKeyPathActual;
+    }
 
     public String getServerAddressActual() {
         return serverAddressActual;
     }
+
 
     public String getUserName() {
         return userName;

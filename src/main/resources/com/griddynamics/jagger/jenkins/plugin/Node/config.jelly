@@ -1,8 +1,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-<f:section title="Node">
-  <f:block>
-     <table>
+<f:section>
+
 
           <f:entry title="Address" field="serverAddress">
               <f:textbox />
@@ -16,6 +15,7 @@
               <f:textbox field="sshKeyPath" />
             </f:entry>
 
+<!--
      </table>
   </f:block>
 
@@ -32,17 +32,20 @@
       </table>
   </f:block>
 
+
   <f:block>
      <table>
         <f:entry title = "Properies Path" >
              <f:textbox field = "propertiesPath" />
           </f:entry>
-    </table>
-  </f:block>
+
+
+-->
 
 
 
 
+<!--
 
 <f:block>
   <table>
@@ -55,14 +58,6 @@
                   <f:optionalProperty field = "master" title = "MASTER" />
              </table>
              </f:block>
-
-<!--
-            <f:block>
-               <table>
-                   <f:optionalProperty field = "rdbServer" title = "RDB_SERVER" />
-               </table>
-            </f:block>
--->
 
             <f:block>
                 <table>
@@ -85,14 +80,10 @@
        </f:entry>
     </f:optionalBlock>
 
-<!--
-    <f:validateButton
-       title="${%Test Connection}" progress="${%Testing...}"
-       method="testConnection" with="serverAddress,userName,sshKeyPath,usePassword,userPassword" />
--->
-
   </table>
 </f:block>
+
+-->
 
 </f:section>
 
