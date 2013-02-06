@@ -132,63 +132,15 @@ public class JaggerEasyDeployPlugin extends Builder
 
         PrintStream logger = listener.getLogger();
 
-   //     try {
         checkUsesOfEnvironmentProperties(build.getEnvVars());
+
         setUpCommonProperties();
-            //where will be checked all Nodes, SUTs, DB options, additional envProperties, Jagger suit. !!!
-          //  checkAddressesOnBuildVars(build.getEnvVars());//build.getEnvVars() this works, but deprecated
-
-//            setUpCommonProperties();
-//         } catch (IOException e) {
-//            logger.println(e);
-//            return false;
-//        }
-
-
-//        //create folder to collect properties files
-//        File folder = new File(build.getWorkspace() + PROPERTIES_PATH);
-//
-//        try {
-//
-//            //delete previous build properties
-//            FileUtils.deleteDirectory(folder);
-//            //make dirs if they not exists
-//            FileUtils.forceMkdir(folder);
-
-//            if(nodList.size() == 1) {
-//               // generateOneNodePropertiesFile(nodList.get(0), folder);
-//            } else {
-//                for(Node node: nodList){
-//
-////                    generatePropertiesFile(node, folder);
-//                }
-//            }
-
-//            generateScriptToDeploy();
 
         generateDeploymentScript();
 
         logger.println("\n-------------Deployment-Script-------------------\n");
-        logger.println(deploymentScript.toString());
+        logger.println(getDeploymentScript().toString());
         logger.println("\n-------------------------------------------------\n\n");
-
-//        } catch (IOException e) {
-//
-//            logger.println("!!!\nWhile generating properties files/deploy script\nException in preBuild: " + e );
-//            for(StackTraceElement element : e.getStackTrace()) {
-//                logger.println(element.getMethodName() + "\t" + element.getLineNumber());
-//            }
-//
-//            if(folder.exists()){
-//                try {
-//                    FileUtils.deleteDirectory(folder);
-//                } catch (IOException e1) {
-//                    logger.println("Can`t delete " + folder + " after failed prebuild");
-//                }
-//            }
-//
-//            return false;
-//        }
 
         return true;
     }
@@ -221,14 +173,14 @@ public class JaggerEasyDeployPlugin extends Builder
 
         String key = "chassis.master.reporting.report.file.name";
 
+        deploymentScript.append("cd ").append(baseDir).append("\n");
         if(commonProperties.containsKey(key)) {
 
-            deploymentScript.append("zip -9 ").append(baseDir).append("/report.zip ").append(baseDir);
-            deploymentScript.append("/").append(commonProperties.getProperty(key)).append(" ").append(baseDir).append("/result.xml\n");
+            deploymentScript.append("zip -9 ").append("report.zip ");
+            deploymentScript.append(commonProperties.getProperty(key)).append(" /result.xml\n");
         } else {
 
-            deploymentScript.append("zip -9 ").append(baseDir).append("/report.zip ").append(baseDir);
-            deploymentScript.append("/report.pdf ").append(baseDir).append("/result.xml\n");
+            deploymentScript.append("zip -9 ").append("report.zip report.pdf result.xml\n");
         }
 
     }
@@ -406,23 +358,23 @@ public class JaggerEasyDeployPlugin extends Builder
         }
     }
 
-
-    private void checkNodesPropertiesPath(Map<String,String> ev, Node node) {
-
-        String temp = node.getPropertiesPath();
-        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-
-        if(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-
-                node.setPropertiesPathActual(temp);
-            }
-        }
-    }
+//    decide not to use that one
+//    private void checkNodesPropertiesPath(Map<String,String> ev, Node node) {
+//
+//        String temp = node.getPropertiesPath();
+//        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
+//
+//        if(me.find()) {
+//            String t = me.group(1);
+//            String t1 = me.group(2);
+//            if(ev.containsKey(t1)) {
+//
+//                temp = temp.replace(t, ev.get(t1));
+//
+//                node.setPropertiesPathActual(temp);
+//            }
+//        }
+//    }
 
 
     private void checkSshNodesUserName(Map<String,String> ev, SshNode node) {
@@ -461,48 +413,6 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-    /**
-     * generating script like in smoke-test, to execute it in perform method
-     * @throws java.io.IOException w
-     */
-    private void generateScriptToDeploy() throws IOException {
-
-        StringBuilder script = new StringBuilder();
-        script.append("#!/bin/bash\n\n");
-        script.append("TimeStart=`date +%y/%m/%d_%H:%M`\n\n");
-
-        killOldJagger(script);
-
-        script.append("sleep 5\n");
-
-        startAgents(script);
-
-        startNodes(script);
-
-        script.append("sleep 5\n");
-
-        copyReports(script);
-
-        copyAllLogs(script);
-
-        script.append("\n\n#mutt -s \"Jenkins[JGR-stable-testplan][$TimeStart]\" jagger@griddynamics.com\n");
-
-        String key = "chassis.master.reporting.report.file.name";
-
-        if(commonProperties.containsKey(key)) {
-
-            script.append("zip -9 ").append(baseDir).append("/report.zip ").append(baseDir);
-            script.append("/").append(commonProperties.getProperty(key)).append(" ").append(baseDir).append("/result.xml\n");
-        } else {
-
-            script.append("zip -9 ").append(baseDir).append("/report.zip ").append(baseDir);
-            script.append("/report.pdf ").append(baseDir).append("/result.xml\n");
-        }
-
-        deploymentScript = script;
-
-    }
-
     private void copyAllLogs(StringBuilder script) {
 
         script.append("\n");
@@ -513,6 +423,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         copyAgentsLogs(script);
     }
+
 
     private void copyAgentsLogs(StringBuilder script) {
 
@@ -568,47 +479,45 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void copyReports(StringBuilder script) {
 
+        if(getNodList().size() == 1) {
+
+            String userName = getNodList().get(0).getUserNameActual();
+            String address = getNodList().get(0).getServerAddressActual();
+            String keyPath = getNodList().get(0).getSshKeyPathActual();
+            String jaggerHome = "/home/" + userName + "/runned_jagger";
 
 
-            if(getNodList().size() == 1) {
+            script.append("\n\necho \"Copy reports\"\n");
 
-                String userName = getNodList().get(0).getUserNameActual();
-                String address = getNodList().get(0).getServerAddressActual();
-                String keyPath = getNodList().get(0).getSshKeyPathActual();
-                String jaggerHome = "/home/" + userName + "/runned_jagger";
+            String key = "chassis.master.reporting.report.file.name";
 
-
-                script.append("\n\necho \"Copy reports\"\n");
-
-                String key = "chassis.master.reporting.report.file.name";
-
-                if(commonProperties.containsKey(key)) {  //it means that user specify it by plugin, or within properties file
-                    scpGetKey(userName,
-                            address,
-                            keyPath,
-                            jaggerHome + "/" + commonProperties.getProperty(key),
-                            baseDir,
-                            script);
-                } else {
-                    scpGetKey(userName,
-                            address,
-                            keyPath,
-                            jaggerHome + "/report.pdf", //default value for report file
-                            baseDir,
-                            script);
-                }
-
+            if(commonProperties.containsKey(key)) {  //it means that user specify it by plugin, or within properties file
                 scpGetKey(userName,
                         address,
                         keyPath,
-                        jaggerHome + "/result.xml",
+                        jaggerHome + "/" + commonProperties.getProperty(key),
                         baseDir,
                         script);
             } else {
-
-                //  for(Node node : nodList){
-                 // }
+                scpGetKey(userName,
+                        address,
+                        keyPath,
+                        jaggerHome + "/report.pdf", //default value for report file
+                        baseDir,
+                        script);
             }
+
+            scpGetKey(userName,
+                    address,
+                    keyPath,
+                    jaggerHome + "/result.xml",
+                    baseDir,
+                    script);
+        } else {
+            // in this case we should peak one that have Master role (, or Reporter)
+            //  for(Node node : nodList){
+             // }
+        }
 
 
     }
@@ -623,40 +532,9 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("\n\necho \"Copying properties to remote Nodes and start\"\n");
 
         if(nodList.size() == 1) {
-            String userName = nodList.get(0).getUserNameActual();
-            String address = nodList.get(0).getServerAddressActual();
-            String keyPath = nodList.get(0).getSshKeyPathActual();
-            String jaggerHome = "/home/" + userName + "/runned_jagger";
 
-            script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
-//!!!                          //for testing
-            StringBuilder command = new StringBuilder();
-            command.append("source /etc/profile ; cd ").append(jaggerHome).append("; ./start.sh ");
-            command.append(getEnvPropertiesActual()).append("\\\n\t-Xmx1550m\\\n\t-Xms1550m\\\n");
-            if(getAdditionalProperties().isDeclared()) {
-                for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
-                    command.append("\t-D").append(line.trim()).append("\\\n");
-                }
-            }
+            startNodesOneNodeConfiguration(script);
 
-            if(getSutsList() != null) {
-                command.append("\t-Dchassis.conditions.monitoring.enable=true\\\n");
-                command.append("\t-Dchassis.conditions.min.agents.count=").append(getSutsList().size()).append("\\\n");
-            }
-
-            if(getDbOptions().isUseExternalDB()) {
-                command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER");
-            } else {
-                command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER,RDB_SERVER");
-            }
-            //стоит ли через -D передавать chassis.roles=MASTER,KERNEL,COORDINATION_SERVER,RDB_SERVER,HTTP_COORDINATION_SERVER?
-
-
-
-            doOnVmSSH(userName, address, keyPath,
-                    command.toString()
-                    , script);
-            script.append(" > /dev/null\n\n");
         } else {
             //never mind for now
 //            Node coordinator = null; //COORDINATION_SERVER should start in very last order
@@ -711,6 +589,42 @@ public class JaggerEasyDeployPlugin extends Builder
 //                throw new IllegalArgumentException("no coordinator");
 //            }
         }
+    }
+
+    private void startNodesOneNodeConfiguration(StringBuilder script) {
+
+        String userName = nodList.get(0).getUserNameActual();
+        String address = nodList.get(0).getServerAddressActual();
+        String keyPath = nodList.get(0).getSshKeyPathActual();
+        String jaggerHome = "/home/" + userName + "/runned_jagger";
+
+        script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
+
+        StringBuilder command = new StringBuilder();
+//!!!                    //for testing
+        command.append("source /etc/profile ; cd ").append(jaggerHome).append("; ./start.sh ");
+        command.append(getEnvPropertiesActual()).append("\\\n\t-Xmx1550m\\\n\t-Xms1550m\\\n");
+        if(getAdditionalProperties().isDeclared()) {
+            for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
+                command.append("\t-D").append(line.trim()).append("\\\n");
+            }
+        }
+
+        if(getSutsList() != null) {
+            command.append("\t-Dchassis.conditions.monitoring.enable=true\\\n");
+            command.append("\t-Dchassis.conditions.min.agents.count=").append(getSutsList().size()).append("\\\n");
+        }
+
+        if(getDbOptions().isUseExternalDB()) {
+            command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER");
+        } else {
+            command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER,RDB_SERVER");
+        }
+
+        doOnVmSSH(userName, address, keyPath,
+                command.toString()
+                , script);
+        script.append(" > /dev/null\n\n");
     }
 
 
@@ -796,12 +710,8 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-
-
-
     /**
-     * rewriting fields on special class foe properties
-     * @throws java.io.IOException  if smthg wrong while reading properties file
+     *
      */
     private void setUpCommonProperties()  {
 
@@ -815,91 +725,87 @@ public class JaggerEasyDeployPlugin extends Builder
 
         } else {
 
-            int minAgents = 0;
-            if (sutsList != null) {
-                minAgents = sutsList.size();
-            }
-
-            int minKernels = 0;
-
-          //  setUpRdbProperties();
-
-            if(nodList.size() == 1){
-
-//!                //!
-
-            } else {
-
-    //            MyProperties nodesProps = new MyProperties();
-    //            for(Node node : nodList) {
-    //
-    //                nodesProps.clear();
-    //                if(!node.getPropertiesPathActual().matches("\\s*")){//Actual
-    //                    nodesProps.load(new FileInputStream(node.getPropertiesPathActual()));
-    //                }
-    //
-    //                if(node.getCoordinationServer() !=  null || nodesProps.containsRole(RoleTypeName.COORDINATION_SERVER)) {
-    //                    setUpCoordinationServerPropeties(node);
-    //                }
-    //
-    //                if(node.getKernel() != null || nodesProps.containsRole(RoleTypeName.KERNEL)) {
-    //                    minKernels ++;
-    //                }
-    //
-    //    //            if(node.getMaster() != null || nodesProps.containsRole(RoleTypeName.MASTER)) {
-    //    //                setUpMasterProperties(node);
-    //    //            }
-    //
-    //                if(node.getReporter() != null || nodesProps.containsRole(RoleTypeName.REPORTER)) {
-    //             //       setUpReporter(node, nodesProps);
-    //                }
-    //            }
-            }
-            commonProperties.setProperty("chassis.conditions.min.agents.count", String.valueOf(minAgents));
-            commonProperties.setProperty("chassis.conditions.min.kernels.count", String.valueOf(minKernels));
-            commonProperties.setProperty("jagger.default.environment.properties", "./configuration/basic/default.environment.properties");
+//            int minAgents = 0;
+//            if (sutsList != null) {
+//                minAgents = sutsList.size();
+//            }
+//
+//            int minKernels = 0;
+//
+//          //  setUpRdbProperties();
+//
+//
+//
+//    //            MyProperties nodesProps = new MyProperties();
+//    //            for(Node node : nodList) {
+//    //
+//    //                nodesProps.clear();
+//    //                if(!node.getPropertiesPathActual().matches("\\s*")){//Actual
+//    //                    nodesProps.load(new FileInputStream(node.getPropertiesPathActual()));
+//    //                }
+//    //
+//    //                if(node.getCoordinationServer() !=  null || nodesProps.containsRole(RoleTypeName.COORDINATION_SERVER)) {
+//    //                    setUpCoordinationServerPropeties(node);
+//    //                }
+//    //
+//    //                if(node.getKernel() != null || nodesProps.containsRole(RoleTypeName.KERNEL)) {
+//    //                    minKernels ++;
+//    //                }
+//    //
+//    //    //            if(node.getMaster() != null || nodesProps.containsRole(RoleTypeName.MASTER)) {
+//    //    //                setUpMasterProperties(node);
+//    //    //            }
+//    //
+//    //                if(node.getReporter() != null || nodesProps.containsRole(RoleTypeName.REPORTER)) {
+//    //             //       setUpReporter(node, nodesProps);
+//    //                }
+//    //            }
+//
+//            commonProperties.setProperty("chassis.conditions.min.agents.count", String.valueOf(minAgents));
+//            commonProperties.setProperty("chassis.conditions.min.kernels.count", String.valueOf(minKernels));
+//            commonProperties.setProperty("jagger.default.environment.properties", "./configuration/basic/default.environment.properties");
         }
 
     }
 
 
-    /**
-     * Set Up Reporter properties : file name, format - html, pdf;
-     * if Reporter wont be set, or set via properties file, default values ​​will be used
-     * @param node node that plays Reporter Role
-     * @param nodesProps  properties from node.propertiesPath
-     */
-    private void setUpReporter(Node node, MyProperties nodesProps) {
-
-        if(node.getReporter() != null) {
-//            commonProperties.setProperty("chassis.master.reporting.report.format", node.getReporter().getFormat());
-//            commonProperties.setProperty("chassis.master.reporting.report.file.name", node.getReporter().getFileName());
-        } else {
-
-            String defaultFormat = "PDF";
-
-            String key = "chassis.master.reporting.report.format";
-            String format = nodesProps.getProperty(key);
-            if(format != null){
-                commonProperties.setProperty(key, format);
-            } else {
-                commonProperties.setProperty(key, defaultFormat);
-            }
-
-            key = "chassis.master.reporting.report.file.name";
-            String fileName = nodesProps.getProperty(key);
-            if(fileName != null){
-                commonProperties.setProperty(key, fileName);
-            } else {
-                if(format != null) {
-                    commonProperties.setProperty(key, "report." + format.toLowerCase());
-                } else {
-                    commonProperties.setProperty(key, "report." + defaultFormat.toLowerCase());
-                }
-            }
-        }
-
-    }
+//    /**
+//     * Set Up Reporter properties : file name, format - html, pdf;
+//     * if Reporter wont be set, or set via properties file, default values ​​will be used
+//     * @param node node that plays Reporter Role
+//     * @param nodesProps  properties from node.propertiesPath
+//     */
+//    private void setUpReporter(Node node, MyProperties nodesProps) {
+//
+//        if(node.getReporter() != null) {
+////            commonProperties.setProperty("chassis.master.reporting.report.format", node.getReporter().getFormat());
+////            commonProperties.setProperty("chassis.master.reporting.report.file.name", node.getReporter().getFileName());
+//        } else {
+//
+//            String defaultFormat = "PDF";
+//
+//            String key = "chassis.master.reporting.report.format";
+//            String format = nodesProps.getProperty(key);
+//            if(format != null){
+//                commonProperties.setProperty(key, format);
+//            } else {
+//                commonProperties.setProperty(key, defaultFormat);
+//            }
+//
+//            key = "chassis.master.reporting.report.file.name";
+//            String fileName = nodesProps.getProperty(key);
+//            if(fileName != null){
+//                commonProperties.setProperty(key, fileName);
+//            } else {
+//                if(format != null) {
+//                    commonProperties.setProperty(key, "report." + format.toLowerCase());
+//                } else {
+//                    commonProperties.setProperty(key, "report." + defaultFormat.toLowerCase());
+//                }
+//            }
+//        }
+//
+//    }
 
 
 //set Up Master Properties .
@@ -940,28 +846,27 @@ public class JaggerEasyDeployPlugin extends Builder
 //        }
 //    }
 
+//    /**
+//     * Setting up Common Properties for Nodes
+//     * @param node Node that play CoordinationServer Role
+//     */
+//    private void setUpCoordinationServerPropeties(Node node) {
+//
+//            commonProperties.setProperty("chassis.coordinator.zookeeper.endpoint", node.getServerAddressActual() +
+//                    ":2181");          //hardcode for a while - seems that that is hardcode in jager
+//            //Is this property belong to Coordination Server
+//            commonProperties.setProperty("chassis.storage.fs.default.name","hdfs://"+node.getServerAddressActual() + "/");
+//            commonProperties.setProperty("chassis.coordination.http.url","http://" + node.getServerAddressActual() + ":8089");  //hardcode for a while - seems that that is hardcode in jager
+//            //port of http.url hard code? or it can be set somewhere
+//    }
+
     /**
      * Setting up Common Properties for Nodes
-     * @param node Node that play CoordinationServer Role
-     */
-    private void setUpCoordinationServerPropeties(Node node) {
-
-            commonProperties.setProperty("chassis.coordinator.zookeeper.endpoint", node.getServerAddressActual() +
-                    ":2181");          //hardcode for a while - seems that that is hardcode in jager
-            //Is this property belong to Coordination Server
-            commonProperties.setProperty("chassis.storage.fs.default.name","hdfs://"+node.getServerAddressActual() + "/");
-            commonProperties.setProperty("chassis.coordination.http.url","http://" + node.getServerAddressActual() + ":8089");  //hardcode for a while - seems that that is hardcode in jager
-            //port of http.url hard code? or it can be set somewhere
-    }
-
-    /**
-     * Setting up Common Properties for Nodes
-     * @throws java.io.IOException while loading properties from file
      */
     private void setUpRdbProperties() {
 
 
-        if(!dbOptions.isUseExternalDB() && nodList.size() == 1) {
+        if(!dbOptions.isUseExternalDB() && getNodList().size() == 1) {
 
             String port = "8043";
 
@@ -972,7 +877,7 @@ public class JaggerEasyDeployPlugin extends Builder
             commonProperties.setProperty("chassis.storage.rdb.password","rocks");
             commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
 
-        } else if (!dbOptions.isUseExternalDB() && nodList.size() > 1){
+        } else if (!getDbOptions().isUseExternalDB() && getNodList().size() > 1){
 
 //            String address = "NO_MASTER_DETECTED";
 //
@@ -1000,220 +905,220 @@ public class JaggerEasyDeployPlugin extends Builder
 
         } else {
 
-            commonProperties.setProperty("chassis.storage.rdb.client.driver", dbOptions.getRdbDriverActual());
-            commonProperties.setProperty("chassis.storage.rdb.client.url", dbOptions.getRdbClientUrlActual());
-            commonProperties.setProperty("chassis.storage.rdb.username", dbOptions.getRdbUserNameActual());
-            commonProperties.setProperty("chassis.storage.rdb.password", dbOptions.getRdbPassword());
-            commonProperties.setProperty("chassis.storage.hibernate.dialect", dbOptions.getRdbDialectActual());
+            commonProperties.setProperty("chassis.storage.rdb.client.driver", getDbOptions().getRdbDriverActual());
+            commonProperties.setProperty("chassis.storage.rdb.client.url", getDbOptions().getRdbClientUrlActual());
+            commonProperties.setProperty("chassis.storage.rdb.username", getDbOptions().getRdbUserNameActual());
+            commonProperties.setProperty("chassis.storage.rdb.password", getDbOptions().getRdbPassword());
+            commonProperties.setProperty("chassis.storage.hibernate.dialect", getDbOptions().getRdbDialectActual());
         }
 
 
     }
 
 
-    /**
-     * Generating properties file for Node
-     * @param node specified node
-     * @param folder where to write file
-     * @throws java.io.IOException /
-     */
-    private void generatePropertiesFile(Node node, File folder) throws IOException {
-
-        File filePath = new File(folder+"/"+node.getServerAddressActual()+".properties");
-  //      if(filePath.exists()){ filePath.delete();}
-
-        MyProperties properties = new MyProperties();
-
-        //adding this properties to EACH Node
-        if(additionalProperties.isDeclared()){
-            addAdditionalProperties(properties);
-        }
-
-        properties.setProperty("jagger.default.environment.properties", commonProperties.getProperty("jagger.default.environment.properties"));
-
-        properties.setProperty("chassis.workspace","./jaggerworkspace");
-
-//        if(node.getPropertiesPathActual() != null && !node.getPropertiesPathActual().matches("\\s*")) {
-//            //validation of properties path
-//            properties.load(new FileInputStream(node.getPropertiesPathActual()));
+//    /**
+//     * Generating properties file for Node
+//     * @param node specified node
+//     * @param folder where to write file
+//     * @throws java.io.IOException /
+//     */
+//    private void generatePropertiesFile(Node node, File folder) throws IOException {
+//
+//        File filePath = new File(folder+"/"+node.getServerAddressActual()+".properties");
+//  //      if(filePath.exists()){ filePath.delete();}
+//
+//        MyProperties properties = new MyProperties();
+//
+//        //adding this properties to EACH Node
+//        if(additionalProperties.isDeclared()){
+//            addAdditionalProperties(properties);
 //        }
-
-        if(node.getMaster() != null || properties.containsRole(RoleTypeName.MASTER.toString())) {
-            addMasterProperties(properties);
-        }
-
-        if(node.getCoordinationServer() != null || properties.containsRole(RoleTypeName.COORDINATION_SERVER.toString())) {
-            addCoordinationServerProperties(properties);
-        }
-
-        if(node.getReporter() != null || properties.containsRole(RoleTypeName.REPORTER)) {
-            addReporterServerProperties(properties);
-        }
-
-        if(node.getKernel() != null || properties.containsRole(RoleTypeName.KERNEL.toString())) {
-            addKernelProperties(properties);
-        }
-
-        properties.store(new FileOutputStream(filePath), "generated automatically");
-        node.setFinalPropertiesPath(filePath.toString());
-        //finalPropertiesPath - Path that Jenkins will use to run start.sh
-
-    }
-
-
-    /**
-     * Adding properties from Additional properties textarea
-     * @param properties property of specific node
-     * @throws java.io.IOException ~
-     */
-    private void addAdditionalProperties(MyProperties properties) throws IOException {
-
-        properties.load(new StringInputStream(additionalProperties.getTextFromAreaActual()));
-    }
-
-
-    /**
-     * Adding Reporter Server Properties
-     * @param properties    property of specified Node
-     */
-    private void addKernelProperties(MyProperties properties) {
-
-        String key = "chassis.roles";
-        if(properties.get(key) == null){
-            properties.setProperty(key, RoleTypeName.KERNEL.toString());
-        } else if (!properties.containsRole(RoleTypeName.KERNEL)) {
-            properties.addValueWithComma(key, RoleTypeName.KERNEL.toString());
-        }
-
-        key = "chassis.coordinator.zookeeper.endpoint";
-        properties.setProperty(key, commonProperties.getProperty(key));
-
-        key = "chassis.storage.fs.default.name";
-        properties.setProperty(key, commonProperties.getProperty(key));
-
-        addDBProperties(properties);
-
-    }
-
-
-    /**
-     * Adding Reporter Server Properties
-     * @param properties    property of specified Node
-     */
-    private void addReporterServerProperties(MyProperties properties) {
-
-        String key = "chassis.roles";
-        if(properties.get(key) == null){
-            properties.setProperty(key, RoleTypeName.REPORTER.toString());
-        } else if (!properties.containsRole(RoleTypeName.REPORTER.toString())) {
-            properties.addValueWithComma(key, RoleTypeName.REPORTER.toString());
-        }
-
-        key = "chassis.master.reporting.report.format";
-        if(commonProperties.containsKey(key)) {
-            properties.setProperty(key, commonProperties.getProperty(key));
-        }
-
-        key = "chassis.master.reporting.report.file.name";
-        if(commonProperties.containsKey(key)) {
-            properties.setProperty(key, commonProperties.getProperty(key));
-        }
-
-    }
-
-
-    /**
-     * Adding Coordination Server Properties
-     * @param properties    property of specified Node
-     */
-    private void addCoordinationServerProperties(MyProperties properties) {
-
-        String key = "chassis.roles";
-        if(properties.get(key) == null){
-            properties.setProperty(key, RoleTypeName.COORDINATION_SERVER.toString());
-        } else if (!properties.containsRole(RoleTypeName.COORDINATION_SERVER)) {
-            properties.addValueWithComma(key, RoleTypeName.COORDINATION_SERVER.toString());
-        }
-
-        key = "chassis.conditions.min.agents.count";
-        if(Integer.parseInt(commonProperties.getProperty(key)) > 0){
-            properties.setProperty("chassis.conditions.monitoring.enable","true");
-            properties.setProperty(key, commonProperties.getProperty(key));
-        }
-
-        key = "chassis.conditions.min.kernels.count";
-        properties.setProperty(key, commonProperties.getProperty(key));
-    }
-
-
-    /**
-     * Adding Master Properties
-     * @param properties    property of specified Node
-     */
-    private void addMasterProperties(MyProperties properties) {
-
-        String key = "chassis.roles";
-        if(properties.getProperty(key) == null){
-            properties.setProperty(key, RoleTypeName.MASTER.toString());
-        } else if ( !properties.containsRole(RoleTypeName.MASTER)) {
-            properties.addValueWithComma(key, RoleTypeName.MASTER.toString());
-        }
-        //Http coordinator will always be on Master node (on port 8089?)!
-        if(properties.getProperty(key) != null && !properties.containsRole("HTTP_COORDINATION_SERVER")) {
-            properties.addValueWithComma(key, "HTTP_COORDINATION_SERVER");
-        }
-
-        if (!dbOptions.isUseExternalDB()) {
-
-            if(!properties.getProperty(key).contains("RDB_SERVER")){
-                properties.addValueWithComma(key,"RDB_SERVER");
-            }
-
-            String port;
-            port = commonProperties.getProperty("tcpPort");
-
-            if(port == null){
-                properties.setProperty("tcpProperty","8043");
-            } else {
-                properties.setProperty("tcpProperty",port);
-            }
-
-        }
-
-        key = "chassis.coordinator.zookeeper.endpoint";
-        properties.setProperty(key, commonProperties.getProperty(key));
-
-        key = "chassis.storage.fs.default.name";
-        properties.setProperty(key, commonProperties.getProperty(key));
-
-        addDBProperties(properties);
-
-    }
-
-
-    /**
-     * Adding Data Base Properties
-     * @param properties    property of specified Node
-     */
-    private void addDBProperties(MyProperties properties) {
-
-        String key;
-
-        key = "chassis.storage.rdb.client.driver";
-        properties.setProperty(key, commonProperties.getProperty(key));
-
-        key = "chassis.storage.rdb.client.url";
-        properties.setProperty(key, commonProperties.getProperty(key));
-
-        key = "chassis.storage.rdb.username";
-        properties.setProperty(key, commonProperties.getProperty(key));
-
-        key = "chassis.storage.rdb.password";
-        properties.setProperty(key, commonProperties.getProperty(key));
-
-        key = "chassis.storage.hibernate.dialect";
-        properties.setProperty(key, commonProperties.getProperty(key));
-    }
+//
+//        properties.setProperty("jagger.default.environment.properties", commonProperties.getProperty("jagger.default.environment.properties"));
+//
+//        properties.setProperty("chassis.workspace","./jaggerworkspace");
+//
+////        if(node.getPropertiesPathActual() != null && !node.getPropertiesPathActual().matches("\\s*")) {
+////            //validation of properties path
+////            properties.load(new FileInputStream(node.getPropertiesPathActual()));
+////        }
+//
+//        if(node.getMaster() != null || properties.containsRole(RoleTypeName.MASTER.toString())) {
+//            addMasterProperties(properties);
+//        }
+//
+//        if(node.getCoordinationServer() != null || properties.containsRole(RoleTypeName.COORDINATION_SERVER.toString())) {
+//            addCoordinationServerProperties(properties);
+//        }
+//
+//        if(node.getReporter() != null || properties.containsRole(RoleTypeName.REPORTER)) {
+//            addReporterServerProperties(properties);
+//        }
+//
+//        if(node.getKernel() != null || properties.containsRole(RoleTypeName.KERNEL.toString())) {
+//            addKernelProperties(properties);
+//        }
+//
+//        properties.store(new FileOutputStream(filePath), "generated automatically");
+//        node.setFinalPropertiesPath(filePath.toString());
+//        //finalPropertiesPath - Path that Jenkins will use to run start.sh
+//
+//    }
+//
+//
+//    /**
+//     * Adding properties from Additional properties textarea
+//     * @param properties property of specific node
+//     * @throws java.io.IOException ~
+//     */
+//    private void addAdditionalProperties(MyProperties properties) throws IOException {
+//
+//        properties.load(new StringInputStream(additionalProperties.getTextFromAreaActual()));
+//    }
+//
+//
+//    /**
+//     * Adding Reporter Server Properties
+//     * @param properties    property of specified Node
+//     */
+//    private void addKernelProperties(MyProperties properties) {
+//
+//        String key = "chassis.roles";
+//        if(properties.get(key) == null){
+//            properties.setProperty(key, RoleTypeName.KERNEL.toString());
+//        } else if (!properties.containsRole(RoleTypeName.KERNEL)) {
+//            properties.addValueWithComma(key, RoleTypeName.KERNEL.toString());
+//        }
+//
+//        key = "chassis.coordinator.zookeeper.endpoint";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//
+//        key = "chassis.storage.fs.default.name";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//
+//        addDBProperties(properties);
+//
+//    }
+//
+//
+//    /**
+//     * Adding Reporter Server Properties
+//     * @param properties    property of specified Node
+//     */
+//    private void addReporterServerProperties(MyProperties properties) {
+//
+//        String key = "chassis.roles";
+//        if(properties.get(key) == null){
+//            properties.setProperty(key, RoleTypeName.REPORTER.toString());
+//        } else if (!properties.containsRole(RoleTypeName.REPORTER.toString())) {
+//            properties.addValueWithComma(key, RoleTypeName.REPORTER.toString());
+//        }
+//
+//        key = "chassis.master.reporting.report.format";
+//        if(commonProperties.containsKey(key)) {
+//            properties.setProperty(key, commonProperties.getProperty(key));
+//        }
+//
+//        key = "chassis.master.reporting.report.file.name";
+//        if(commonProperties.containsKey(key)) {
+//            properties.setProperty(key, commonProperties.getProperty(key));
+//        }
+//
+//    }
+//
+//
+//    /**
+//     * Adding Coordination Server Properties
+//     * @param properties    property of specified Node
+//     */
+//    private void addCoordinationServerProperties(MyProperties properties) {
+//
+//        String key = "chassis.roles";
+//        if(properties.get(key) == null){
+//            properties.setProperty(key, RoleTypeName.COORDINATION_SERVER.toString());
+//        } else if (!properties.containsRole(RoleTypeName.COORDINATION_SERVER)) {
+//            properties.addValueWithComma(key, RoleTypeName.COORDINATION_SERVER.toString());
+//        }
+//
+//        key = "chassis.conditions.min.agents.count";
+//        if(Integer.parseInt(commonProperties.getProperty(key)) > 0){
+//            properties.setProperty("chassis.conditions.monitoring.enable","true");
+//            properties.setProperty(key, commonProperties.getProperty(key));
+//        }
+//
+//        key = "chassis.conditions.min.kernels.count";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//    }
+//
+//
+//    /**
+//     * Adding Master Properties
+//     * @param properties    property of specified Node
+//     */
+//    private void addMasterProperties(MyProperties properties) {
+//
+//        String key = "chassis.roles";
+//        if(properties.getProperty(key) == null){
+//            properties.setProperty(key, RoleTypeName.MASTER.toString());
+//        } else if ( !properties.containsRole(RoleTypeName.MASTER)) {
+//            properties.addValueWithComma(key, RoleTypeName.MASTER.toString());
+//        }
+//        //Http coordinator will always be on Master node (on port 8089?)!
+//        if(properties.getProperty(key) != null && !properties.containsRole("HTTP_COORDINATION_SERVER")) {
+//            properties.addValueWithComma(key, "HTTP_COORDINATION_SERVER");
+//        }
+//
+//        if (!dbOptions.isUseExternalDB()) {
+//
+//            if(!properties.getProperty(key).contains("RDB_SERVER")){
+//                properties.addValueWithComma(key,"RDB_SERVER");
+//            }
+//
+//            String port;
+//            port = commonProperties.getProperty("tcpPort");
+//
+//            if(port == null){
+//                properties.setProperty("tcpProperty","8043");
+//            } else {
+//                properties.setProperty("tcpProperty",port);
+//            }
+//
+//        }
+//
+//        key = "chassis.coordinator.zookeeper.endpoint";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//
+//        key = "chassis.storage.fs.default.name";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//
+//        addDBProperties(properties);
+//
+//    }
+//
+//
+//    /**
+//     * Adding Data Base Properties
+//     * @param properties    property of specified Node
+//     */
+//    private void addDBProperties(MyProperties properties) {
+//
+//        String key;
+//
+//        key = "chassis.storage.rdb.client.driver";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//
+//        key = "chassis.storage.rdb.client.url";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//
+//        key = "chassis.storage.rdb.username";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//
+//        key = "chassis.storage.rdb.password";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//
+//        key = "chassis.storage.hibernate.dialect";
+//        properties.setProperty(key, commonProperties.getProperty(key));
+//    }
 
 
     // Start's processes on computer where jenkins run ProcStarter is not serializable
@@ -1289,11 +1194,10 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void createScriptFile(String file) throws IOException {
 
-      //  new File(System.getProperty("user.home") + "/deploy-script.sh").createNewFile();
         PrintWriter fw = null;
         try{
             fw = new PrintWriter(new FileOutputStream(file));
-            fw.write(deploymentScript.toString());  //<<-- deploymentScript.toString()
+            fw.write(deploymentScript.toString());
 
         } finally {
             if(fw != null){
@@ -1425,6 +1329,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      *  log information about all Nodes
+     *  debug
      * @param logger listener.getLogger from perform method
      */
     private void logInfoAboutNodes(PrintStream logger) {

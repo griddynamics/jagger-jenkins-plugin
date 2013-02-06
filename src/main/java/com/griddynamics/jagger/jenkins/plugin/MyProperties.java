@@ -1,5 +1,7 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 
 /**
@@ -24,7 +26,7 @@ public class MyProperties extends Properties{
 
             String roles = getProperty("chassis.roles");
             if(roles != null) {
-                if(roles.contains("," + role) || roles.startsWith(role)) {
+                if(Arrays.asList(roles.split(",")).contains(role)) {
                     return true;
                 }
             }
@@ -39,7 +41,7 @@ public class MyProperties extends Properties{
 
             String roles = getProperty("chassis.roles");
             if(roles != null) {
-                if(roles.contains("," + role) || roles.startsWith(role.toString())) {
+                if(Arrays.asList(roles.split(",")).contains(role.toString())) {
                     return true;
                 }
             }
