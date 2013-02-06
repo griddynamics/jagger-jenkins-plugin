@@ -132,7 +132,17 @@ public class JaggerEasyDeployPlugin extends Builder
 
         PrintStream logger = listener.getLogger();
 
-        checkUsesOfEnvironmentProperties(build.getEnvVars());
+        try {
+            checkUsesOfEnvironmentProperties(build, listener);
+        } catch (IOException e) {
+            logger.println("EXCEPTION WHILE CHECKING USES OF ENV VARAIBLES");
+            logger.println(e);
+            return false;
+        } catch (InterruptedException e) {
+            logger.println("EXCEPTION WHILE CHECKING USES OF ENV VARAIBLES");
+            logger.println(e);
+            return false;
+        }
 
         setUpCommonProperties();
 
@@ -188,228 +198,110 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      * provide ability to use environment properties
-     * @param envVars environment properties
+     * @param listener /
+     * @param build    /
+     * @throws java.io.IOException /
+     * @throws InterruptedException /
      */
-    private void checkUsesOfEnvironmentProperties(Map<String, String> envVars) {
+    private void checkUsesOfEnvironmentProperties(Build build, BuildListener listener) throws IOException, InterruptedException {
 
-        checkNodesOnBuildVars(envVars);
-        checkAdditionalPropertiesOnBuildVars(envVars);
-        checkJaggerTestSuitOnBuildVars(envVars);
-        checkDBOptionsOnBuildVars(envVars);
-        checkAgentsOnBuildVars(envVars);
-        checkEnvPropertiesOnBuildVars(envVars);
+        //build.getEnvironment(listener).expand("tyheerth"));
+
+        checkNodesOnBuildVars(build, listener);
+        checkAdditionalPropertiesOnBuildVars(build, listener);
+        checkJaggerTestSuitOnBuildVars(build, listener);
+        checkDBOptionsOnBuildVars(build, listener);
+        checkAgentsOnBuildVars(build, listener);
+        checkEnvPropertiesOnBuildVars(build, listener);
 
 
     }
 
-    private void checkEnvPropertiesOnBuildVars(Map<String, String> ev) {
+    private void checkEnvPropertiesOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
 
         String temp = getEnvProperties();
-        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
 
-        if(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-                setEnvPropertiesActual(temp);
-            }
-        }
+        setEnvPropertiesActual(build.getEnvironment(listener).expand(temp));
     }
 
-    private void checkAgentsOnBuildVars(Map<String, String> ev) {
+    private void checkAgentsOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
 
         if(sutsList != null) {
             for(SuT node : sutsList) {
-                checkSshNodesServerAddresses(ev, node);
-                checkSshNodesSSHKeyPath(ev, node);
-                checkSshNodesUserName(ev, node);
+                checkSshNodesServerAddresses(build, listener, node);
+                checkSshNodesSSHKeyPath(build, listener, node);
+                checkSshNodesUserName(build, listener, node);
             }
         }
     }
 
 
-    private void checkDBOptionsOnBuildVars(Map<String, String> ev) {
+    private void checkDBOptionsOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
 
         String temp = dbOptions.getRdbDialect();
-        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-
-        while(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-                dbOptions.setRdbDialectActual(temp);
-            }
-        }
-
+        dbOptions.setRdbDialectActual(build.getEnvironment(listener).expand(temp));
 
         temp = dbOptions.getRdbUserName();
-        me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-
-        while(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-                dbOptions.setRdbUserNameActual(temp);
-            }
-        }
-
+        dbOptions.setRdbUserNameActual(build.getEnvironment(listener).expand(temp));
 
         temp = dbOptions.getRdbClientUrl();
-        me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-
-        while(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-                dbOptions.setRdbClientUrlActual(temp);
-            }
-        }
-
+        dbOptions.setRdbClientUrlActual(build.getEnvironment(listener).expand(temp));
 
         temp = dbOptions.getRdbDriver();
-        me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-
-        while(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-                dbOptions.setRdbDriverActual(temp);
-            }
-        }
+        dbOptions.setRdbDriverActual(build.getEnvironment(listener).expand(temp));
 
     }
 
-    private void checkJaggerTestSuitOnBuildVars(Map<String, String> ev) {
+    private void checkJaggerTestSuitOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
 
         String temp = getJaggerTestSuitePath();
-        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-
-        if(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-                setJaggerTestSuitePathActual(temp);
-            }
-        }
-
+        setJaggerTestSuitePathActual(build.getEnvironment(listener).expand(temp));
     }
 
 
-    private void checkAdditionalPropertiesOnBuildVars(Map<String, String> ev) {
+    private void checkAdditionalPropertiesOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
 
-        String temp = additionalProperties.getTextFromArea();
-        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*", Pattern.MULTILINE).matcher(temp);
-
-        while(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-
-                additionalProperties.setTextFromAreaActual(temp);
-            }
-        }
+    String temp = getAdditionalProperties().getTextFromArea();
+        additionalProperties.setTextFromAreaActual(build.getEnvironment(listener).expand(temp));
     }
 
 
     /**
      * Check if Build Variables contain addresses , or VERSION (of Jagger)
-     * @param ev Build Variables
+     * @param build  /
+     * @param listener /
+     * @throws java.io.IOException /
+     * @throws InterruptedException /
      */
-    private void checkNodesOnBuildVars(Map<String,String> ev) {
+    private void checkNodesOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
 
         for(Node node: nodList){
 
-            checkSshNodesServerAddresses(ev, node);
-            checkSshNodesUserName(ev, node);
-            checkSshNodesSSHKeyPath(ev, node);
+            checkSshNodesServerAddresses(build, listener, node);
+            checkSshNodesUserName(build, listener, node);
+            checkSshNodesSSHKeyPath(build, listener, node);
 
         }
 
     }
 
-    private void checkSshNodesSSHKeyPath(Map<String, String> ev, SshNode node) {
+    private void checkSshNodesSSHKeyPath(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
 
         String temp = node.getSshKeyPath();
-        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-
-        if(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-
-                node.setSshKeyPathActual(temp);
-            }
-        }
+        node.setSshKeyPathActual(build.getEnvironment(listener).expand(temp));
     }
 
-//    decide not to use that one
-//    private void checkNodesPropertiesPath(Map<String,String> ev, Node node) {
-//
-//        String temp = node.getPropertiesPath();
-//        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-//
-//        if(me.find()) {
-//            String t = me.group(1);
-//            String t1 = me.group(2);
-//            if(ev.containsKey(t1)) {
-//
-//                temp = temp.replace(t, ev.get(t1));
-//
-//                node.setPropertiesPathActual(temp);
-//            }
-//        }
-//    }
-
-
-    private void checkSshNodesUserName(Map<String,String> ev, SshNode node) {
+    private void checkSshNodesUserName(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
 
         String temp = node.getUserName();
-        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-
-        if(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-
-                node.setUserNameActual(temp);
-            }
-        }
+        node.setUserNameActual(build.getEnvironment(listener).expand(temp));
     }
 
 
-    private void checkSshNodesServerAddresses(Map<String,String> ev, SshNode node) {
+    private void checkSshNodesServerAddresses(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
 
         String temp = node.getServerAddress();
-        Matcher me = Pattern.compile(".*(\\$\\{(.+)\\}).*").matcher(temp);
-
-        if(me.find()) {
-            String t = me.group(1);
-            String t1 = me.group(2);
-            if(ev.containsKey(t1)) {
-
-                temp = temp.replace(t, ev.get(t1));
-
-                node.setServerAddressActual(temp);
-            }
-        }
+        node.setServerAddressActual(build.getEnvironment(listener).expand(temp));
     }
 
 
