@@ -6,14 +6,11 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
-import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.IOException;
 import java.net.*;
-import java.security.PublicKey;
 
 /**
  * Created with IntelliJ IDEA.
@@ -161,62 +158,5 @@ public class SuT implements Describable<SuT>, SshNode {
             }
             return FormValidation.ok();
         }
-
-        /**
-         * For test ssh connection / permissions to make 'magic'
-         * @param serverAddress   STRING host address
-         * @param userName        STRING user name
-         * @param sshKeyPath      STRING path of ssh Key
-         * @param usePassword     BOOLEAN if password in use
-         * @param userPassword    STRING user password
-         * @return   ok if connect, error otherwise
-         */
-        public FormValidation doTestSSHConnection(@QueryParameter("serverAddress") final String serverAddress,
-                                               @QueryParameter("userName") final String userName,
-                                               @QueryParameter("sshKeyPath") final String sshKeyPath,
-                                               @QueryParameter("usePassword") final boolean usePassword,
-                                               @QueryParameter("userPassword") final String userPassword) {
-            try {
-
-                final SSHClient ssh = new SSHClient();
-
-                ssh.addHostKeyVerifier(new HostKeyVerifier() {
-                    public boolean verify(String arg0, int arg1, PublicKey arg2) {
-                        return true;  // don't bother verifying
-                    }
-                });
-
-                ssh.connect(serverAddress);
-                try{
-                    if (usePassword){
-                        ssh.authPassword(userName,userPassword);
-                    } else {
-                        ssh.authPublickey(userName,sshKeyPath);
-                    }
-
-                    net.schmizz.sshj.connection.channel.direct.Session session = null;
-                    try{
-                        session = ssh.startSession();
-                    } finally {
-                        if(session != null){
-                            session.close();
-                        }
-                    }
-
-                } finally {
-                    ssh.disconnect();
-                }
-
-
-                return FormValidation.ok("ok");
-
-            } catch (ConnectException e) {
-                return FormValidation.error("can't make even connection");
-            } catch (IOException e) {
-                return FormValidation.error("Can't connect with such configuration\n"+e.getLocalizedMessage());
-            }
-        }
-
     }
-
 }

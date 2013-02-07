@@ -5,18 +5,12 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
-import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.*;
-import java.security.PublicKey;
 import java.util.HashMap;
-import java.util.Properties;
 
 /**
  * Created with IntelliJ IDEA.
