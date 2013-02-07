@@ -432,7 +432,7 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
 
         StringBuilder command = new StringBuilder();
-        command.append("source /etc/profile ;cd ").append(jaggerHome).append("; ./start.sh ");
+        command.append("cd ").append(jaggerHome).append("; ./start.sh ");
         command.append(getEnvPropertiesActual()).append("\\\n\t-Xmx1550m\\\n\t-Xms1550m\\\n");
 
         if(getAdditionalProperties().isDeclared()) {
