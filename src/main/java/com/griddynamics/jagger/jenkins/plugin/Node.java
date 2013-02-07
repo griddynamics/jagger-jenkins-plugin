@@ -11,17 +11,19 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
 import java.util.HashMap;
+import java.util.Properties;
 
 /**
  * Created with IntelliJ IDEA.
  * User: amikryukov
  * Date: 12/14/12
  */
-public class Node implements Describable<Node> {
+public class Node implements Describable<Node>, SshNode {
 
     private final String serverAddress;
 
@@ -29,11 +31,17 @@ public class Node implements Describable<Node> {
 
     private final String userName;
 
+    private String userNameActual;
+
     private final String userPassword;
 
     private final String sshKeyPath ;
 
-    private String propertiesPath;
+    private String sshKeyPathActual;
+
+    private final String propertiesPath;
+
+    private String propertiesPathActual;
 
     private String finalPropertiesPath;
 
@@ -45,31 +53,35 @@ public class Node implements Describable<Node> {
 
     @DataBoundConstructor
     public Node(String serverAddress, String userName,
-                String sshKeyPath, boolean usePassword, String userPassword, String propertiesPath,
-                boolean setPropertiesByHand,
+                String sshKeyPath, String propertiesPath
 
+             ,  boolean usePassword, String userPassword
+            ,   boolean setPropertiesByHand,
                 Master master,
-         //       DBOptions rdbServer,
                 CoordinationServer coordinationServer,
                 Kernel kernel,
                 Reporter reporter
-       //     ,                           String serverAddressName
     ) {
 
         this.serverAddress = serverAddress;
-        this.userName = userName;
-        this.userPassword = userPassword;
-        this.sshKeyPath = sshKeyPath;
-        this.usePassword = usePassword;
-        this.propertiesPath = propertiesPath;
-        this.setPropertiesByHand = setPropertiesByHand;
         this.serverAddressActual = serverAddress;
+        this.userName = userName;
+        this.userNameActual = userName;
+        this.sshKeyPath = sshKeyPath;
+        this.sshKeyPathActual = sshKeyPath;
+        this.usePassword = usePassword;
+        this.userPassword = userPassword;
+        this.propertiesPath = propertiesPath;
+        this.propertiesPathActual = propertiesPath;
+        this.setPropertiesByHand = setPropertiesByHand;
+
         hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
 
         if (setPropertiesByHand){
             fillRoles(master, coordinationServer, kernel, reporter );
         }
     }
+
 
     public CoordinationServer getCoordinationServer() {
 
@@ -78,7 +90,7 @@ public class Node implements Describable<Node> {
 
     public Kernel getKernel() {
 
-        return (Kernel) hmRoles.get(RoleTypeName.KERNEL);
+            return (Kernel) hmRoles.get(RoleTypeName.KERNEL);
     }
 
     public String getServerAddressActual() {
@@ -95,10 +107,29 @@ public class Node implements Describable<Node> {
         return (Master) hmRoles.get(RoleTypeName.MASTER);
     }
 
-//    public DBOptions getRdbServer() {
-//
-//        return (DBOptions) hmRoles.get(RoleTypeName.RDB_SERVER);
-//    }
+    public String getUserNameActual() {
+        return userNameActual;
+    }
+
+    public void setUserNameActual(String userNameActual) {
+        this.userNameActual = userNameActual;
+    }
+
+    public String getSshKeyPathActual() {
+        return sshKeyPathActual;
+    }
+
+    public void setSshKeyPathActual(String sshKeyPathActual) {
+        this.sshKeyPathActual = sshKeyPathActual;
+    }
+
+    public String getPropertiesPathActual() {
+        return propertiesPathActual;
+    }
+
+    public void setPropertiesPathActual(String propertiesPathActual) {
+        this.propertiesPathActual = propertiesPathActual;
+    }
 
     public boolean isSetPropertiesByHand() {
         return setPropertiesByHand;
@@ -177,6 +208,9 @@ public class Node implements Describable<Node> {
                 if(value == null || value.matches("\\s*")) {
                     return FormValidation.warning("Set Address");
                 }
+                if(value.contains("$")) {
+                    return FormValidation.ok();
+                }
 
                 new Socket(value,22).close();
 
@@ -188,30 +222,9 @@ public class Node implements Describable<Node> {
             return FormValidation.ok();
         }
 
-        /**
-         * Checking properties path
-         * @param setPropertiesByHand boolean from form
-         * @param propertiesPath String from form
-         * @return Form Validation OK / ERROR
-         */
-        public FormValidation doCheckPropertiesPath(@QueryParameter("setPropertiesByHand") final boolean setPropertiesByHand,
-                                                @QueryParameter("propertiesPath")final String propertiesPath) {
-
-            if(setPropertiesByHand){
-                return FormValidation.ok();
-            } else {
-
-                if(propertiesPath.matches("\\s*")){
-                    return FormValidation.error("Set Properties Path, or Set Properties By Hand");
-                }
-                    if(! new File("path").exists()){
-                        return FormValidation.error("File not exist");
-                    }
-                return FormValidation.ok();
-            }
-        }
 
         /**
+         * May be we don't need such verification
          * For testing Connection to remote machine(ssh, rdb connection ... )
          * @param  serverAddress         serverAddress
          * @param userName      userName

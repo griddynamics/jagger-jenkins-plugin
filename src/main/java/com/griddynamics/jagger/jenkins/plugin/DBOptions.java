@@ -14,28 +14,71 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class DBOptions implements Describable<DBOptions> {
 
-    private final boolean doUseH2;
+    private final boolean useExternalDB;
     private final String rdbDriver;
     private final String rdbClientUrl;
     private final String rdbUserName;
     private final String rdbPassword;
     private final String rdbDialect;
 
+    private String rdbDriverActual;
+    private String rdbClientUrlActual;
+    private String rdbUserNameActual;
+    private String rdbDialectActual;
+
 
     @DataBoundConstructor
     public DBOptions(String rdbDriver, String rdbClientUrl,
-                     String rdbUserName, String rdbPassword, String rdbDialect, boolean doUseH2){
+                     String rdbUserName, String rdbPassword, String rdbDialect, boolean useExternalDB){
 
-        this.doUseH2 = doUseH2;
+        this.useExternalDB = useExternalDB;
         this.rdbDriver = rdbDriver;
+        this.rdbDriverActual = rdbDriver;
         this.rdbClientUrl = rdbClientUrl;
+        this.rdbClientUrlActual = rdbClientUrl;
         this.rdbUserName = rdbUserName;
+        this.rdbUserNameActual = rdbUserName;
         this.rdbPassword = rdbPassword;
         this.rdbDialect = rdbDialect;
+        this.rdbDialectActual = rdbDialect;
     }
 
-    public boolean isDoUseH2() {
-        return doUseH2;
+
+    public String getRdbDriverActual() {
+        return rdbDriverActual;
+    }
+
+    public void setRdbDriverActual(String rdbDriverActual) {
+        this.rdbDriverActual = rdbDriverActual;
+    }
+
+    public String getRdbClientUrlActual() {
+        return rdbClientUrlActual;
+    }
+
+    public void setRdbClientUrlActual(String rdbClientUrlActual) {
+        this.rdbClientUrlActual = rdbClientUrlActual;
+    }
+
+    public String getRdbUserNameActual() {
+        return rdbUserNameActual;
+    }
+
+    public void setRdbUserNameActual(String rdbUserNameActual) {
+        this.rdbUserNameActual = rdbUserNameActual;
+    }
+
+
+    public String getRdbDialectActual() {
+        return rdbDialectActual;
+    }
+
+    public void setRdbDialectActual(String rdbDialectActual) {
+        this.rdbDialectActual = rdbDialectActual;
+    }
+
+    public boolean isUseExternalDB() {
+        return useExternalDB;
     }
 
     public String getRdbDriver() {

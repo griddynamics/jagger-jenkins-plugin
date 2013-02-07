@@ -1,59 +1,39 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-    <f:section title = "Some Options">
+    <f:section title = "Options">
+
         <f:entry title = "Jagger Test Suite *.zip" field = "jaggerTestSuitePath">
              <f:textbox  />
         </f:entry>
 
-        <f:entry>
-             <f:property field="dbOptions" />
+
+        <f:entry title = "Environment Properties" field = "envProperties">
+             <f:textbox  />
         </f:entry>
 
 
-<!--
-        <f:block>
-                 <table>
-
-                        <f:entry title="Rdb Driver" field="rdbDriver">
-                            <f:textbox  default = "com.mysql.jdbc.Driver" />
-                                      </f:entry>
-
-                          <f:entry title="Rdb Client Url" field="rdbClientUrl">
-                                      <f:textbox default="jdbc:mysql://address:port/name_of_db" />
-                                                </f:entry>
-
-                           <f:entry title="User Name" field="rdbUserName">
-                                     <f:textbox  />
-                                           </f:entry>
-
-                           <f:entry title="User Password" field="rdbPassword">
-                                     <f:password  />
-                                           </f:entry>
-
-                          <f:entry title="Rdb Dialect" field="rdbDialect">
-                                    <f:textbox  default = "org.hibernate.dialect.MySQL5Dialect" />
-                                        </f:entry>
-
-                        <f:entry title="Use H2" >
-                            <f:checkbox field="doUseH2" checked="${instance.doUseH2}" />
-                                </f:entry>
-
-               </table>
-        </f:block>
--->
+        <f:entry>
+             <f:property field="additionalProperties" />
+        </f:entry>
 
 
     </f:section>
 
-   <f:section title = "Systems Under Test">
+    <f:section title = "Data Base Options">
+        <f:entry>
+             <f:property field="dbOptions" />
+        </f:entry>
+    </f:section>
+
+   <f:section title = "Agent Installation">
          <f:entry >
-                 <f:repeatableProperty field = "sutsList" minimum = "1" />
+                 <f:repeatableProperty field = "sutsList" minimum = "0" />
           </f:entry>
     </f:section>
 
-    <f:section title = "Adding Nodes To Do Work">
+    <f:section title = "Jagger Nodes">
         <f:entry name = "nodList">
-             <f:repeatableProperty field = "nodList" minimum = "1" />
+             <f:repeatableProperty field = "nodList" noAddButton="true" minimum = "1" />
         </f:entry>
     </f:section>
 

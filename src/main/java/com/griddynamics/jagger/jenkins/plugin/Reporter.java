@@ -4,7 +4,15 @@ import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import org.codehaus.groovy.tools.shell.IO;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.w3c.tidy.Report;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,8 +21,39 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class Reporter implements Role, Describable<Reporter> {
 
+//    private final String format;
+//    private final String fileName;
+
+//    private String fileNameActual;
+
     @DataBoundConstructor
-    public Reporter(){}
+    public Reporter(String format, String fileName){
+
+//        this.format = format;
+//        this.fileName = fileName;
+    }
+
+    public Reporter(){
+//        this.fileName = "report.pdf";
+//        this.format = "PDF";
+    }
+
+//
+//    public String getFileNameActual() {
+//        return fileNameActual;
+//    }
+//
+//    public void setFileNameActual(String fileNameActual) {
+//        this.fileNameActual = fileNameActual;
+//    }
+//
+//    public String getFileName() {
+//        return fileName;
+//    }
+//
+//    public String getFormat() {
+//        return format;
+//    }
 
     @Override
     public String toString() {
@@ -36,6 +75,24 @@ public class Reporter implements Role, Describable<Reporter> {
         @Override
         public String getDisplayName() {
             return "Reporter";
+        }
+
+
+        /**
+         * Validation of file name
+         * @param fileName file name
+         * @return FormValidation object
+         */
+        public FormValidation doCheckFileName(@QueryParameter("fileName") final String fileName) {
+
+            Pattern pattern = Pattern.compile("(.*)[><\\|\\?*/:\\\\\"@&^#!\\(\\)+=](.*)");
+            Matcher matcher = pattern.matcher(fileName);
+
+            if(!matcher.find()) {
+                return FormValidation.ok();
+            } else {
+                return FormValidation.error("Bad File Name");
+            }
         }
     }
 }

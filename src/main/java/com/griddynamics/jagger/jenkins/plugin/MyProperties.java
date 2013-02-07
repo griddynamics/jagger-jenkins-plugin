@@ -1,5 +1,7 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 
 /**
@@ -14,7 +16,37 @@ public class MyProperties extends Properties{
      * @param key key
      * @param value value
      */
-    public void addValueWithComma( String key, String value){
+    public void addValueWithComma(String key, String value) {
         setProperty(key,getProperty(key) + "," + value);
+    }
+
+    public boolean containsRole(String role) {
+
+        if(keySet().contains("chassis.roles")) {
+
+            String roles = getProperty("chassis.roles");
+            if(roles != null) {
+                if(Arrays.asList(roles.split(",")).contains(role)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean containsRole(RoleTypeName role) {
+
+        if(keySet().contains("chassis.roles")) {
+
+            String roles = getProperty("chassis.roles");
+            if(roles != null) {
+                if(Arrays.asList(roles.split(",")).contains(role.toString())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
