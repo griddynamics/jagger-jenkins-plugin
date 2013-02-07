@@ -1,6 +1,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-  <f:section title="Node">
+
 
 
 
@@ -15,6 +15,8 @@
                 <f:entry title="Ssh Key Path">
                   <f:textbox field="sshKeyPath" />
                 </f:entry>
+
+                <f:entry title=""> <div align="right"> <f:repeatableDeleteButton value="Delete Current Agent" /> </div> </f:entry>
 
 <!--
                 <f:block>
@@ -37,6 +39,6 @@
 
 
 
-  </f:section>
+
 
 </j:jelly>

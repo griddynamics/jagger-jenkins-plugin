@@ -131,6 +131,7 @@ public class SuT implements Describable<SuT>, SshNode {
         /**
          * For test Server Address if it available
          * @param value String from Server Address form
+         * @param installAgent then we can test ssh port 22
          * @return OK if ping, ERROR otherwise
          */
         public FormValidation doCheckServerAddress(@QueryParameter String value,@QueryParameter("installAgent") boolean installAgent) {
@@ -142,7 +143,7 @@ public class SuT implements Describable<SuT>, SshNode {
                 }
 
                 if(value.startsWith("$")){
-                    return FormValidation.ok("using vars");
+                    return FormValidation.ok();
                 }
 
                 if(installAgent){

@@ -208,6 +208,9 @@ public class Node implements Describable<Node>, SshNode {
                 if(value == null || value.matches("\\s*")) {
                     return FormValidation.warning("Set Address");
                 }
+                if(value.contains("$")) {
+                    return FormValidation.ok();
+                }
 
                 new Socket(value,22).close();
 
@@ -218,30 +221,6 @@ public class Node implements Describable<Node>, SshNode {
             }
             return FormValidation.ok();
         }
-
-//
-//        /**
-//         * Checking properties path
-//         * @param setPropertiesByHand boolean from form
-//         * @param propertiesPath String from form
-//         * @return Form Validation OK / ERROR
-//         */
-//        public FormValidation doCheckPropertiesPath(@QueryParameter("setPropertiesByHand") final boolean setPropertiesByHand,
-//                                                @QueryParameter("propertiesPath")final String propertiesPath) {
-//
-//            if(setPropertiesByHand){
-//                return FormValidation.ok();
-//            } else {
-//
-//                if(propertiesPath.matches("\\s*")){
-//                    return FormValidation.warning("Set Properties Path, or Set Properties By Hand");
-//                }
-//                    if(! new File(propertiesPath).exists()){
-//                        return FormValidation.error("File not exist");
-//                    }
-//                return FormValidation.ok();
-//            }
-//        }
 
 
         /**
