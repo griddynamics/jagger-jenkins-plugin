@@ -21,39 +21,10 @@ import java.util.regex.Pattern;
  */
 public class Reporter implements Role, Describable<Reporter> {
 
-//    private final String format;
-//    private final String fileName;
-
-//    private String fileNameActual;
-
     @DataBoundConstructor
-    public Reporter(String format, String fileName){
-
-//        this.format = format;
-//        this.fileName = fileName;
-    }
-
     public Reporter(){
-//        this.fileName = "report.pdf";
-//        this.format = "PDF";
-    }
 
-//
-//    public String getFileNameActual() {
-//        return fileNameActual;
-//    }
-//
-//    public void setFileNameActual(String fileNameActual) {
-//        this.fileNameActual = fileNameActual;
-//    }
-//
-//    public String getFileName() {
-//        return fileName;
-//    }
-//
-//    public String getFormat() {
-//        return format;
-//    }
+    }
 
     @Override
     public String toString() {
@@ -75,24 +46,6 @@ public class Reporter implements Role, Describable<Reporter> {
         @Override
         public String getDisplayName() {
             return "Reporter";
-        }
-
-
-        /**
-         * Validation of file name
-         * @param fileName file name
-         * @return FormValidation object
-         */
-        public FormValidation doCheckFileName(@QueryParameter("fileName") final String fileName) {
-
-            Pattern pattern = Pattern.compile("(.*)[><\\|\\?*/:\\\\\"@&^#!\\(\\)+=](.*)");
-            Matcher matcher = pattern.matcher(fileName);
-
-            if(!matcher.find()) {
-                return FormValidation.ok();
-            } else {
-                return FormValidation.error("Bad File Name");
-            }
         }
     }
 }

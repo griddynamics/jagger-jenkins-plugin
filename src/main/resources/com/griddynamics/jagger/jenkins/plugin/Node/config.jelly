@@ -1,8 +1,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
 
-
-
           <f:entry title="Address" field="serverAddress">
               <f:textbox />
             </f:entry>
@@ -14,71 +12,6 @@
             <f:entry title="Ssh Key Path">
               <f:textbox field="sshKeyPath" />
             </f:entry>
-
-<!--
-     </table>
-  </f:block>
-
-
-  <f:block>
-      <table>
-
-        <f:optionalBlock field = "usePassword" checked="${instance.usePassword}" title="Use Password" inline="true">
-          <f:entry title = "Password">
-            <f:password field = "userPassword"/>
-          </f:entry>
-        </f:optionalBlock>
-
-      </table>
-  </f:block>
-
-
-  <f:block>
-     <table>
-        <f:entry title = "Properies Path" >
-             <f:textbox field = "propertiesPath" />
-          </f:entry>
-
-
-
-<f:block>
-  <table>
-    <f:optionalBlock field = "setPropertiesByHand" checked= "${instance.setPropertiesByHand}"  title = "Set Properties By Hand" inline = "true">
-
-       <f:entry>
-
-            <f:block>
-               <table>
-                  <f:optionalProperty field = "master" title = "MASTER" />
-             </table>
-             </f:block>
-
-            <f:block>
-                <table>
-                    <f:optionalProperty field = "coordinationServer" title = "COORDINATION_SERVER" />
-                </table>
-            </f:block>
-
-            <f:block>
-                <table>
-                    <f:optionalProperty field = "kernel" title = "KERNEL" />
-                </table>
-            </f:block>
-
-             <f:block>
-                <table>
-                    <f:optionalProperty field = "reporter" title = "REPORTER" />
-                </table>
-            </f:block>
-
-       </f:entry>
-    </f:optionalBlock>
-
-  </table>
-</f:block>
-
--->
-
 
 
 </j:jelly>

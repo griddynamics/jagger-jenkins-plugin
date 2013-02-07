@@ -105,17 +105,6 @@ public class SuT implements Describable<SuT>, SshNode {
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
-    @Override
-    public String toString() {
-        return "SuT{" +
-                "serverAddress='" + serverAddressActual + '\'' +
-                ", userName='" + userName + '\'' +
-                ", userPassword='" + userPassword + '\'' +
-                ", sshKeyPath='" + sshKeyPath + '\'' +
-                ", usePassword=" + usePassword +
-                '}';
-    }
-
     public void setServerAddressActual(String s) {
         serverAddressActual = s;
     }
