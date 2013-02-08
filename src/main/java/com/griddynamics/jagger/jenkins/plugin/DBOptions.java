@@ -119,14 +119,4 @@ public class DBOptions implements Describable<DBOptions> {
         }
     }
 
-    @Override
-    public String toString() {
-        return "RDB_SERVER{" +
-                "rdbDriver='" + rdbDriver + '\'' +
-                ", rdbClientUrl='" + rdbClientUrl + '\'' +
-                ", rdbUserName='" + rdbUserName + '\'' +
-                ", rdbPassword='" + rdbPassword + '\'' +
-                ", rdbDialect='" + rdbDialect + '\'' +
-                '}';
-    }
 }

@@ -6,16 +6,11 @@ import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.tools.ant.filters.StringInputStream;
-import org.jvnet.winp.NotWindowsException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class JaggerEasyDeployPlugin extends Builder
@@ -31,12 +26,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private final AdditionalProperties additionalProperties;
 
-    // where we will store properties for Jagger for each node
-    private final String PROPERTIES_PATH = "/properties";
+    private JaggerProperties commonProperties ;
 
-    private MyProperties commonProperties ;
-
-    //environment properties for test suit
+    //environment properties file for test suit
     private final String envProperties;
 
     private String envPropertiesActual;
@@ -48,7 +40,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private String jaggerTestSuitePathActual;
 
-    private String baseDir = "pwd";
+    private final String baseDir = "result";
 
 
     /**
@@ -165,6 +157,9 @@ public class JaggerEasyDeployPlugin extends Builder
         deploymentScript.append("#!/bin/bash\n\n");
         deploymentScript.append("TimeStart=`date +%y/%m/%d_%H:%M`\n\n");
 
+        deploymentScript.append("rm -rf ").append(baseDir).append("\n");
+        deploymentScript.append("mkdir ").append(baseDir).append("\n\n");
+
         killOldJagger(deploymentScript);
 
         deploymentScript.append("sleep 5\n\n");
@@ -181,17 +176,10 @@ public class JaggerEasyDeployPlugin extends Builder
 
         deploymentScript.append("\n\n#mutt -s \"Jenkins[JGR-stable-testplan][$TimeStart]\" jagger@griddynamics.com\n");
 
-        String key = "chassis.master.reporting.report.file.name";
-
         deploymentScript.append("cd ").append(baseDir).append("\n");
-        if(commonProperties.containsKey(key)) {
 
-            deploymentScript.append("zip -9 ").append("report.zip ");
-            deploymentScript.append(commonProperties.getProperty(key)).append(" /result.xml\n");
-        } else {
+        deploymentScript.append("zip -9 ").append("report.zip *.pdf *.html *.xml\n");
 
-            deploymentScript.append("zip -9 ").append("report.zip report.pdf result.xml\n");
-        }
 
     }
 
@@ -204,8 +192,6 @@ public class JaggerEasyDeployPlugin extends Builder
      * @throws InterruptedException /
      */
     private void checkUsesOfEnvironmentProperties(Build build, BuildListener listener) throws IOException, InterruptedException {
-
-        //build.getEnvironment(listener).expand("tyheerth"));
 
         checkNodesOnBuildVars(build, listener);
         checkAdditionalPropertiesOnBuildVars(build, listener);
@@ -360,12 +346,12 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void copyLogs(String userName, String address, String keyPath, StringBuilder script) {
 
-        String jaggerHome = "/home/" + userName + "/runned_jagger";
+        String jaggerHome = "runned_jagger";
                                                                                      //this how we take Nodes logs,and Agents logs
         doOnVmSSH(userName, address, keyPath, "cd " + jaggerHome + "; zip -9 " + address + ".logs.zip jagger*.log*", script);
         script.append("\n");
 
-        scpGetKey(userName, address, keyPath, jaggerHome + "/" + address + ".logs.zip", baseDir, script);
+        scpGetKey(userName, address, keyPath, jaggerHome + File.separator + address + ".logs.zip", baseDir, script);
     }
 
 
@@ -376,39 +362,19 @@ public class JaggerEasyDeployPlugin extends Builder
             String userName = getNodList().get(0).getUserNameActual();
             String address = getNodList().get(0).getServerAddressActual();
             String keyPath = getNodList().get(0).getSshKeyPathActual();
-            String jaggerHome = "/home/" + userName + "/runned_jagger";
+            String jaggerHome = "runned_jagger" + File.separator;
 
 
             script.append("\n\necho \"Copy reports\"\n");
 
-            String key = "chassis.master.reporting.report.file.name";
-
-            if(commonProperties.containsKey(key)) {  //it means that user specify it by plugin, or within properties file
-                scpGetKey(userName,
-                        address,
-                        keyPath,
-                        jaggerHome + "/" + commonProperties.getProperty(key),
-                        baseDir,
-                        script);
-            } else {
-                scpGetKey(userName,
-                        address,
-                        keyPath,
-                        jaggerHome + "/report.pdf", //default value for report file
-                        baseDir,
-                        script);
-            }
-
             scpGetKey(userName,
                     address,
                     keyPath,
-                    jaggerHome + "/result.xml",
+                    "\"" + jaggerHome + "*.xml " + jaggerHome + "*.pdf " + jaggerHome + "*.html\"",
                     baseDir,
                     script);
         } else {
             // in this case we should peak one that have Master role (, or Reporter)
-            //  for(Node node : nodList){
-             // }
         }
 
 
@@ -429,57 +395,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         } else {
             //never mind for now
-//            Node coordinator = null; //COORDINATION_SERVER should start in very last order
-//
-//            for(Node node : nodList) {
-//                String userName = node.getUserNameActual();
-//                String address = node.getServerAddressActual();
-//                String keyPath = node.getSshKeyPathActual();
-//                String jaggerHome = "/home/" + userName + "/runned_jagger";
-//                String newPropPath = jaggerHome + "/tempPropertiesToDeploy.property";
-//
-////                File property = new File(newPropPath);
-////                if(!property.exists()){
-////                    //noinspection ResultOfMethodCallIgnored
-////                    property.mkdirs();
-////                }
-////                scpSendKey(userName, address, keyPath, node.getFinalPropertiesPath(), newPropPath,script);
-////                node.setFinalPropertiesPath(newPropPath);
-////
-////                MyProperties temp = new MyProperties();
-////
-////                if(!node.getPropertiesPathActual().matches("\\s*")) {
-////                    temp.load(new FileInputStream(node.getPropertiesPathActual()));
-////                }
-//
-//                if(node.getCoordinationServer() != null ) {
-//                    coordinator = node;
-//                } else {
-//                    script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
-//    //!!!                                                        //for testing
-//                    doOnVmSSHDaemon(userName, address, keyPath,
-//                            "source /etc/profile ; cd " + jaggerHome + "; ./start.sh " + node.getPropertiesPathActual() + " -Xmx1550m -Xms1550m"
-//                            , script);
-//                    script.append(" > /dev/null\n\n");
-//                }
-//            }
-//
-//            if (coordinator != null) {
-//                String userName = coordinator.getUserNameActual();
-//                String address = coordinator.getServerAddressActual();
-//                String keyPath = coordinator.getSshKeyPathActual();
-//                String jaggerHome = "/home/" + userName + "/runned_jagger";
-//
-//                script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh ").append("properties_file\"\n");
-//
-//                                                                                                                        //-Xmx1550m -Xms1550m
-//                doOnVmSSH(userName, address, keyPath,
-//    //!!!                 //for testing
-//                        "source /etc/profile ;cd " + jaggerHome + "; ./start.sh " + coordinator.getPropertiesPathActual() + " -Xmx1550m -Xms1550m", script);
-//                script.append(" > /dev/null\n\n");
-//            } else {
-//                throw new IllegalArgumentException("no coordinator");
-//            }
         }
     }
 
@@ -488,14 +403,14 @@ public class JaggerEasyDeployPlugin extends Builder
         String userName = nodList.get(0).getUserNameActual();
         String address = nodList.get(0).getServerAddressActual();
         String keyPath = nodList.get(0).getSshKeyPathActual();
-        String jaggerHome = "/home/" + userName + "/runned_jagger";
+        String jaggerHome = "runned_jagger";
 
         script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
 
         StringBuilder command = new StringBuilder();
-//!!!                    //for testing
-        command.append("source /etc/profile ; cd ").append(jaggerHome).append("; ./start.sh ");
+        command.append("cd ").append(jaggerHome).append("; ./start.sh ");
         command.append(getEnvPropertiesActual()).append("\\\n\t-Xmx1550m\\\n\t-Xms1550m\\\n");
+
         if(getAdditionalProperties().isDeclared()) {
             for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
                 command.append("\t-D").append(line.trim()).append("\\\n");
@@ -503,7 +418,6 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
         if(getSutsList() != null) {
-            command.append("\t-Dchassis.conditions.monitoring.enable=true\\\n");
             command.append("\t-Dchassis.conditions.min.agents.count=").append(getSutsList().size()).append("\\\n");
         }
 
@@ -516,7 +430,7 @@ public class JaggerEasyDeployPlugin extends Builder
         doOnVmSSH(userName, address, keyPath,
                 command.toString()
                 , script);
-        script.append(" > /dev/null\n\n");
+        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
     }
 
 
@@ -529,20 +443,21 @@ public class JaggerEasyDeployPlugin extends Builder
         if (sutsList != null) {
             for(SuT node : sutsList){
 
-                String jaggerHome = "/home/" + node.getUserNameActual() + "/runned_jagger";
+                String jaggerHome = "runned_jagger";
 
                 killOldJagger1(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), jaggerHome, script);
                 script.append("sleep 5\n");
 
                 script.append("\necho \"Starting Agent\"\n");
                 script.append("echo \"").append(node.getServerAddressActual()).append(" : cd ").append(jaggerHome).append("; ./start_agent.sh\"\n");
-//!!!                           //for testing
+
                 StringBuilder command = new StringBuilder();
-                command.append("source /etc/profile  ;cd ").append(jaggerHome);
+                command.append("cd ").append(jaggerHome);
                 command.append("; ./start_agent.sh\\\n\t-Xmx1550m\\\n\t-Xms1550m\\\n\t-Dchassis.coordination.http.url=");
                 command.append(commonProperties.get("chassis.coordination.http.url"));
+
                 doOnVmSSHDaemon(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), command.toString(), script);
-                script.append("> /dev/null\n");
+                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
 
             }
         }
@@ -558,7 +473,7 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("\necho \"KILLING old jagger\"\n\n");
         for(Node node:nodList){
 
-            String jaggerHome = "/home/" + node.getUserNameActual() + "/runned_jagger";
+            String jaggerHome = "runned_jagger";
 
             killOldJagger1(node.getUserNameActual(),node.getServerAddressActual(), node.getSshKeyPathActual(), jaggerHome,  script);
         }
@@ -582,32 +497,32 @@ public class JaggerEasyDeployPlugin extends Builder
 
         //here we take name of file from path: '~/path/to/file' -> 'file'
         String jaggerFileName = getJaggerTestSuitePathActual();
-        int index = getJaggerTestSuitePathActual().lastIndexOf('/');
+        int index = getJaggerTestSuitePathActual().lastIndexOf(File.separator);
         if(index >= 0) {
             jaggerFileName = getJaggerTestSuitePathActual().substring(index + 1);
         }
 
         doOnVmSSH(userName, serverAddress, keyPath,
-                "unzip " + jaggerHome + "/" + jaggerFileName + " -d " + jaggerHome,
+                "unzip " + jaggerHome + File.separator + jaggerFileName + " -d " + jaggerHome,
                 script);
-        script.append(" > /dev/null");
+        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
 
         script.append("\n\necho \"KILLING previous processes ").append(userName).append("@").append(serverAddress).append("\"\n");
-        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + "/stop.sh", script);
+        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop.sh", script);
         script.append("\n");
-        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + "/stop_agent.sh", script);
+        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop_agent.sh", script);
         script.append("\n");
-        doOnVmSSH(userName, serverAddress, keyPath, "rm -rf /home/" + userName + "/jaggerdb", script);
+        doOnVmSSH(userName, serverAddress, keyPath, "rm -rf jaggerdb", script);
         script.append("\n\n");
     }
 
 
     /**
-     *
+     *  Common Properties that will be used
      */
     private void setUpCommonProperties()  {
 
-        commonProperties = new MyProperties();
+        commonProperties = new JaggerProperties();
 
         if(getNodList().size() == 1) {
 
@@ -616,141 +531,10 @@ public class JaggerEasyDeployPlugin extends Builder
                     "http://" + getNodList().get(0).getServerAddressActual() + ":8089");
 
         } else {
-
-//            int minAgents = 0;
-//            if (sutsList != null) {
-//                minAgents = sutsList.size();
-//            }
-//
-//            int minKernels = 0;
-//
-//          //  setUpRdbProperties();
-//
-//
-//
-//    //            MyProperties nodesProps = new MyProperties();
-//    //            for(Node node : nodList) {
-//    //
-//    //                nodesProps.clear();
-//    //                if(!node.getPropertiesPathActual().matches("\\s*")){//Actual
-//    //                    nodesProps.load(new FileInputStream(node.getPropertiesPathActual()));
-//    //                }
-//    //
-//    //                if(node.getCoordinationServer() !=  null || nodesProps.containsRole(RoleTypeName.COORDINATION_SERVER)) {
-//    //                    setUpCoordinationServerPropeties(node);
-//    //                }
-//    //
-//    //                if(node.getKernel() != null || nodesProps.containsRole(RoleTypeName.KERNEL)) {
-//    //                    minKernels ++;
-//    //                }
-//    //
-//    //    //            if(node.getMaster() != null || nodesProps.containsRole(RoleTypeName.MASTER)) {
-//    //    //                setUpMasterProperties(node);
-//    //    //            }
-//    //
-//    //                if(node.getReporter() != null || nodesProps.containsRole(RoleTypeName.REPORTER)) {
-//    //             //       setUpReporter(node, nodesProps);
-//    //                }
-//    //            }
-//
-//            commonProperties.setProperty("chassis.conditions.min.agents.count", String.valueOf(minAgents));
-//            commonProperties.setProperty("chassis.conditions.min.kernels.count", String.valueOf(minKernels));
-//            commonProperties.setProperty("jagger.default.environment.properties", "./configuration/basic/default.environment.properties");
+//               . . .
         }
-
     }
 
-
-//    /**
-//     * Set Up Reporter properties : file name, format - html, pdf;
-//     * if Reporter wont be set, or set via properties file, default values ​​will be used
-//     * @param node node that plays Reporter Role
-//     * @param nodesProps  properties from node.propertiesPath
-//     */
-//    private void setUpReporter(Node node, MyProperties nodesProps) {
-//
-//        if(node.getReporter() != null) {
-////            commonProperties.setProperty("chassis.master.reporting.report.format", node.getReporter().getFormat());
-////            commonProperties.setProperty("chassis.master.reporting.report.file.name", node.getReporter().getFileName());
-//        } else {
-//
-//            String defaultFormat = "PDF";
-//
-//            String key = "chassis.master.reporting.report.format";
-//            String format = nodesProps.getProperty(key);
-//            if(format != null){
-//                commonProperties.setProperty(key, format);
-//            } else {
-//                commonProperties.setProperty(key, defaultFormat);
-//            }
-//
-//            key = "chassis.master.reporting.report.file.name";
-//            String fileName = nodesProps.getProperty(key);
-//            if(fileName != null){
-//                commonProperties.setProperty(key, fileName);
-//            } else {
-//                if(format != null) {
-//                    commonProperties.setProperty(key, "report." + format.toLowerCase());
-//                } else {
-//                    commonProperties.setProperty(key, "report." + defaultFormat.toLowerCase());
-//                }
-//            }
-//        }
-//
-//    }
-
-
-//set Up Master Properties .
-//    private void setUpMasterProperties(Node node) {
-//seems that tcpPort is hardcode property
-//            if(!dbOptions.isUseExternalDB()) {
-//                if(!node.getPropertiesPath().matches("\\s*")) {
-//                    String key = "tcpPort" ;          // seems tcpPort only Jaggers property, hardcode
-//                    try {
-//                        Properties prope = new Properties();
-//                        prope.load(new FileInputStream(node.getPropertiesPath()));
-//                        String temp = prope.getProperty(key);
-//                        if(temp == null) {
-//                            commonProperties.setProperty(key, "8043");
-//                        } else {
-//                            commonProperties.setProperty(key, temp);
-//                        }
-//                    } catch (IOException e) {
-//                        commonProperties.setProperty("IOException","while reading " + node.getPropertiesPath());
-//                    }
-//                }
-//            }
-//    }
-
-
-//   Decide to point services in additional properties
-//    /**
-//     * Setting up Common Properties for SUTes
-//     * @param node node to attack
-//     */
-//    private void setUpNodeToAttack(SuT node) {
-//
-//        String key = "test.service.endpoints";
-//        if(commonProperties.get(key) == null){
-//            commonProperties.setProperty(key, node.getServerAddressActual());
-//        } else {
-//            commonProperties.addValueWithComma(key, node.getServerAddressActual());
-//        }
-//    }
-
-//    /**
-//     * Setting up Common Properties for Nodes
-//     * @param node Node that play CoordinationServer Role
-//     */
-//    private void setUpCoordinationServerPropeties(Node node) {
-//
-//            commonProperties.setProperty("chassis.coordinator.zookeeper.endpoint", node.getServerAddressActual() +
-//                    ":2181");          //hardcode for a while - seems that that is hardcode in jager
-//            //Is this property belong to Coordination Server
-//            commonProperties.setProperty("chassis.storage.fs.default.name","hdfs://"+node.getServerAddressActual() + "/");
-//            commonProperties.setProperty("chassis.coordination.http.url","http://" + node.getServerAddressActual() + ":8089");  //hardcode for a while - seems that that is hardcode in jager
-//            //port of http.url hard code? or it can be set somewhere
-//    }
 
     /**
      * Setting up Common Properties for Nodes
@@ -770,31 +554,7 @@ public class JaggerEasyDeployPlugin extends Builder
             commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
 
         } else if (!getDbOptions().isUseExternalDB() && getNodList().size() > 1){
-
-//            String address = "NO_MASTER_DETECTED";
-//
-//            String port = "8043";
-//
-//            MyProperties nodeProp = new MyProperties();
-//            for(Node node: nodList) {
-//
-//                if(!node.getPropertiesPathActual().matches("\\s*")){
-//                    nodeProp.clear();
-//        //            nodeProp.load(new FileInputStream(node.getPropertiesPathActual()));
-//                }
-//                if(node.getMaster() != null || nodeProp.containsRole(RoleTypeName.MASTER.toString())) {
-//                    address = node.getServerAddressActual();
-//                    break;
-//                }
-//            }
-//
-//            commonProperties.setProperty("chassis.storage.rdb.client.driver", "org.h2.Driver");
-//            commonProperties.setProperty("chassis.storage.rdb.client.url","jdbc:h2:tcp://" +
-//                            address + ":" + port +"/jaggerdb/db");
-//            commonProperties.setProperty("chassis.storage.rdb.username","jagger");
-//            commonProperties.setProperty("chassis.storage.rdb.password","rocks");
-//            commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
-
+//          ...
         } else {
 
             commonProperties.setProperty("chassis.storage.rdb.client.driver", getDbOptions().getRdbDriverActual());
@@ -803,214 +563,7 @@ public class JaggerEasyDeployPlugin extends Builder
             commonProperties.setProperty("chassis.storage.rdb.password", getDbOptions().getRdbPassword());
             commonProperties.setProperty("chassis.storage.hibernate.dialect", getDbOptions().getRdbDialectActual());
         }
-
-
     }
-
-
-//    /**
-//     * Generating properties file for Node
-//     * @param node specified node
-//     * @param folder where to write file
-//     * @throws java.io.IOException /
-//     */
-//    private void generatePropertiesFile(Node node, File folder) throws IOException {
-//
-//        File filePath = new File(folder+"/"+node.getServerAddressActual()+".properties");
-//  //      if(filePath.exists()){ filePath.delete();}
-//
-//        MyProperties properties = new MyProperties();
-//
-//        //adding this properties to EACH Node
-//        if(additionalProperties.isDeclared()){
-//            addAdditionalProperties(properties);
-//        }
-//
-//        properties.setProperty("jagger.default.environment.properties", commonProperties.getProperty("jagger.default.environment.properties"));
-//
-//        properties.setProperty("chassis.workspace","./jaggerworkspace");
-//
-////        if(node.getPropertiesPathActual() != null && !node.getPropertiesPathActual().matches("\\s*")) {
-////            //validation of properties path
-////            properties.load(new FileInputStream(node.getPropertiesPathActual()));
-////        }
-//
-//        if(node.getMaster() != null || properties.containsRole(RoleTypeName.MASTER.toString())) {
-//            addMasterProperties(properties);
-//        }
-//
-//        if(node.getCoordinationServer() != null || properties.containsRole(RoleTypeName.COORDINATION_SERVER.toString())) {
-//            addCoordinationServerProperties(properties);
-//        }
-//
-//        if(node.getReporter() != null || properties.containsRole(RoleTypeName.REPORTER)) {
-//            addReporterServerProperties(properties);
-//        }
-//
-//        if(node.getKernel() != null || properties.containsRole(RoleTypeName.KERNEL.toString())) {
-//            addKernelProperties(properties);
-//        }
-//
-//        properties.store(new FileOutputStream(filePath), "generated automatically");
-//        node.setFinalPropertiesPath(filePath.toString());
-//        //finalPropertiesPath - Path that Jenkins will use to run start.sh
-//
-//    }
-//
-//
-//    /**
-//     * Adding properties from Additional properties textarea
-//     * @param properties property of specific node
-//     * @throws java.io.IOException ~
-//     */
-//    private void addAdditionalProperties(MyProperties properties) throws IOException {
-//
-//        properties.load(new StringInputStream(additionalProperties.getTextFromAreaActual()));
-//    }
-//
-//
-//    /**
-//     * Adding Reporter Server Properties
-//     * @param properties    property of specified Node
-//     */
-//    private void addKernelProperties(MyProperties properties) {
-//
-//        String key = "chassis.roles";
-//        if(properties.get(key) == null){
-//            properties.setProperty(key, RoleTypeName.KERNEL.toString());
-//        } else if (!properties.containsRole(RoleTypeName.KERNEL)) {
-//            properties.addValueWithComma(key, RoleTypeName.KERNEL.toString());
-//        }
-//
-//        key = "chassis.coordinator.zookeeper.endpoint";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.fs.default.name";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        addDBProperties(properties);
-//
-//    }
-//
-//
-//    /**
-//     * Adding Reporter Server Properties
-//     * @param properties    property of specified Node
-//     */
-//    private void addReporterServerProperties(MyProperties properties) {
-//
-//        String key = "chassis.roles";
-//        if(properties.get(key) == null){
-//            properties.setProperty(key, RoleTypeName.REPORTER.toString());
-//        } else if (!properties.containsRole(RoleTypeName.REPORTER.toString())) {
-//            properties.addValueWithComma(key, RoleTypeName.REPORTER.toString());
-//        }
-//
-//        key = "chassis.master.reporting.report.format";
-//        if(commonProperties.containsKey(key)) {
-//            properties.setProperty(key, commonProperties.getProperty(key));
-//        }
-//
-//        key = "chassis.master.reporting.report.file.name";
-//        if(commonProperties.containsKey(key)) {
-//            properties.setProperty(key, commonProperties.getProperty(key));
-//        }
-//
-//    }
-//
-//
-//    /**
-//     * Adding Coordination Server Properties
-//     * @param properties    property of specified Node
-//     */
-//    private void addCoordinationServerProperties(MyProperties properties) {
-//
-//        String key = "chassis.roles";
-//        if(properties.get(key) == null){
-//            properties.setProperty(key, RoleTypeName.COORDINATION_SERVER.toString());
-//        } else if (!properties.containsRole(RoleTypeName.COORDINATION_SERVER)) {
-//            properties.addValueWithComma(key, RoleTypeName.COORDINATION_SERVER.toString());
-//        }
-//
-//        key = "chassis.conditions.min.agents.count";
-//        if(Integer.parseInt(commonProperties.getProperty(key)) > 0){
-//            properties.setProperty("chassis.conditions.monitoring.enable","true");
-//            properties.setProperty(key, commonProperties.getProperty(key));
-//        }
-//
-//        key = "chassis.conditions.min.kernels.count";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//    }
-//
-//
-//    /**
-//     * Adding Master Properties
-//     * @param properties    property of specified Node
-//     */
-//    private void addMasterProperties(MyProperties properties) {
-//
-//        String key = "chassis.roles";
-//        if(properties.getProperty(key) == null){
-//            properties.setProperty(key, RoleTypeName.MASTER.toString());
-//        } else if ( !properties.containsRole(RoleTypeName.MASTER)) {
-//            properties.addValueWithComma(key, RoleTypeName.MASTER.toString());
-//        }
-//        //Http coordinator will always be on Master node (on port 8089?)!
-//        if(properties.getProperty(key) != null && !properties.containsRole("HTTP_COORDINATION_SERVER")) {
-//            properties.addValueWithComma(key, "HTTP_COORDINATION_SERVER");
-//        }
-//
-//        if (!dbOptions.isUseExternalDB()) {
-//
-//            if(!properties.getProperty(key).contains("RDB_SERVER")){
-//                properties.addValueWithComma(key,"RDB_SERVER");
-//            }
-//
-//            String port;
-//            port = commonProperties.getProperty("tcpPort");
-//
-//            if(port == null){
-//                properties.setProperty("tcpProperty","8043");
-//            } else {
-//                properties.setProperty("tcpProperty",port);
-//            }
-//
-//        }
-//
-//        key = "chassis.coordinator.zookeeper.endpoint";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.fs.default.name";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        addDBProperties(properties);
-//
-//    }
-//
-//
-//    /**
-//     * Adding Data Base Properties
-//     * @param properties    property of specified Node
-//     */
-//    private void addDBProperties(MyProperties properties) {
-//
-//        String key;
-//
-//        key = "chassis.storage.rdb.client.driver";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.rdb.client.url";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.rdb.username";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.rdb.password";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//
-//        key = "chassis.storage.hibernate.dialect";
-//        properties.setProperty(key, commonProperties.getProperty(key));
-//    }
 
 
     // Start's processes on computer where jenkins run ProcStarter is not serializable
@@ -1031,13 +584,11 @@ public class JaggerEasyDeployPlugin extends Builder
 
         PrintStream logger = listener.getLogger();
         logger.println("\n______Jagger_Easy_Deploy_Started______\n");
-        String pathToDeploymentScript = build.getWorkspace() + "/deploy-script.sh";
+        String pathToDeploymentScript = build.getWorkspace() + File.separator + "deploy-script.sh";
 
         try{
 
             setUpProcStarter(launcher,build,listener);
-
-            createBaseDir();
 
             createScriptFile(pathToDeploymentScript);
 
@@ -1066,16 +617,6 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
         return true;
-
-    }
-
-    private void createBaseDir() throws IOException {
-
-        procStarter.cmds(stringToCmds("rm -rf "+baseDir)).start();
-
-        procStarter.cmds(stringToCmds("mkdir "+baseDir)).start();
-
-
     }
 
 
@@ -1176,22 +717,6 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-//    /**
-//     * not yet implemented
-//     * do commands on remote machine via ssh using password key authorisation
-//     * @param userName /                 look doOnVmSSh(...)
-//     * @param address   /
-//     * @param password   password of user
-//     * @param commandString /
-//     * @throws java.io.IOException /
-//     * @throws InterruptedException /
-//     */
-//    private void doOnVmSSHPass(String userName, String address, String password, String commandString) throws IOException, InterruptedException {
-//       //not yet implemented
-//       // procStarter.cmds(stringToCmds("ssh " + userName + "@" + address + " " + commandString)).start().join();
-//    }
-
-
     /**
      * do commands daemon on remote machine via ssh using public key authorisation
      *
@@ -1216,44 +741,6 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private String[] stringToCmds(String str){
         return QuotedStringTokenizer.tokenize(str);
-    }
-
-
-    /**
-     *  log information about all Nodes
-     *  debug
-     * @param logger listener.getLogger from perform method
-     */
-    private void logInfoAboutNodes(PrintStream logger) {
-
-        if(sutsList != null) {
-            for (SshNode node : sutsList) {
-                logger.println("-------------------------");
-                logger.println(node.getServerAddress() + "\t" + node.getServerAddressActual());
-                logger.println(node.getSshKeyPath() + "\t" + node.getSshKeyPathActual());
-                logger.println(node.getUserName() + "\t" + node.getUserNameActual());
-            }
-                    logger.println("-------------------------\n\n");
-        }
-        for(Node node : nodList){
-            logger.println("-------------------------");
-            logger.println(node.getServerAddress() + "\t" + node.getServerAddressActual());
-            logger.println(node.getSshKeyPath() + "\t" + node.getSshKeyPathActual());
-            logger.println(node.getUserName() + "\t" + node.getUserNameActual());
-        }
-
-
-        logger.println("\n\n------------------------------------");
-        logger.println(dbOptions.getRdbClientUrl() + "\t" + dbOptions.getRdbClientUrlActual());
-        logger.println(dbOptions.getRdbDialect() + "\t" + dbOptions.getRdbDialectActual());
-        logger.println(dbOptions.getRdbDriver() + "\t" + dbOptions.getRdbDriverActual());
-        logger.println(dbOptions.getRdbUserName() + "\t" + dbOptions.getRdbUserNameActual());
-
-        logger.println("\n\n------------------------------------");
-        logger.println(additionalProperties.getTextFromArea() + "\n\n" + additionalProperties.getTextFromAreaActual());
-
-        logger.println("\n\n------------------------------------");
-        logger.println(jaggerTestSuitePath + "\t" + jaggerTestSuitePathActual);
     }
 
 
@@ -1300,7 +787,5 @@ public class JaggerEasyDeployPlugin extends Builder
 
             return FormValidation.ok();
         }
-
     }
-
 }
