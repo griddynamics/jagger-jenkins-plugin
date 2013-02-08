@@ -40,9 +40,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private String jaggerTestSuitePathActual;
 
-    private String baseDir = "result";
-
-    private final String FILE_SEPARATOR = System.getProperty("file.separator");
+    private final String baseDir = "result";
 
 
     /**
@@ -159,6 +157,9 @@ public class JaggerEasyDeployPlugin extends Builder
         deploymentScript.append("#!/bin/bash\n\n");
         deploymentScript.append("TimeStart=`date +%y/%m/%d_%H:%M`\n\n");
 
+        deploymentScript.append("rm -rf ").append(baseDir).append("\n");
+        deploymentScript.append("mkdir ").append(baseDir).append("\n\n");
+
         killOldJagger(deploymentScript);
 
         deploymentScript.append("sleep 5\n\n");
@@ -175,17 +176,10 @@ public class JaggerEasyDeployPlugin extends Builder
 
         deploymentScript.append("\n\n#mutt -s \"Jenkins[JGR-stable-testplan][$TimeStart]\" jagger@griddynamics.com\n");
 
-        String key = "chassis.master.reporting.report.file.name";
-
         deploymentScript.append("cd ").append(baseDir).append("\n");
-        if(commonProperties.containsKey(key)) {
 
-            deploymentScript.append("zip -9 ").append("report.zip ");
-            deploymentScript.append(commonProperties.getProperty(key)).append(" result.xml\n");
-        } else {
+        deploymentScript.append("zip -9 ").append("report.zip *.pdf *.html *.xml\n");
 
-            deploymentScript.append("zip -9 ").append("report.zip report.pdf result.xml\n");
-        }
 
     }
 
@@ -357,7 +351,7 @@ public class JaggerEasyDeployPlugin extends Builder
         doOnVmSSH(userName, address, keyPath, "cd " + jaggerHome + "; zip -9 " + address + ".logs.zip jagger*.log*", script);
         script.append("\n");
 
-        scpGetKey(userName, address, keyPath, jaggerHome + FILE_SEPARATOR + address + ".logs.zip", baseDir, script);
+        scpGetKey(userName, address, keyPath, jaggerHome + File.separator + address + ".logs.zip", baseDir, script);
     }
 
 
@@ -368,33 +362,15 @@ public class JaggerEasyDeployPlugin extends Builder
             String userName = getNodList().get(0).getUserNameActual();
             String address = getNodList().get(0).getServerAddressActual();
             String keyPath = getNodList().get(0).getSshKeyPathActual();
-            String jaggerHome = "runned_jagger";
+            String jaggerHome = "runned_jagger" + File.separator;
 
 
             script.append("\n\necho \"Copy reports\"\n");
 
-            String key = "chassis.master.reporting.report.file.name";
-
-            if(commonProperties.containsKey(key)) {  //it means that user specify it by plugin, or within properties file
-                scpGetKey(userName,
-                        address,
-                        keyPath,
-                        jaggerHome + FILE_SEPARATOR + commonProperties.getProperty(key),
-                        baseDir,
-                        script);
-            } else {
-                scpGetKey(userName,
-                        address,
-                        keyPath,
-                        jaggerHome + FILE_SEPARATOR + "report.pdf", //default value for report file
-                        baseDir,
-                        script);
-            }
-
             scpGetKey(userName,
                     address,
                     keyPath,
-                    jaggerHome + FILE_SEPARATOR + "result.xml",
+                    "\"" + jaggerHome + "*.xml " + jaggerHome + "*.pdf " + jaggerHome + "*.html\"",
                     baseDir,
                     script);
         } else {
@@ -454,7 +430,7 @@ public class JaggerEasyDeployPlugin extends Builder
         doOnVmSSH(userName, address, keyPath,
                 command.toString()
                 , script);
-        script.append(" > ").append(FILE_SEPARATOR).append("dev").append(FILE_SEPARATOR).append("null\n\n");
+        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
     }
 
 
@@ -481,7 +457,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 command.append(commonProperties.get("chassis.coordination.http.url"));
 
                 doOnVmSSHDaemon(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), command.toString(), script);
-                script.append(" > ").append(FILE_SEPARATOR).append("dev").append(FILE_SEPARATOR).append("null\n\n");
+                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
 
             }
         }
@@ -521,20 +497,20 @@ public class JaggerEasyDeployPlugin extends Builder
 
         //here we take name of file from path: '~/path/to/file' -> 'file'
         String jaggerFileName = getJaggerTestSuitePathActual();
-        int index = getJaggerTestSuitePathActual().lastIndexOf(FILE_SEPARATOR);
+        int index = getJaggerTestSuitePathActual().lastIndexOf(File.separator);
         if(index >= 0) {
             jaggerFileName = getJaggerTestSuitePathActual().substring(index + 1);
         }
 
         doOnVmSSH(userName, serverAddress, keyPath,
-                "unzip " + jaggerHome + FILE_SEPARATOR + jaggerFileName + " -d " + jaggerHome,
+                "unzip " + jaggerHome + File.separator + jaggerFileName + " -d " + jaggerHome,
                 script);
-        script.append(" > ").append(FILE_SEPARATOR).append("dev").append(FILE_SEPARATOR).append("null\n\n");
+        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
 
         script.append("\n\necho \"KILLING previous processes ").append(userName).append("@").append(serverAddress).append("\"\n");
-        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + FILE_SEPARATOR + "stop.sh", script);
+        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop.sh", script);
         script.append("\n");
-        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + FILE_SEPARATOR + "stop_agent.sh", script);
+        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop_agent.sh", script);
         script.append("\n");
         doOnVmSSH(userName, serverAddress, keyPath, "rm -rf jaggerdb", script);
         script.append("\n\n");
@@ -608,13 +584,11 @@ public class JaggerEasyDeployPlugin extends Builder
 
         PrintStream logger = listener.getLogger();
         logger.println("\n______Jagger_Easy_Deploy_Started______\n");
-        String pathToDeploymentScript = build.getWorkspace() + FILE_SEPARATOR + "deploy-script.sh";
+        String pathToDeploymentScript = build.getWorkspace() + File.separator + "deploy-script.sh";
 
         try{
 
             setUpProcStarter(launcher,build,listener);
-
-            createBaseDir();
 
             createScriptFile(pathToDeploymentScript);
 
@@ -643,13 +617,6 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
         return true;
-    }
-
-    private void createBaseDir() throws IOException {
-
-        procStarter.cmds(stringToCmds("rm -rf "+baseDir)).start();
-
-        procStarter.cmds(stringToCmds("mkdir "+baseDir)).start();
     }
 
 
