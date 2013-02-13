@@ -409,7 +409,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         StringBuilder command = new StringBuilder();
         command.append("cd ").append(jaggerHome).append("; ./start.sh ");
-        command.append(getEnvPropertiesActual()).append("\\\n\t-Xmx1550m\\\n\t-Xms1550m\\\n");
+        command.append(getEnvPropertiesActual()).append(" \'\\\n\t-Xmx1550m\\\n\t-Xms1550m\\\n");
 
         if(getAdditionalProperties().isDeclared()) {
             for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
@@ -426,6 +426,9 @@ public class JaggerEasyDeployPlugin extends Builder
         } else {
             command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER,RDB_SERVER");
         }
+
+        command.append("\'");
+
 
         doOnVmSSH(userName, address, keyPath,
                 command.toString()
