@@ -11,6 +11,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,12 +39,16 @@ public class SuT implements Describable<SuT>, SshNode {
 
     private String sshKeyPathActual;
 
+    private final boolean useJmx;
+
+    private final String jmxPort;
+
     private final boolean usePassword;
 
 
     @DataBoundConstructor
     public SuT(String serverAddress, String userName, String sshKeyPath,
-               boolean usePassword, String userPassword){
+               boolean usePassword, String userPassword, String jmxPort, boolean useJmx){
 
         this.serverAddress = serverAddress;
         this.serverAddressActual = serverAddress;
@@ -53,8 +58,17 @@ public class SuT implements Describable<SuT>, SshNode {
         this.sshKeyPathActual = sshKeyPath;
         this.usePassword = usePassword;
         this.userPassword = userPassword;
+        this.jmxPort = jmxPort;
+        this.useJmx = useJmx;
     }
 
+    public boolean isUseJmx() {
+        return useJmx;
+    }
+
+    public String getJmxPort() {
+        return jmxPort;
+    }
 
     public String getUserNameActual() {
         return userNameActual;

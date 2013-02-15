@@ -31,6 +31,8 @@ public class Node implements Describable<Node>, SshNode {
 
     private String sshKeyPathActual;
 
+    private String rolesWithComas;
+
     private HashMap<RoleTypeName, Role> hmRoles;
 
     @DataBoundConstructor
@@ -41,7 +43,7 @@ public class Node implements Describable<Node>, SshNode {
                 CoordinationServer coordinationServer,
                 Kernel kernel,
                 Reporter reporter
-    ) {
+             ) {
 
         this.serverAddress = serverAddress;
         this.serverAddressActual = serverAddress;
@@ -51,9 +53,56 @@ public class Node implements Describable<Node>, SshNode {
         this.sshKeyPathActual = sshKeyPath;
 
         hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
+        fillRoles(master, coordinationServer, kernel, reporter);
 
     }
 
+    private void fillRoles(Role ... roles) {
+
+        rolesWithComas = "";
+        for(Role role : roles){
+            if(role != null) {
+
+                hmRoles.put(role.getRoleType(), role);
+
+                if(rolesWithComas.isEmpty()){
+
+                    rolesWithComas += role.getRoleType().toString();
+
+                    if(role.getRoleType().equals(RoleTypeName.MASTER)) {
+                        rolesWithComas += ",HTTP_COORDINATION_SERVER";
+                    }
+                } else {
+
+                    rolesWithComas += "," + role.getRoleType().toString();
+
+                    if(role.getRoleType().equals(RoleTypeName.MASTER)) {
+                        rolesWithComas += ",HTTP_COORDINATION_SERVER";
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean isMaster() {
+        return hmRoles.containsKey(RoleTypeName.MASTER);
+    }
+
+    public boolean isCoordinationServer() {
+        return hmRoles.containsKey(RoleTypeName.COORDINATION_SERVER);
+    }
+
+    public boolean isKernel() {
+        return hmRoles.containsKey(RoleTypeName.KERNEL);
+    }
+
+    public boolean isReporter() {
+        return hmRoles.containsKey(RoleTypeName.REPORTER);
+    }
+
+    public String getRolesWithComas() {
+        return rolesWithComas;
+    }
 
     public CoordinationServer getCoordinationServer() {
 
