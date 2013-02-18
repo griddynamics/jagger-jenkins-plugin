@@ -15,57 +15,10 @@
         <f:textbox field="sshKeyPath" />
     </f:entry>
 
-<!--
-    <f:entry>
-        <f:block>
-            <f:optionalProperty field = "master" title = "MASTER" />
-            <f:optionalProperty field = "coordinationServer" title = "COORDINATION_SERVER" />
-            <f:optionalProperty field = "kernel" title = "KERNEL" />
-            <f:optionalProperty field = "reporter" title = "REPORTER" />
-        </f:block>
-        <f:entry title=""> <div align="right"> <f:repeatableDeleteButton value="Delete Current Node" /> </div> </f:entry>
-    </f:entry>
-
-
-    <j:choose>
-
-        <j:when test="${instance.isOneNodeConfiguration()}">
-
-        </j:when>
-
-        <j:otherwise>
-
-            <f:entry>
-                <f:block>
-                    <table>
-                        <f:optionalProperty field = "master" title = "MASTER" />
-                    </table>
-                </f:block>
-
-                <f:block>
-                    <table>
-                        <f:optionalProperty field = "coordinationServer" title = "COORDINATION_SERVER" />
-                    </table>
-                </f:block>
-
-                <f:block>
-                    <table>
-                        <f:optionalProperty field = "kernel" title = "KERNEL" />
-                    </table>
-                </f:block>
-
-                <f:block>
-                    <table>
-                        <f:optionalProperty field = "reporter" title = "REPORTER" />
-                    </table>
-                </f:block>
-
-                <f:entry title=""> <div align="right"> <f:repeatableDeleteButton value="Delete Current Node" /> </div> </f:entry>
-            </f:entry>
-
-        </j:otherwise>
-
-    </j:choose>
--->
+    <f:optionalBlock field="setJavaHome" title="Set JAVA_HOME" inline="true">
+          <f:entry title="" field="javaHome">
+                <f:textbox />
+          </f:entry>
+    </f:optionalBlock>
 
 </j:jelly>

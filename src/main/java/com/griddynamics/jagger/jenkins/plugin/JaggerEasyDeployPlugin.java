@@ -252,11 +252,19 @@ public class JaggerEasyDeployPlugin extends Builder
 
         if(sutsList != null) {
             for(SuT node : sutsList) {
+                checkJavaHome(build, listener, node);
                 checkSshNodesServerAddresses(build, listener, node);
                 checkSshNodesSSHKeyPath(build, listener, node);
                 checkSshNodesUserName(build, listener, node);
+                checkJmxPort(build, listener, node);
             }
         }
+    }
+
+    private void checkJmxPort(Build build, BuildListener listener, SuT node) throws IOException, InterruptedException {
+
+        String temp = node.getJmxPort();
+        node.setJmxPortActual(build.getEnvironment(listener).expand(temp));
     }
 
 
@@ -304,7 +312,14 @@ public class JaggerEasyDeployPlugin extends Builder
             checkSshNodesServerAddresses(build, listener, node);
             checkSshNodesUserName(build, listener, node);
             checkSshNodesSSHKeyPath(build, listener, node);
+            checkJavaHome(build, listener, node);
         }
+    }
+
+    private void checkJavaHome(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
+
+        String temp = node.getJavaHome();
+        node.setJavaHomeActual(build.getEnvironment(listener).expand(temp));
     }
 
     private void checkSshNodesSSHKeyPath(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
@@ -345,6 +360,7 @@ public class JaggerEasyDeployPlugin extends Builder
             for(SuT node : sutsList) {
                 script.append("\necho \"Copy agents logs\"\n");
                 copyLogs(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), script);
+                script.append("echo \"Stop Agent\"\n");
                 stopJaggerAgent(script, node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual());
             }
         }
@@ -381,7 +397,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
 
     private void copyLogs(String userName, String address, String keyPath, StringBuilder script) {
-
                                                                                      //this how we take Nodes logs,and Agents logs
         doOnVmSSH(userName, address, keyPath, "cd " + jaggerHome + "; zip -9 " + address + ".logs.zip jagger*.log*", script);
         script.append("\n");
@@ -457,7 +472,14 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
 
         StringBuilder command = new StringBuilder();
-        command.append("cd ").append(jaggerHome).append("; ./start.sh ");
+        command.append("cd ").append(jaggerHome);
+
+        if (node.isSetJavaHome()) {
+            command.append("; export JAVA_HOME=").append(node.getJavaHomeActual());
+        }
+
+        command.append("; ./start.sh ");
+
         command.append(getEnvPropertiesActual()).append(" \'\\\n\t-Xmx1550m \\\n\t-Xms1550m \\\n");
 
         if(getAdditionalProperties().isDeclared()) {
@@ -534,7 +556,7 @@ public class JaggerEasyDeployPlugin extends Builder
         key = "chassis.storage.rdb.client.url";
         command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
         key = "chassis.storage.rdb.username";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("  \\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
         key = "chassis.storage.rdb.password";
         command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
         key = "chassis.storage.hibernate.dialect";
@@ -557,6 +579,11 @@ public class JaggerEasyDeployPlugin extends Builder
 
                 StringBuilder command = new StringBuilder();
                 command.append("cd ").append(jaggerHome);
+
+                if(node.isSetJavaHome()) {
+                    command.append("; export JAVA_HOME=").append(node.getJavaHomeActual());
+                }
+
                 command.append("; ./start_agent.sh \'\\\n\t");
 
                 command.append("-Dchassis.coordination.http.url=");
@@ -565,7 +592,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 if(node.isUseJmx()) {
 
                     command.append("-Djmx.enabled=true \\\n\t");
-                    String[] ports = node.getJmxPort().split("[,;\\s]");
+                    String[] ports = node.getJmxPortActual().split("[,;\\s]");
                     command.append("-Djmx.services=");
                     for(int i = 0; i<ports.length -1 ; i ++) {
                         command.append("localhost:").append(ports[i]).append(";");// with coma in new version

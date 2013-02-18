@@ -13,15 +13,20 @@
                   <f:textbox field="sshKeyPath" />
                 </f:entry>
 
-                 <f:block>
-                      <table>
-                            <f:optionalBlock field="useJmx" title="JMX" inline="true">
-                                  <f:entry title="Port" field="jmxPort">
-                                        <f:textbox />
-                                  </f:entry>
-                            </f:optionalBlock>
-                      </table>
-                </f:block>
+
+                <f:optionalBlock field="setJavaHome" title="Set JAVA_HOME" inline="true">
+                      <f:entry title="" field="javaHome">
+                            <f:textbox />
+                      </f:entry>
+                </f:optionalBlock>
+
+
+                <f:optionalBlock field="useJmx" title="Use JMX" inline="true">
+                      <f:entry title="Port(s)" field="jmxPort">
+                            <f:textbox />
+                      </f:entry>
+                </f:optionalBlock>
+
 
                 <f:entry title=""> <div align="right"> <f:repeatableDeleteButton value="Delete Current Agent" /> </div> </f:entry>
 
