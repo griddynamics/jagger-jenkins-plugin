@@ -13,6 +13,16 @@
                   <f:textbox field="sshKeyPath" />
                 </f:entry>
 
+                 <f:block>
+                      <table>
+                            <f:optionalBlock field="useJmx" title="JMX" inline="true">
+                                  <f:entry title="Port" field="jmxPort">
+                                        <f:textbox />
+                                  </f:entry>
+                            </f:optionalBlock>
+                      </table>
+                </f:block>
+
                 <f:entry title=""> <div align="right"> <f:repeatableDeleteButton value="Delete Current Agent" /> </div> </f:entry>
 
 

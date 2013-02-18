@@ -184,8 +184,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         copyAllLogs(deploymentScript);
 
-        stopJagger(deploymentScript);
-
         deploymentScript.append("\n\n#mutt -s \"Jenkins[JGR-stable-testplan][$TimeStart]\" jagger@griddynamics.com\n");
 
         deploymentScript.append("cd ").append(getBaseDir()).append("\n");
@@ -347,6 +345,7 @@ public class JaggerEasyDeployPlugin extends Builder
             for(SuT node : sutsList) {
                 script.append("\necho \"Copy agents logs\"\n");
                 copyLogs(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), script);
+                stopJaggerAgent(script, node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual());
             }
         }
     }
@@ -430,7 +429,7 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void startNodes(StringBuilder script) {
 
-        script.append("\n\necho \"Copying properties to remote Nodes and start\"\n");
+        script.append("echo \"Copying properties to remote Nodes and start\"\n");
 
         if(!multiNodeConfiguration) {
 
@@ -458,7 +457,7 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
 
         StringBuilder command = new StringBuilder();
-        command.append("source /etc/profile;cd ").append(jaggerHome).append("; ./start.sh ");  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!source - не нужно
+        command.append("cd ").append(jaggerHome).append("; ./start.sh ");
         command.append(getEnvPropertiesActual()).append(" \'\\\n\t-Xmx1550m \\\n\t-Xms1550m \\\n");
 
         if(getAdditionalProperties().isDeclared()) {
@@ -485,6 +484,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         if(!multiNodeConfiguration) {
             if(getDbOptions().isUseExternalDB()) {
+                setRdbProperties(command);
                 command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER");
             } else {
                 command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER,RDB_SERVER");
@@ -530,15 +530,15 @@ public class JaggerEasyDeployPlugin extends Builder
     private void setRdbProperties(StringBuilder command) {
 
         String key = "chassis.storage.rdb.client.driver";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
         key = "chassis.storage.rdb.client.url";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
         key = "chassis.storage.rdb.username";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("  \\\n");
         key = "chassis.storage.rdb.password";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
         key = "chassis.storage.hibernate.dialect";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
     }
 
     /**
@@ -552,28 +552,33 @@ public class JaggerEasyDeployPlugin extends Builder
 
                 killOldJagger1(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), jaggerHome, script);
 
-                script.append("\necho \"Starting Agent\"\n");
+                script.append("echo \"Starting Agent\"\n");
                 script.append("echo \"").append(node.getServerAddressActual()).append(" : cd ").append(jaggerHome).append("; ./start_agent.sh\"\n");
 
                 StringBuilder command = new StringBuilder();
                 command.append("cd ").append(jaggerHome);
                 command.append("; ./start_agent.sh \'\\\n\t");
 
-                //
                 command.append("-Dchassis.coordination.http.url=");
                 command.append(commonProperties.get("chassis.coordination.http.url")).append(" \\\n\t");
-                //
 
                 if(node.isUseJmx()) {
+
                     command.append("-Djmx.enabled=true \\\n\t");
-                    command.append("-Djmx.services=").append(node.getJmxPort()).append(" \\\n\t");
+                    String[] ports = node.getJmxPort().split("[,;\\s]");
+                    command.append("-Djmx.services=");
+                    for(int i = 0; i<ports.length -1 ; i ++) {
+                        command.append("localhost:").append(ports[i]).append(";");// with coma in new version
+                    }
+                    command.append("localhost:").append(ports[ports.length-1]);
+                    command.append(" \\\n\t");
                 } else {
                      command.append("-Djmx.enabled=false \\\n\t");
                 }
 
                 command.append("\'");
                 doOnVmSSHDaemon(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), command.toString(), script);
-                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
+                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n\n");
 
             }
         }
@@ -626,14 +631,8 @@ public class JaggerEasyDeployPlugin extends Builder
         stopJagger(script, userName, serverAddress, keyPath);
         stopJaggerAgent(script, userName, serverAddress, keyPath);
 
-//        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop.sh", script);
-//        script.append("\n");
+        script.append("\n\n");
 
-//        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop_agent.sh", script);
-//        script.append("\n");
-//        doOnVmSSH(userName, serverAddress, keyPath, "rm -rf jaggerdb", script);
-
-        script.append("\n\n\n");
     }
 
 

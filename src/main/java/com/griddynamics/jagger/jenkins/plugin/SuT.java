@@ -172,5 +172,21 @@ public class SuT implements Describable<SuT>, SshNode {
             }
             return FormValidation.ok();
         }
+
+         /**
+         * testing if jmx ports given correctly
+         * @param value jmx port(s)
+         * @return FormValidation
+         */
+        public FormValidation doCheckJmxPort(@QueryParameter String value) {
+
+            if(value == null || value.matches("\\s*")) {
+                return FormValidation.warning("Set JMX Port(s)");
+            } else if(value.matches("\\d+([,;\\s]\\d+)*")) {
+                return FormValidation.ok();
+            } else {
+                return FormValidation.error("wrong format");
+            }
+        }
     }
 }
