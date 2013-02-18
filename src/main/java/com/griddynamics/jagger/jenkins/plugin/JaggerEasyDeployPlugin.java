@@ -595,7 +595,7 @@ public class JaggerEasyDeployPlugin extends Builder
                     String[] ports = node.getJmxPortActual().split("[,;\\s]");
                     command.append("-Djmx.services=");
                     for(int i = 0; i<ports.length -1 ; i ++) {
-                        command.append("localhost:").append(ports[i]).append(";");// with coma in new version
+                        command.append("localhost:").append(ports[i]).append(",");// with ";" in old version Jagger
                     }
                     command.append("localhost:").append(ports[ports.length-1]);
                     command.append(" \\\n\t");
@@ -676,6 +676,8 @@ public class JaggerEasyDeployPlugin extends Builder
             commonProperties.setProperty("chassis.coordination.http.url",
                     "http://" + getNodList().get(0).getServerAddressActual() + ":8089");
 
+            commonProperties.setProperty("chassis.conditions.min.kernels.count", "1");
+
         } else {
 
             int minKernels = 0;
@@ -701,10 +703,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void setUpMasterProperties(Node node) {
 
-//        int httpUrlPort = 8089;
-//        commonProperties.setProperty("chassis.coordination.http.url",
-//                    "http://" + node.getServerAddressActual() + ":" + httpUrlPort);
-//
         commonProperties.setProperty("chassis.storage.fs.default.name","hdfs://" + node.getServerAddressActual() + "/");
     }
 
