@@ -397,11 +397,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
 
     private void copyLogs(String userName, String address, String keyPath, StringBuilder script) {
-                                                                                     //this how we take Nodes logs,and Agents logs
-        doOnVmSSH(userName, address, keyPath, "cd " + jaggerHome + "; zip -9 " + address + ".logs.zip jagger*.log*", script);
-        script.append("\n");
 
-        scpGetKey(userName, address, keyPath, jaggerHome + File.separator + address + ".logs.zip", getBaseDir(), script);
+        scpGetKey(userName, address, keyPath, jaggerHome + File.separator + "*.log*", getBaseDir(), script);
+        script.append("cd " + baseDir + "; zip -9 ").append(address).append(".zip jagger*.log*; rm jagger*.log*; cd ..\n");
     }
 
 
