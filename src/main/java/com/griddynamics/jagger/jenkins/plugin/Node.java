@@ -31,7 +31,15 @@ public class Node implements Describable<Node>, SshNode {
 
     private String sshKeyPathActual;
 
+    private String rolesWithComas;
+
     private HashMap<RoleTypeName, Role> hmRoles;
+
+    private final boolean setJavaHome;
+
+    private final String javaHome;
+
+    private String javaHomeActual;
 
     @DataBoundConstructor
     public Node(String serverAddress, String userName,
@@ -40,8 +48,8 @@ public class Node implements Describable<Node>, SshNode {
                 Master master,
                 CoordinationServer coordinationServer,
                 Kernel kernel,
-                Reporter reporter
-    ) {
+                Reporter reporter,
+                boolean setJavaHome, String javaHome) {
 
         this.serverAddress = serverAddress;
         this.serverAddressActual = serverAddress;
@@ -49,11 +57,77 @@ public class Node implements Describable<Node>, SshNode {
         this.userNameActual = userName;
         this.sshKeyPath = sshKeyPath;
         this.sshKeyPathActual = sshKeyPath;
+        this.setJavaHome = setJavaHome;
+        this.javaHome = javaHome;
+
+        setJavaHomeActual(javaHome);
 
         hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
-
+        fillRoles(master, coordinationServer, kernel, reporter);
     }
 
+    public boolean isSetJavaHome() {
+        return setJavaHome;
+    }
+
+    public String getJavaHomeActual() {
+        return javaHomeActual;
+    }
+
+    public void setJavaHomeActual(String javaHomeActual) {
+        this.javaHomeActual = javaHomeActual;
+    }
+
+    public String getJavaHome() {
+        return javaHome;
+    }
+
+    private void fillRoles(Role ... roles) {
+
+        rolesWithComas = "";
+        for(Role role : roles){
+            if(role != null) {
+
+                hmRoles.put(role.getRoleType(), role);
+
+                if(rolesWithComas.isEmpty()){
+
+                    rolesWithComas += role.getRoleType().toString();
+
+                    if(role.getRoleType().equals(RoleTypeName.MASTER)) {
+                        rolesWithComas += ",HTTP_COORDINATION_SERVER";
+                    }
+                } else {
+
+                    rolesWithComas += "," + role.getRoleType().toString();
+
+                    if(role.getRoleType().equals(RoleTypeName.MASTER)) {
+                        rolesWithComas += ",HTTP_COORDINATION_SERVER";
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean isMaster() {
+        return hmRoles.containsKey(RoleTypeName.MASTER);
+    }
+
+    public boolean isCoordinationServer() {
+        return hmRoles.containsKey(RoleTypeName.COORDINATION_SERVER);
+    }
+
+    public boolean isKernel() {
+        return hmRoles.containsKey(RoleTypeName.KERNEL);
+    }
+
+    public boolean isReporter() {
+        return hmRoles.containsKey(RoleTypeName.REPORTER);
+    }
+
+    public String getRolesWithComas() {
+        return rolesWithComas;
+    }
 
     public CoordinationServer getCoordinationServer() {
 
@@ -151,6 +225,20 @@ public class Node implements Describable<Node>, SshNode {
                 return FormValidation.error("Can't Reach Host on 22 port");
             }
             return FormValidation.ok();
+        }
+
+        /**
+         * test Java Home
+         * @param value String from JavaHome form
+         * @return FormValidation
+         */
+        public FormValidation doCheckJavaHome(@QueryParameter String value) {
+
+            if(value == null || value.matches("\\s*")) {
+                return FormValidation.warning("Set JavaHome");
+            } else {
+                return FormValidation.ok();
+            }
         }
     }
 }

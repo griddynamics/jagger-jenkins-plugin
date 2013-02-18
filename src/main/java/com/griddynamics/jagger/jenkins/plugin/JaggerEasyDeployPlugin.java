@@ -42,6 +42,10 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private final String baseDir = "result";
 
+    private final String jaggerHome = "runned_jagger" ;
+
+    private final boolean multiNodeConfiguration;
+
 
     /**
      * Constructor where fields from *.jelly will be passed
@@ -67,6 +71,16 @@ public class JaggerEasyDeployPlugin extends Builder
 
         this.envProperties = envProperties;
         this.envPropertiesActual = envProperties;
+
+        multiNodeConfiguration = nodList.size() > 1;
+    }
+
+    public boolean isMultiNodeConfiguration() {
+        return multiNodeConfiguration;
+    }
+
+    public String getBaseDir() {
+        return baseDir;
     }
 
     public String getEnvPropertiesActual() {
@@ -157,18 +171,14 @@ public class JaggerEasyDeployPlugin extends Builder
         deploymentScript.append("#!/bin/bash\n\n");
         deploymentScript.append("TimeStart=`date +%y/%m/%d_%H:%M`\n\n");
 
-        deploymentScript.append("rm -rf ").append(baseDir).append("\n");
-        deploymentScript.append("mkdir ").append(baseDir).append("\n\n");
+        deploymentScript.append("rm -rf ").append(getBaseDir()).append("\n");
+        deploymentScript.append("mkdir ").append(getBaseDir()).append("\n\n");
 
         killOldJagger(deploymentScript);
-
-        deploymentScript.append("sleep 5\n\n");
 
         startAgents(deploymentScript);
 
         startNodes(deploymentScript);
-
-        deploymentScript.append("sleep 5\n\n");
 
         copyReports(deploymentScript);
 
@@ -176,10 +186,41 @@ public class JaggerEasyDeployPlugin extends Builder
 
         deploymentScript.append("\n\n#mutt -s \"Jenkins[JGR-stable-testplan][$TimeStart]\" jagger@griddynamics.com\n");
 
-        deploymentScript.append("cd ").append(baseDir).append("\n");
+        deploymentScript.append("cd ").append(getBaseDir()).append("\n");
 
         deploymentScript.append("zip -9 ").append("report.zip *.pdf *.html *.xml\n");
 
+
+    }
+
+
+    /**
+     * stop Agents
+     * @param deploymentScript /
+     */
+    private void stopJagger(StringBuilder deploymentScript) {
+
+        if(sutsList != null) {
+            for(SuT sut: sutsList) {
+                stopJaggerAgent(deploymentScript, sut.getUserNameActual(), sut.getServerAddressActual(),
+                        sut.getSshKeyPathActual());
+            }
+        }
+    }
+
+    private void stopJaggerAgent(StringBuilder script,
+                                 String userName, String serverAddress, String keyPath) {
+
+        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop_agent.sh", script);
+        script.append("\n");
+
+    }
+
+    private void stopJagger(StringBuilder script,
+                                 String userName, String serverAddress, String keyPath) {
+
+        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop.sh", script);
+        script.append("\n");
 
     }
 
@@ -199,14 +240,11 @@ public class JaggerEasyDeployPlugin extends Builder
         checkDBOptionsOnBuildVars(build, listener);
         checkAgentsOnBuildVars(build, listener);
         checkEnvPropertiesOnBuildVars(build, listener);
-
-
     }
 
     private void checkEnvPropertiesOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
 
         String temp = getEnvProperties();
-
         setEnvPropertiesActual(build.getEnvironment(listener).expand(temp));
     }
 
@@ -214,11 +252,19 @@ public class JaggerEasyDeployPlugin extends Builder
 
         if(sutsList != null) {
             for(SuT node : sutsList) {
+                checkJavaHome(build, listener, node);
                 checkSshNodesServerAddresses(build, listener, node);
                 checkSshNodesSSHKeyPath(build, listener, node);
                 checkSshNodesUserName(build, listener, node);
+                checkJmxPort(build, listener, node);
             }
         }
+    }
+
+    private void checkJmxPort(Build build, BuildListener listener, SuT node) throws IOException, InterruptedException {
+
+        String temp = node.getJmxPort();
+        node.setJmxPortActual(build.getEnvironment(listener).expand(temp));
     }
 
 
@@ -247,7 +293,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void checkAdditionalPropertiesOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
 
-    String temp = getAdditionalProperties().getTextFromArea();
+        String temp = getAdditionalProperties().getTextFromArea();
         additionalProperties.setTextFromAreaActual(build.getEnvironment(listener).expand(temp));
     }
 
@@ -266,9 +312,14 @@ public class JaggerEasyDeployPlugin extends Builder
             checkSshNodesServerAddresses(build, listener, node);
             checkSshNodesUserName(build, listener, node);
             checkSshNodesSSHKeyPath(build, listener, node);
-
+            checkJavaHome(build, listener, node);
         }
+    }
 
+    private void checkJavaHome(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
+
+        String temp = node.getJavaHome();
+        node.setJavaHomeActual(build.getEnvironment(listener).expand(temp));
     }
 
     private void checkSshNodesSSHKeyPath(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
@@ -307,17 +358,17 @@ public class JaggerEasyDeployPlugin extends Builder
 
         if(sutsList != null){
             for(SuT node : sutsList) {
-                if(node != null) {
-                    script.append("\necho \"Copy agents logs\"\n");
-                    copyLogs(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), script);
-                }
+                script.append("\necho \"Copy agents logs\"\n");
+                copyLogs(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), script);
+                script.append("echo \"Stop Agent\"\n");
+                stopJaggerAgent(script, node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual());
             }
         }
     }
 
     private void copyKernelsLogs(StringBuilder script) {
 
-        if(getNodList().size() != 1) {
+        if(multiNodeConfiguration) {
             for (Node node: nodList) {
                 if(node.getKernel() != null && node.getMaster() == null) {
                     script.append("\necho \"Copy kernels logs\"\n");
@@ -329,7 +380,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void copyMastersLogs(StringBuilder script) {
 
-        if(getNodList().size() == 1) {
+        if(!multiNodeConfiguration) {
              script.append("\necho \"Copy master logs\"\n");
                 copyLogs(getNodList().get(0).getUserNameActual(), getNodList().get(0).getServerAddressActual(),
                         getNodList().get(0).getSshKeyPathActual(), script);
@@ -338,6 +389,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 if(node.getMaster() != null) {
                     script.append("\necho \"Copy master logs\"\n");
                     copyLogs(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), script);
+                    break;
                 }
             }
         }
@@ -345,39 +397,44 @@ public class JaggerEasyDeployPlugin extends Builder
 
 
     private void copyLogs(String userName, String address, String keyPath, StringBuilder script) {
-
-        String jaggerHome = "runned_jagger";
                                                                                      //this how we take Nodes logs,and Agents logs
         doOnVmSSH(userName, address, keyPath, "cd " + jaggerHome + "; zip -9 " + address + ".logs.zip jagger*.log*", script);
         script.append("\n");
 
-        scpGetKey(userName, address, keyPath, jaggerHome + File.separator + address + ".logs.zip", baseDir, script);
+        scpGetKey(userName, address, keyPath, jaggerHome + File.separator + address + ".logs.zip", getBaseDir(), script);
     }
 
 
     private void copyReports(StringBuilder script) {
 
-        if(getNodList().size() == 1) {
+        if(!multiNodeConfiguration) {
 
-            String userName = getNodList().get(0).getUserNameActual();
-            String address = getNodList().get(0).getServerAddressActual();
-            String keyPath = getNodList().get(0).getSshKeyPathActual();
-            String jaggerHome = "runned_jagger" + File.separator;
-
-
-            script.append("\n\necho \"Copy reports\"\n");
-
-            scpGetKey(userName,
-                    address,
-                    keyPath,
-                    "\"" + jaggerHome + "*.xml " + jaggerHome + "*.pdf " + jaggerHome + "*.html\"",
-                    baseDir,
-                    script);
+            copyReports(nodList.get(0), script);
         } else {
-            // in this case we should peak one that have Master role (, or Reporter)
+
+            for(Node node : nodList) {
+                if(node.getMaster() != null) {
+                    copyReports(node, script);
+                    break;
+                }
+            }
         }
+    }
 
+    private void copyReports(Node node, StringBuilder script) {
 
+        String userName = node.getUserNameActual();
+        String address = node.getServerAddressActual();
+        String keyPath = node.getSshKeyPathActual();
+
+        script.append("\n\necho \"Copy reports\"\n");
+
+        scpGetKey(userName,
+                address,
+                keyPath,
+                "\"" + jaggerHome + File.separator + "*.xml " + jaggerHome + "*.pdf " + jaggerHome + "*.html\"",
+                getBaseDir(),
+                script);
     }
 
 
@@ -387,29 +444,43 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void startNodes(StringBuilder script) {
 
-        script.append("\n\necho \"Copying properties to remote Nodes and start\"\n");
+        script.append("echo \"Copying properties to remote Nodes and start\"\n");
 
-        if(nodList.size() == 1) {
+        if(!multiNodeConfiguration) {
 
-            startNodesOneNodeConfiguration(script);
-
+            startNodes(nodList.get(0) ,script);
         } else {
-            //never mind for now
+
+            Node coordinator = nodList.get(0);
+            for(Node node : nodList) {
+                if(node.getCoordinationServer() != null){
+                    coordinator = node;
+                    continue;
+                }
+                startNodes(node, script);
+            }
+            startNodes(coordinator, script);
         }
     }
 
-    private void startNodesOneNodeConfiguration(StringBuilder script) {
+    private void startNodes(Node node, StringBuilder script) {
 
-        String userName = nodList.get(0).getUserNameActual();
-        String address = nodList.get(0).getServerAddressActual();
-        String keyPath = nodList.get(0).getSshKeyPathActual();
-        String jaggerHome = "runned_jagger";
+        String userName = node.getUserNameActual();
+        String address = node.getServerAddressActual();
+        String keyPath = node.getSshKeyPathActual();
 
         script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
 
         StringBuilder command = new StringBuilder();
-        command.append("cd ").append(jaggerHome).append("; ./start.sh ");
-        command.append(getEnvPropertiesActual()).append("\\\n\t-Xmx1550m\\\n\t-Xms1550m\\\n");
+        command.append("cd ").append(jaggerHome);
+
+        if (node.isSetJavaHome()) {
+            command.append("; export JAVA_HOME=").append(node.getJavaHomeActual());
+        }
+
+        command.append("; ./start.sh ");
+
+        command.append(getEnvPropertiesActual()).append(" \'\\\n\t-Xmx1550m \\\n\t-Xms1550m \\\n");
 
         if(getAdditionalProperties().isDeclared()) {
             for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
@@ -417,22 +488,80 @@ public class JaggerEasyDeployPlugin extends Builder
             }
         }
 
-        if(getSutsList() != null) {
-            command.append("\t-Dchassis.conditions.min.agents.count=").append(getSutsList().size()).append("\\\n");
+        String key;
+
+        if(node.isMaster() || !multiNodeConfiguration) {
+            if(getSutsList() != null) {
+                command.append("\t-Dchassis.conditions.min.agents.count=").append(getSutsList().size()).append(" \\\n");
+            } else {
+                command.append("\t-Dchassis.conditions.min.agents.count=0 \\\n");
+            }
+
+            key = "chassis.conditions.min.kernels.count";
+            if(commonProperties.containsKey(key)) {
+                command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
+
+            }
         }
 
-        if(getDbOptions().isUseExternalDB()) {
-            command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER");
+        if(!multiNodeConfiguration) {
+            if(getDbOptions().isUseExternalDB()) {
+                setRdbProperties(command);
+                command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER");
+            } else {
+                command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER,RDB_SERVER");
+            }
         } else {
-            command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER,RDB_SERVER");
+            setRdbProperties(command);
+            key = "chassis.coordinator.zookeeper.endpoint";
+            command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+            key = "chassis.storage.fs.default.name";
+            command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+            command.append("\t-Dchassis.roles=").append(node.getRolesWithComas());
+            if(!dbOptions.isUseExternalDB() && node.isMaster()) {
+                command.append(",RDB_SERVER");
+            }
+
         }
 
-        doOnVmSSH(userName, address, keyPath,
-                command.toString()
-                , script);
-        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
+        command.append("\'");
+
+        if(multiNodeConfiguration){
+            if (node.getCoordinationServer() != null) {
+
+                doOnVmSSH(userName, address, keyPath,
+                        command.toString()
+                        , script);
+                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
+            } else {
+
+                doOnVmSSHDaemon(userName, address, keyPath,
+                        command.toString()
+                        , script);
+                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
+            }
+        } else {
+
+            doOnVmSSH(userName, address, keyPath,
+                        command.toString()
+                        , script);
+            script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
+        }
     }
 
+    private void setRdbProperties(StringBuilder command) {
+
+        String key = "chassis.storage.rdb.client.driver";
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
+        key = "chassis.storage.rdb.client.url";
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
+        key = "chassis.storage.rdb.username";
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
+        key = "chassis.storage.rdb.password";
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
+        key = "chassis.storage.hibernate.dialect";
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
+    }
 
     /**
      * Starting Agents, if it declared
@@ -443,21 +572,40 @@ public class JaggerEasyDeployPlugin extends Builder
         if (sutsList != null) {
             for(SuT node : sutsList){
 
-                String jaggerHome = "runned_jagger";
-
                 killOldJagger1(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), jaggerHome, script);
-                script.append("sleep 5\n");
 
-                script.append("\necho \"Starting Agent\"\n");
+                script.append("echo \"Starting Agent\"\n");
                 script.append("echo \"").append(node.getServerAddressActual()).append(" : cd ").append(jaggerHome).append("; ./start_agent.sh\"\n");
 
                 StringBuilder command = new StringBuilder();
                 command.append("cd ").append(jaggerHome);
-                command.append("; ./start_agent.sh\\\n\t-Xmx1550m\\\n\t-Xms1550m\\\n\t-Dchassis.coordination.http.url=");
-                command.append(commonProperties.get("chassis.coordination.http.url"));
 
+                if(node.isSetJavaHome()) {
+                    command.append("; export JAVA_HOME=").append(node.getJavaHomeActual());
+                }
+
+                command.append("; ./start_agent.sh \'\\\n\t");
+
+                command.append("-Dchassis.coordination.http.url=");
+                command.append(commonProperties.get("chassis.coordination.http.url")).append(" \\\n\t");
+
+                if(node.isUseJmx()) {
+
+                    command.append("-Djmx.enabled=true \\\n\t");
+                    String[] ports = node.getJmxPortActual().split("[,;\\s]");
+                    command.append("-Djmx.services=");
+                    for(int i = 0; i<ports.length -1 ; i ++) {
+                        command.append("localhost:").append(ports[i]).append(";");// with coma in new version
+                    }
+                    command.append("localhost:").append(ports[ports.length-1]);
+                    command.append(" \\\n\t");
+                } else {
+                     command.append("-Djmx.enabled=false \\\n\t");
+                }
+
+                command.append("\'");
                 doOnVmSSHDaemon(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), command.toString(), script);
-                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
+                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n\n");
 
             }
         }
@@ -472,8 +620,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         script.append("\necho \"KILLING old jagger\"\n\n");
         for(Node node:nodList){
-
-            String jaggerHome = "runned_jagger";
 
             killOldJagger1(node.getUserNameActual(),node.getServerAddressActual(), node.getSshKeyPathActual(), jaggerHome,  script);
         }
@@ -507,13 +653,13 @@ public class JaggerEasyDeployPlugin extends Builder
                 script);
         script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
 
-        script.append("\n\necho \"KILLING previous processes ").append(userName).append("@").append(serverAddress).append("\"\n");
-        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop.sh", script);
-        script.append("\n");
-        doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop_agent.sh", script);
-        script.append("\n");
-        doOnVmSSH(userName, serverAddress, keyPath, "rm -rf jaggerdb", script);
+        script.append("echo \"KILLING previous processes ").append(userName).append("@").append(serverAddress).append("\"\n");
+
+        stopJagger(script, userName, serverAddress, keyPath);
+        stopJaggerAgent(script, userName, serverAddress, keyPath);
+
         script.append("\n\n");
+
     }
 
 
@@ -524,15 +670,50 @@ public class JaggerEasyDeployPlugin extends Builder
 
         commonProperties = new JaggerProperties();
 
-        if(getNodList().size() == 1) {
+        if(!multiNodeConfiguration) {
 
             setUpRdbProperties();
             commonProperties.setProperty("chassis.coordination.http.url",
                     "http://" + getNodList().get(0).getServerAddressActual() + ":8089");
 
         } else {
-//               . . .
+
+            int minKernels = 0;
+
+            setUpRdbProperties();
+            for (Node node : nodList) {
+                if (node.getCoordinationServer() != null) {
+                    setUpCoordinatorProperties(node);
+                }
+
+                if (node.isMaster()) {
+                    setUpMasterProperties(node);
+                }
+
+                if(node.getKernel() != null) {
+                    minKernels ++;
+                }
+            }
+
+            commonProperties.setProperty("chassis.conditions.min.kernels.count", String.valueOf(minKernels));
         }
+    }
+
+    private void setUpMasterProperties(Node node) {
+
+//        int httpUrlPort = 8089;
+//        commonProperties.setProperty("chassis.coordination.http.url",
+//                    "http://" + node.getServerAddressActual() + ":" + httpUrlPort);
+//
+        commonProperties.setProperty("chassis.storage.fs.default.name","hdfs://" + node.getServerAddressActual() + "/");
+    }
+
+    private void setUpCoordinatorProperties(Node node) {
+
+        int port = 2181;
+        commonProperties.setProperty("chassis.coordinator.zookeeper.endpoint", node.getServerAddressActual() + ":" + port);
+
+
     }
 
 
@@ -542,19 +723,17 @@ public class JaggerEasyDeployPlugin extends Builder
     private void setUpRdbProperties() {
 
 
-        if(!dbOptions.isUseExternalDB() && getNodList().size() == 1) {
+        if (!dbOptions.isUseExternalDB() && !multiNodeConfiguration) {
 
-            String port = "8043";
+            setUpRdbProperties(nodList.get(0));
+        } else if (!getDbOptions().isUseExternalDB() && multiNodeConfiguration){
 
-            commonProperties.setProperty("chassis.storage.rdb.client.driver", "org.h2.Driver");
-            commonProperties.setProperty("chassis.storage.rdb.client.url","jdbc:h2:tcp://" +
-                            nodList.get(0).getServerAddressActual() + ":" + port +"/jaggerdb/db");
-            commonProperties.setProperty("chassis.storage.rdb.username","jagger");
-            commonProperties.setProperty("chassis.storage.rdb.password","rocks");
-            commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
-
-        } else if (!getDbOptions().isUseExternalDB() && getNodList().size() > 1){
-//          ...
+            for(Node node : nodList) {
+                if(node.getMaster() != null) {
+                    setUpRdbProperties(node);
+                    break;
+                }
+            }
         } else {
 
             commonProperties.setProperty("chassis.storage.rdb.client.driver", getDbOptions().getRdbDriverActual());
@@ -563,6 +742,18 @@ public class JaggerEasyDeployPlugin extends Builder
             commonProperties.setProperty("chassis.storage.rdb.password", getDbOptions().getRdbPassword());
             commonProperties.setProperty("chassis.storage.hibernate.dialect", getDbOptions().getRdbDialectActual());
         }
+    }
+
+    private void setUpRdbProperties(Node node) {
+
+        int port = 3306;
+
+        commonProperties.setProperty("chassis.storage.rdb.client.driver", "org.h2.Driver");
+        commonProperties.setProperty("chassis.storage.rdb.client.url","jdbc:h2:tcp://" +
+                        node.getServerAddressActual() + ":" + port +"/jaggerdb/db");
+        commonProperties.setProperty("chassis.storage.rdb.username","jagger");
+        commonProperties.setProperty("chassis.storage.rdb.password", "rocks");
+        commonProperties.setProperty("chassis.storage.hibernate.dialect","org.hibernate.dialect.H2Dialect");
     }
 
 
@@ -654,8 +845,11 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void scpGetKey(String userName, String address, String keyPath, String filePathFrom, String filePathTo, StringBuilder script) {
 
-        script.append("scp -i ");
-        script.append(keyPath);
+        script.append("scp");
+        if(! keyPath.matches("\\s*")) {
+            script.append(" -i ");
+            script.append(keyPath);
+        }
         script.append(" ");
         script.append(userName);
         script.append("@");
@@ -679,8 +873,11 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void scpSendKey(String userName, String address, String keyPath, String filePathFrom, String filePathTo, StringBuilder script) {
 
-        script.append("scp -i ");
-        script.append(keyPath);
+        script.append("scp");
+        if(! keyPath.matches("\\s*")) {
+            script.append(" -i ");
+            script.append(keyPath);
+        }
         script.append(" ");
         script.append(filePathFrom);
         script.append(" ");
@@ -712,7 +909,12 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void doOnVmSSH(String userName, String address, String keyPath, String commandString,StringBuilder script) {
 
-        script.append("ssh -i ").append(keyPath).append(" ").append(userName).append("@").append(address);
+        script.append("ssh");
+        if(! keyPath.matches("\\s*")) {
+            script.append(" -i ");
+            script.append(keyPath);
+        }
+        script.append(" ").append(userName).append("@").append(address);
         script.append(" \"").append(commandString).append("\"");
     }
 
@@ -728,7 +930,12 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void doOnVmSSHDaemon(String userName, String address, String keyPath, String commandString,StringBuilder script) {
 
-        script.append("ssh -f -i ").append(keyPath).append(" ").append(userName).append("@").append(address);
+        script.append("ssh -f");
+        if(! keyPath.matches("\\s*")) {
+            script.append(" -i ");
+            script.append(keyPath);
+        }
+        script.append(" ").append(userName).append("@").append(address);
         script.append(" \"").append(commandString).append("\"");
     }
 

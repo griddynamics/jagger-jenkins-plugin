@@ -11,6 +11,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,18 +33,26 @@ public class SuT implements Describable<SuT>, SshNode {
 
     private String userNameActual;
 
-    private final String userPassword;
-
     private final String sshKeyPath ;
 
     private String sshKeyPathActual;
 
-    private final boolean usePassword;
+    private final boolean useJmx;
+
+    private final String jmxPort;
+
+    private String jmxPortActual;
+
+    private final boolean setJavaHome;
+
+    private final String javaHome;
+
+    private String javaHomeActual;
 
 
     @DataBoundConstructor
     public SuT(String serverAddress, String userName, String sshKeyPath,
-               boolean usePassword, String userPassword){
+               String jmxPort, boolean useJmx, boolean setJavaHome, String javaHome){
 
         this.serverAddress = serverAddress;
         this.serverAddressActual = serverAddress;
@@ -51,10 +60,47 @@ public class SuT implements Describable<SuT>, SshNode {
         this.userNameActual = userName;
         this.sshKeyPath = sshKeyPath;
         this.sshKeyPathActual = sshKeyPath;
-        this.usePassword = usePassword;
-        this.userPassword = userPassword;
+        this.jmxPort = jmxPort;
+        this.useJmx = useJmx;
+        this.setJavaHome = setJavaHome;
+        this.javaHome = javaHome;
+
+        setJavaHomeActual(javaHome);
+
+        setJmxPortActual(jmxPort);
     }
 
+    public boolean isSetJavaHome() {
+        return setJavaHome;
+    }
+
+    public String getJavaHome() {
+        return javaHome;
+    }
+
+    public String getJavaHomeActual() {
+        return javaHomeActual;
+    }
+
+    public void setJavaHomeActual(String javaHomeActual) {
+        this.javaHomeActual = javaHomeActual;
+    }
+
+    public String getJmxPortActual() {
+        return jmxPortActual;
+    }
+
+    public void setJmxPortActual(String jmxPortActual) {
+        this.jmxPortActual = jmxPortActual;
+    }
+
+    public boolean isUseJmx() {
+        return useJmx;
+    }
+
+    public String getJmxPort() {
+        return jmxPort;
+    }
 
     public String getUserNameActual() {
         return userNameActual;
@@ -81,16 +127,8 @@ public class SuT implements Describable<SuT>, SshNode {
         return userName;
     }
 
-    public String getUserPassword() {
-        return userPassword;
-    }
-
     public String getSshKeyPath() {
         return sshKeyPath;
-    }
-
-    public boolean isUsePassword() {
-        return usePassword;
     }
 
     public String getServerAddress() {
@@ -157,6 +195,20 @@ public class SuT implements Describable<SuT>, SshNode {
                 return FormValidation.error("Interrapted Exception");
             }
             return FormValidation.ok();
+        }
+
+         /**
+         * testing if jmx ports given correctly
+         * @param value jmx port(s)
+         * @return FormValidation
+         */
+        public FormValidation doCheckJmxPort(@QueryParameter String value) {
+
+            if(value == null || value.matches("\\s*")) {
+                return FormValidation.warning("Set JMX Port(s)");
+            } else {
+                return FormValidation.ok();
+            }
         }
     }
 }

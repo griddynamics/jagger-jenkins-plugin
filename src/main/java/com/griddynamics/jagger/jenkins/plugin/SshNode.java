@@ -24,4 +24,9 @@ public interface SshNode {
     public String getServerAddress();
 
     public void setServerAddressActual(String s);
+
+    public String getJavaHome();
+
+    public void setJavaHomeActual(String javaHomeActual);
+
 }

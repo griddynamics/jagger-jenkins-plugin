@@ -13,16 +13,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class CoordinationServer implements Role, Describable<CoordinationServer> {
 
-    private final String port;
-
     @DataBoundConstructor
-    public CoordinationServer(String port){
+    public CoordinationServer(){
 
-        this.port = port;
-    }
-
-    public String getPort() {
-        return port;
     }
 
     public RoleTypeName getRoleType() {
@@ -38,12 +31,6 @@ public class CoordinationServer implements Role, Describable<CoordinationServer>
         }
     }
 
-    @Override
-    public String toString() {
-        return "CoordinationServer{" +
-                "port='" + port + '\'' +
-                '}';
-    }
 
     public Descriptor<CoordinationServer> getDescriptor() {
         return Hudson.getInstance().getDescriptor(getClass());
