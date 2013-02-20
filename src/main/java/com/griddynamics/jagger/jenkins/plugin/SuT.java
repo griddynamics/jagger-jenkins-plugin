@@ -49,10 +49,14 @@ public class SuT implements Describable<SuT>, SshNode {
 
     private String javaHomeActual;
 
+    private final String javaOptions;
+
+    private String javaOptionsActual;
+
 
     @DataBoundConstructor
     public SuT(String serverAddress, String userName, String sshKeyPath,
-               String jmxPort, boolean useJmx, boolean setJavaHome, String javaHome){
+               String jmxPort, boolean useJmx, boolean setJavaHome, String javaHome, String minJavaHeap, String maxJavaHeap, boolean useAdvanced, String javaOptions){
 
         this.serverAddress = serverAddress;
         this.serverAddressActual = serverAddress;
@@ -64,10 +68,24 @@ public class SuT implements Describable<SuT>, SshNode {
         this.useJmx = useJmx;
         this.setJavaHome = setJavaHome;
         this.javaHome = javaHome;
+        this.javaOptions = javaOptions;
 
         setJavaHomeActual(javaHome);
 
         setJmxPortActual(jmxPort);
+    }
+
+
+    public void setJavaOptionsActual(String javaOptionsActual) {
+        this.javaOptionsActual = javaOptionsActual;
+    }
+
+    public String getJavaOptions() {
+        return javaOptions;
+    }
+
+    public String getJavaOptionsActual() {
+        return javaOptionsActual;
     }
 
     public boolean isSetJavaHome() {

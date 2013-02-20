@@ -29,4 +29,7 @@ public interface SshNode {
 
     public void setJavaHomeActual(String javaHomeActual);
 
+    public void setJavaOptionsActual(String javaOptionsActual);
+
+    public String getJavaOptions();
 }
