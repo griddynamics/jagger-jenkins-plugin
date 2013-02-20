@@ -206,6 +206,8 @@ public class SuT implements Describable<SuT>, SshNode {
 
             if(value == null || value.matches("\\s*")) {
                 return FormValidation.warning("Set JMX Port(s)");
+            } else if (!value.matches("\\d+(,\\d+)*")) {
+                return FormValidation.error("wrong format: split with comas");
             } else {
                 return FormValidation.ok();
             }

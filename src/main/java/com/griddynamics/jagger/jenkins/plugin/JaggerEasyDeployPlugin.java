@@ -430,7 +430,8 @@ public class JaggerEasyDeployPlugin extends Builder
         scpGetKey(userName,
                 address,
                 keyPath,
-                "\"" + jaggerHome + File.separator + "*.xml " + jaggerHome + "*.pdf " + jaggerHome + "*.html\"",
+                "\"" + jaggerHome + File.separator + "*.xml " + jaggerHome + File.separator + "*.pdf " +
+                        jaggerHome + File.separator + "*.html\"",
                 getBaseDir(),
                 script);
     }
@@ -480,12 +481,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         command.append(getEnvPropertiesActual()).append(" \'\\\n\t-Xmx1550m \\\n\t-Xms1550m \\\n");
 
-        if(getAdditionalProperties().isDeclared()) {
-            for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
-                command.append("\t-D").append(line.trim()).append("\\\n");
-            }
-        }
-
         String key;
 
         if(node.isMaster() || !multiNodeConfiguration) {
@@ -499,6 +494,12 @@ public class JaggerEasyDeployPlugin extends Builder
             if(commonProperties.containsKey(key)) {
                 command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
 
+            }
+        }
+
+        if(getAdditionalProperties().isDeclared()) {
+            for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
+                command.append("\t-D").append(line.trim()).append("\\\n");
             }
         }
 
@@ -590,7 +591,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 if(node.isUseJmx()) {
 
                     command.append("-Djmx.enabled=true \\\n\t");
-                    String[] ports = node.getJmxPortActual().split("[,;\\s]");
+                    String[] ports = node.getJmxPortActual().split(",");
                     command.append("-Djmx.services=");
                     for(int i = 0; i<ports.length -1 ; i ++) {
                         command.append("localhost:").append(ports[i]).append(",");// with ";" in old version Jagger
