@@ -257,6 +257,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 checkSshNodesSSHKeyPath(build, listener, node);
                 checkSshNodesUserName(build, listener, node);
                 checkJmxPort(build, listener, node);
+                checkJavaOptions(build, listener, node);
             }
         }
     }
@@ -313,7 +314,14 @@ public class JaggerEasyDeployPlugin extends Builder
             checkSshNodesUserName(build, listener, node);
             checkSshNodesSSHKeyPath(build, listener, node);
             checkJavaHome(build, listener, node);
+            checkJavaOptions(build, listener, node);
         }
+    }
+
+    private void checkJavaOptions(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
+
+        String temp = node.getJavaOptions();
+        node.setJavaOptionsActual(build.getEnvironment(listener).expand(temp));
     }
 
     private void checkJavaHome(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
@@ -370,7 +378,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         if(multiNodeConfiguration) {
             for (Node node: nodList) {
-                if(node.getKernel() != null && node.getMaster() == null) {
+                if(node.isKernel() && node.isMaster()) {
                     script.append("\necho \"Copy kernels logs\"\n");
                     copyLogs(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), script);
                 }
@@ -386,7 +394,7 @@ public class JaggerEasyDeployPlugin extends Builder
                         getNodList().get(0).getSshKeyPathActual(), script);
         } else  {
             for (Node node: nodList) {
-                if(node.getMaster() != null) {
+                if(node.isMaster()) {
                     script.append("\necho \"Copy master logs\"\n");
                     copyLogs(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), script);
                     break;
@@ -397,11 +405,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
 
     private void copyLogs(String userName, String address, String keyPath, StringBuilder script) {
-                                                                                     //this how we take Nodes logs,and Agents logs
-        doOnVmSSH(userName, address, keyPath, "cd " + jaggerHome + "; zip -9 " + address + ".logs.zip jagger*.log*", script);
-        script.append("\n");
 
-        scpGetKey(userName, address, keyPath, jaggerHome + File.separator + address + ".logs.zip", getBaseDir(), script);
+        scpGetKey(userName, address, keyPath, jaggerHome + File.separator + "*.log*", getBaseDir(), script);
+        script.append("cd " + baseDir + "; zip -9 ").append(address).append(".zip jagger*.log*; rm jagger*.log*; cd ..\n");
     }
 
 
@@ -413,7 +419,7 @@ public class JaggerEasyDeployPlugin extends Builder
         } else {
 
             for(Node node : nodList) {
-                if(node.getMaster() != null) {
+                if(node.isMaster()) {
                     copyReports(node, script);
                     break;
                 }
@@ -432,7 +438,8 @@ public class JaggerEasyDeployPlugin extends Builder
         scpGetKey(userName,
                 address,
                 keyPath,
-                "\"" + jaggerHome + File.separator + "*.xml " + jaggerHome + "*.pdf " + jaggerHome + "*.html\"",
+                "\"" + jaggerHome + File.separator + "*.xml " + jaggerHome + File.separator + "*.pdf " +
+                        jaggerHome + File.separator + "*.html\"",
                 getBaseDir(),
                 script);
     }
@@ -453,7 +460,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
             Node coordinator = nodList.get(0);
             for(Node node : nodList) {
-                if(node.getCoordinationServer() != null){
+                if(node.isCoordinationServer()){
                     coordinator = node;
                     continue;
                 }
@@ -478,14 +485,12 @@ public class JaggerEasyDeployPlugin extends Builder
             command.append("; export JAVA_HOME=").append(node.getJavaHomeActual());
         }
 
-        command.append("; ./start.sh ");
+        command.append("; ./start.sh ").append(getEnvPropertiesActual()).append(" \'\\\n\t");
 
-        command.append(getEnvPropertiesActual()).append(" \'\\\n\t-Xmx1550m \\\n\t-Xms1550m \\\n");
-
-        if(getAdditionalProperties().isDeclared()) {
-            for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
-                command.append("\t-D").append(line.trim()).append("\\\n");
-            }
+        if(node.getJavaOptionsActual().matches("\\s*")) {
+            command.append("-Xmx1550m -Xms1550m \\\n");
+        } else {
+            command.append(node.getJavaOptionsActual()).append(" \\\n");
         }
 
         String key;
@@ -507,9 +512,9 @@ public class JaggerEasyDeployPlugin extends Builder
         if(!multiNodeConfiguration) {
             if(getDbOptions().isUseExternalDB()) {
                 setRdbProperties(command);
-                command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER");
+                command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER \\\n");
             } else {
-                command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER,RDB_SERVER");
+                command.append("\t-Dchassis.roles=MASTER,KERNEL,COORDINATION_SERVER,HTTP_COORDINATION_SERVER,RDB_SERVER \\\n");
             }
         } else {
             setRdbProperties(command);
@@ -524,10 +529,16 @@ public class JaggerEasyDeployPlugin extends Builder
 
         }
 
+        if(getAdditionalProperties().isDeclared()) {
+            for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
+                command.append("\t-D").append(line.trim()).append(" \\\n");
+            }
+        }
+
         command.append("\'");
 
         if(multiNodeConfiguration){
-            if (node.getCoordinationServer() != null) {
+            if (node.isCoordinationServer()) {
 
                 doOnVmSSH(userName, address, keyPath,
                         command.toString()
@@ -586,16 +597,20 @@ public class JaggerEasyDeployPlugin extends Builder
 
                 command.append("; ./start_agent.sh \'\\\n\t");
 
+                if(!node.getJavaOptionsActual().matches("\\s*")) {
+                    command.append(node.getJavaOptionsActual()).append(" \\\n\t");
+                }
+
                 command.append("-Dchassis.coordination.http.url=");
                 command.append(commonProperties.get("chassis.coordination.http.url")).append(" \\\n\t");
 
                 if(node.isUseJmx()) {
 
                     command.append("-Djmx.enabled=true \\\n\t");
-                    String[] ports = node.getJmxPortActual().split("[,;\\s]");
+                    String[] ports = node.getJmxPortActual().split(",");
                     command.append("-Djmx.services=");
                     for(int i = 0; i<ports.length -1 ; i ++) {
-                        command.append("localhost:").append(ports[i]).append(";");// with coma in new version
+                        command.append("localhost:").append(ports[i]).append(",");// with ";" in old version Jagger
                     }
                     command.append("localhost:").append(ports[ports.length-1]);
                     command.append(" \\\n\t");
@@ -676,13 +691,15 @@ public class JaggerEasyDeployPlugin extends Builder
             commonProperties.setProperty("chassis.coordination.http.url",
                     "http://" + getNodList().get(0).getServerAddressActual() + ":8089");
 
+            commonProperties.setProperty("chassis.conditions.min.kernels.count", "1");
+
         } else {
 
             int minKernels = 0;
 
             setUpRdbProperties();
             for (Node node : nodList) {
-                if (node.getCoordinationServer() != null) {
+                if (node.isCoordinationServer()) {
                     setUpCoordinatorProperties(node);
                 }
 
@@ -690,7 +707,7 @@ public class JaggerEasyDeployPlugin extends Builder
                     setUpMasterProperties(node);
                 }
 
-                if(node.getKernel() != null) {
+                if(node.isKernel()) {
                     minKernels ++;
                 }
             }
@@ -701,10 +718,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void setUpMasterProperties(Node node) {
 
-//        int httpUrlPort = 8089;
-//        commonProperties.setProperty("chassis.coordination.http.url",
-//                    "http://" + node.getServerAddressActual() + ":" + httpUrlPort);
-//
+        commonProperties.setProperty("chassis.coordination.http.url",
+                    "http://" + node.getServerAddressActual() + ":8089");
+
         commonProperties.setProperty("chassis.storage.fs.default.name","hdfs://" + node.getServerAddressActual() + "/");
     }
 
@@ -729,7 +745,7 @@ public class JaggerEasyDeployPlugin extends Builder
         } else if (!getDbOptions().isUseExternalDB() && multiNodeConfiguration){
 
             for(Node node : nodList) {
-                if(node.getMaster() != null) {
+                if(node.isMaster()) {
                     setUpRdbProperties(node);
                     break;
                 }
@@ -746,7 +762,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void setUpRdbProperties(Node node) {
 
-        int port = 3306;
+        int port = 8043;
 
         commonProperties.setProperty("chassis.storage.rdb.client.driver", "org.h2.Driver");
         commonProperties.setProperty("chassis.storage.rdb.client.url","jdbc:h2:tcp://" +

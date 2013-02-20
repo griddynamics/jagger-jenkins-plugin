@@ -41,6 +41,14 @@ public class Node implements Describable<Node>, SshNode {
 
     private String javaHomeActual;
 
+    private final String javaOptions;
+
+    private String javaOptionsActual;
+
+
+
+
+
     @DataBoundConstructor
     public Node(String serverAddress, String userName,
                 String sshKeyPath,
@@ -49,7 +57,7 @@ public class Node implements Describable<Node>, SshNode {
                 CoordinationServer coordinationServer,
                 Kernel kernel,
                 Reporter reporter,
-                boolean setJavaHome, String javaHome) {
+                boolean setJavaHome, String javaHome, String minJavaHeap, String maxJavaHeap, boolean useAdvanced, String javaOptions) {
 
         this.serverAddress = serverAddress;
         this.serverAddressActual = serverAddress;
@@ -59,11 +67,24 @@ public class Node implements Describable<Node>, SshNode {
         this.sshKeyPathActual = sshKeyPath;
         this.setJavaHome = setJavaHome;
         this.javaHome = javaHome;
+        this.javaOptions = javaOptions;
 
         setJavaHomeActual(javaHome);
 
         hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
         fillRoles(master, coordinationServer, kernel, reporter);
+    }
+
+    public void setJavaOptionsActual(String javaOptionsActual) {
+        this.javaOptionsActual = javaOptionsActual;
+    }
+
+    public String getJavaOptions() {
+        return javaOptions;
+    }
+
+    public String getJavaOptionsActual() {
+        return javaOptionsActual;
     }
 
     public boolean isSetJavaHome() {

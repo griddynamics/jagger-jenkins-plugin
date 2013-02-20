@@ -29,7 +29,7 @@
           </f:entry>
     </f:section>
 
-    <f:section title = "Jagger Node">
+    <f:section title = "Jagger Nodes">
 
     <f:entry name = "nodList">
          <f:repeatableProperty field = "nodList" noAddButton="true" minimum = "1" />
