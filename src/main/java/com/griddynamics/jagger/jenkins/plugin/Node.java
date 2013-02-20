@@ -17,7 +17,7 @@ import java.util.HashMap;
  * User: amikryukov
  * Date: 12/14/12
  */
-public class Node implements Describable<Node>, SshNode {
+public class Node implements SshNode {
 
     private final String serverAddress;
 
@@ -31,10 +31,6 @@ public class Node implements Describable<Node>, SshNode {
 
     private String sshKeyPathActual;
 
-    private String rolesWithComas;
-
-    private HashMap<RoleTypeName, Role> hmRoles;
-
     private final boolean setJavaHome;
 
     private final String javaHome;
@@ -45,18 +41,10 @@ public class Node implements Describable<Node>, SshNode {
 
     private String javaOptionsActual;
 
-
-
-
-
     @DataBoundConstructor
     public Node(String serverAddress, String userName,
                 String sshKeyPath,
 
-                Master master,
-                CoordinationServer coordinationServer,
-                Kernel kernel,
-                Reporter reporter,
                 boolean setJavaHome, String javaHome, String minJavaHeap, String maxJavaHeap, boolean useAdvanced, String javaOptions) {
 
         this.serverAddress = serverAddress;
@@ -69,10 +57,6 @@ public class Node implements Describable<Node>, SshNode {
         this.javaHome = javaHome;
         this.javaOptions = javaOptions;
 
-        setJavaHomeActual(javaHome);
-
-        hmRoles = new HashMap<RoleTypeName, Role>(RoleTypeName.values().length);
-        fillRoles(master, coordinationServer, kernel, reporter);
     }
 
     public void setJavaOptionsActual(String javaOptionsActual) {
@@ -103,75 +87,8 @@ public class Node implements Describable<Node>, SshNode {
         return javaHome;
     }
 
-    private void fillRoles(Role ... roles) {
-
-        rolesWithComas = "";
-        for(Role role : roles){
-            if(role != null) {
-
-                hmRoles.put(role.getRoleType(), role);
-
-                if(rolesWithComas.isEmpty()){
-
-                    rolesWithComas += role.getRoleType().toString();
-
-                    if(role.getRoleType().equals(RoleTypeName.MASTER)) {
-                        rolesWithComas += ",HTTP_COORDINATION_SERVER";
-                    }
-                } else {
-
-                    rolesWithComas += "," + role.getRoleType().toString();
-
-                    if(role.getRoleType().equals(RoleTypeName.MASTER)) {
-                        rolesWithComas += ",HTTP_COORDINATION_SERVER";
-                    }
-                }
-            }
-        }
-    }
-
-    public boolean isMaster() {
-        return hmRoles.containsKey(RoleTypeName.MASTER);
-    }
-
-    public boolean isCoordinationServer() {
-        return hmRoles.containsKey(RoleTypeName.COORDINATION_SERVER);
-    }
-
-    public boolean isKernel() {
-        return hmRoles.containsKey(RoleTypeName.KERNEL);
-    }
-
-    public boolean isReporter() {
-        return hmRoles.containsKey(RoleTypeName.REPORTER);
-    }
-
-    public String getRolesWithComas() {
-        return rolesWithComas;
-    }
-
-    public CoordinationServer getCoordinationServer() {
-
-        return (CoordinationServer) hmRoles.get(RoleTypeName.COORDINATION_SERVER);
-    }
-
-    public Kernel getKernel() {
-
-            return (Kernel) hmRoles.get(RoleTypeName.KERNEL);
-    }
-
     public String getServerAddressActual() {
         return serverAddressActual;
-    }
-
-    public Reporter getReporter() {
-
-        return (Reporter) hmRoles.get(RoleTypeName.REPORTER);
-    }
-
-    public Master getMaster() {
-
-        return (Master) hmRoles.get(RoleTypeName.MASTER);
     }
 
     public String getUserNameActual() {
@@ -202,64 +119,9 @@ public class Node implements Describable<Node>, SshNode {
         return sshKeyPath;
     }
 
-    public HashMap<RoleTypeName, Role> getHmRoles() {
-        return hmRoles;
-    }
-
-    public Descriptor<Node> getDescriptor() {
-        return Hudson.getInstance().getDescriptor(getClass());
-    }
 
     public void setServerAddressActual(String s) {
         serverAddressActual = s;
     }
 
-    @Extension
-    public static class DescriptorN extends Descriptor<Node>{
-
-        @Override
-        public String getDisplayName() {
-            return "Node";
-        }
-
-        /**
-         * For test Server Address if it available
-         * @param value String from Server Address form
-         * @return OK if ping, ERROR otherwise
-         */
-        public FormValidation doCheckServerAddress(@QueryParameter String value) {
-
-            try {
-
-                if(value == null || value.matches("\\s*")) {
-                    return FormValidation.warning("Set Address");
-                }
-                if(value.contains("$")) {
-                    return FormValidation.ok();
-                }
-
-                new Socket(value,22).close();
-
-            } catch (UnknownHostException e) {
-                return FormValidation.error("Unknown Host");
-            } catch (IOException e) {
-                return FormValidation.error("Can't Reach Host on 22 port");
-            }
-            return FormValidation.ok();
-        }
-
-        /**
-         * test Java Home
-         * @param value String from JavaHome form
-         * @return FormValidation
-         */
-        public FormValidation doCheckJavaHome(@QueryParameter String value) {
-
-            if(value == null || value.matches("\\s*")) {
-                return FormValidation.warning("Set JavaHome");
-            } else {
-                return FormValidation.ok();
-            }
-        }
-    }
 }

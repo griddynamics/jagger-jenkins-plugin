@@ -34,7 +34,8 @@
 
 
 
-        <f:entry title=""> <div align="right"> <f:repeatableDeleteButton value="Delete Current Agent" /> </div> </f:entry>
+        <f:entry title=""> <div align="right"> <f:repeatableDeleteButton value="Delete" /> </div> </f:entry>
 
+        <f:section title="" />
 
 </j:jelly>

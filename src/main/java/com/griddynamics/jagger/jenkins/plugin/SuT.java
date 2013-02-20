@@ -173,10 +173,9 @@ public class SuT implements Describable<SuT>, SshNode {
         /**
          * For test Server Address if it available
          * @param value String from Server Address form
-         * @param installAgent then we can test ssh port 22
          * @return OK if ping, ERROR otherwise
          */
-        public FormValidation doCheckServerAddress(@QueryParameter String value,@QueryParameter("installAgent") boolean installAgent) {
+        public FormValidation doCheckServerAddress(@QueryParameter String value) {
 
             try {
 
@@ -188,29 +187,12 @@ public class SuT implements Describable<SuT>, SshNode {
                     return FormValidation.ok();
                 }
 
-                if(installAgent){
-                    new Socket(value,22).close();
-                } else {
+                new Socket(value,22).close();
 
-                    String cmd = "";
-                    if(System.getProperty("os.name").startsWith("windows")){
-                        cmd = "ping -n 1 " + value;
-                    } else {
-                        cmd = "ping -c 1 " + value;
-                    }
-                    Process p1 = java.lang.Runtime.getRuntime().exec(cmd);
-                    if(p1.waitFor() == 0) {
-                        return FormValidation.ok();
-                    } else {
-                        return FormValidation.error("Server unreachable");
-                    }
-                }
             } catch (UnknownHostException e) {
                 return FormValidation.error("Unknown Host\t"+value+"\t"+e.getLocalizedMessage());
             } catch (IOException e) {
-                return FormValidation.error("Can't Reach Host on 22 port");
-            } catch (InterruptedException e) {
-                return FormValidation.error("Interrapted Exception");
+                return FormValidation.error("Input Output Exception while connecting to \t"+value+"\t"+e.getLocalizedMessage());
             }
             return FormValidation.ok();
         }
