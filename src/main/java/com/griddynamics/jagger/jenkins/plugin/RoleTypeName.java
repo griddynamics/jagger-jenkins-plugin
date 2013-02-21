@@ -10,5 +10,5 @@ package com.griddynamics.jagger.jenkins.plugin;
  * Enumeration of all Roles that could be
  */
 public enum RoleTypeName {
-    MASTER,COORDINATION_SERVER,KERNEL,RDB_SERVER,REPORTER
+    MASTER, COORDINATION_SERVER, HTTP_COORDINATION_SERVER, KERNEL, RDB_SERVER, REPORTER
 }

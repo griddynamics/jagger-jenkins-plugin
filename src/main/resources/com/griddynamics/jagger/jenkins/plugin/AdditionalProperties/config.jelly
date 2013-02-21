@@ -8,7 +8,7 @@
 
 -->
 
-    <f:entry>
+
         <f:optionalBlock field="declared" title = "Additional Environment Properties" inline = "true">
 
            <f:entry field="textFromArea">
@@ -16,7 +16,7 @@
            </f:entry>
 
         </f:optionalBlock>
-    </f:entry>
+
 
 
 </j:jelly>

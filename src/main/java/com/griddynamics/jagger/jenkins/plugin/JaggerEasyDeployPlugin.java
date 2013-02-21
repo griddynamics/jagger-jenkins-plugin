@@ -249,6 +249,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
         String temp = getEnvProperties();
         setEnvPropertiesActual(build.getEnvironment(listener).expand(temp));
+        if(getEnvPropertiesActual().matches("\\s*")) {
+            setEnvPropertiesActual("./configuration/basic/default.environment.properties");
+        }
     }
 
     private void checkAgentsOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
@@ -485,17 +488,24 @@ public class JaggerEasyDeployPlugin extends Builder
             command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
         }
 
+        key = RoleTypeName.MASTER + "," + RoleTypeName.COORDINATION_SERVER + "," + RoleTypeName.HTTP_COORDINATION_SERVER;
+
         if(getDbOptions().isUseExternalDB()) {
             setRdbProperties(command);
-            command.append("\t-Dchassis.roles=MASTER,COORDINATION_SERVER,HTTP_COORDINATION_SERVER \\\n");
         } else {
-            command.append("\t-Dchassis.roles=MASTER,COORDINATION_SERVER,HTTP_COORDINATION_SERVER,RDB_SERVER \\\n");
+            key += "," + RoleTypeName.RDB_SERVER;
         }
 
+        if(!multiNodeConfiguration) {
+            key += "," + RoleTypeName.KERNEL;
+        }
+
+        command.append("\t-Dchassis.roles=").append(key).append(" \\\n");
+
         key = "chassis.coordinator.zookeeper.endpoint";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
         key = "chassis.storage.fs.default.name";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
 
         if(getAdditionalProperties().isDeclared()) {
             for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
@@ -541,9 +551,9 @@ public class JaggerEasyDeployPlugin extends Builder
         String key;
 
         key = "chassis.coordinator.zookeeper.endpoint";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
         key = "chassis.storage.fs.default.name";
-        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append("\\\n");
+        command.append("\t-D").append(key).append("=").append(commonProperties.getProperty(key)).append(" \\\n");
 
         if(getAdditionalProperties().isDeclared()) {
             for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
@@ -615,9 +625,15 @@ public class JaggerEasyDeployPlugin extends Builder
                         command.append("localhost:").append(ports[i]).append(",");// with ";" in old version Jagger
                     }
                     command.append("localhost:").append(ports[ports.length-1]);
-                    command.append(" \\\n\t");
+                    command.append(" \\\n");
                 } else {
-                     command.append("-Djmx.enabled=false \\\n\t");
+                     command.append("-Djmx.enabled=false \\\n");
+                }
+
+                if(getAdditionalProperties().isDeclared()) {
+                    for(String line: getAdditionalProperties().getTextFromAreaActual().split("\\n")) {
+                        command.append("\t-D").append(line.trim()).append(" \\\n");
+                    }
                 }
 
                 command.append("\'");
@@ -726,9 +742,9 @@ public class JaggerEasyDeployPlugin extends Builder
     private void setUpMasterProperties(Node node) {
 
         commonProperties.setProperty("chassis.coordination.http.url",
-                    "http://" + node.getServerAddressActual() + ":8089");
+                "http://" + node.getServerAddressActual() + ":8089");
 
-        commonProperties.setProperty("chassis.storage.fs.default.name","hdfs://" + node.getServerAddressActual() + "/");
+        commonProperties.setProperty("chassis.storage.fs.default.name", "hdfs://" + node.getServerAddressActual() + "/");
     }
 
 
@@ -984,6 +1000,15 @@ public class JaggerEasyDeployPlugin extends Builder
         public String getDisplayName() {
             //how it names in build step config
             return "Jagger Easy Deploy";
+        }
+
+        public FormValidation doCheckEnvProperties(@QueryParameter final String value) {
+
+            if(value.matches("\\s*")){
+                return FormValidation.ok("default properties will be used");
+            }
+
+            return FormValidation.ok();
         }
 
         public FormValidation doCheckJaggerTestSuitePath(@QueryParameter final String value) {
