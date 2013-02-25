@@ -173,7 +173,7 @@ public class JaggerEasyDeployPlugin extends Builder
         deploymentScript = new StringBuilder();
         deploymentScript.append("#!/bin/bash\n\n");
         addFunctions(deploymentScript);
-        deploymentScript.append("\n#set -e\nset -v\n\n");
+//        deploymentScript.append("\n#set -e\nset -v\n\n");
         deploymentScript.append("TimeStart=`date +%y/%m/%d_%H:%M`\n\n");
 
         deploymentScript.append("rm -rf ").append(getBaseDir()).append("\n");
@@ -213,14 +213,12 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void checkExitStatus(StringBuilder script) {
 
-        script.append("\nexit_code=$?\n");
-        script.append("\nif [ \"$exit_code\" -ne 0 ]; then\n\texit $exit_code\nfi\n");
+        script.append("check_exit_status_0\n");
     }
 
     private void checkExitStatus123(StringBuilder script) {
 
-        script.append("\nexit_code=$?\n");
-        script.append("\nif [ \"$exit_code\" -ne 123 ] && [ \"$exit_code\" -ne 0 ]; then\n\texit $exit_code\nfi\n");
+        script.append("check_exit_status_0_123\n");
     }
 
 
@@ -724,6 +722,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 getJaggerTestSuitePathActual(),
                 jaggerHome, script);
         checkExitStatus(script);
+        script.append("\n");
 
         //here we take name of file from path: '~/path/to/file' -> 'file'
         String jaggerFileName = getJaggerTestSuitePathActual();
