@@ -864,12 +864,27 @@ public class JaggerEasyDeployPlugin extends Builder
 
             logger.println("exit code : " + exitCode);
 
-       //     listener.getLogger().flush();
-
             logger.println("\n\n----------------------------------------------\n\n");
 
-            return exitCode == 0;
+            if(exitCode != 0) {
 
+                if(sutsList != null) {
+
+                    for(SuT sut: sutsList) {
+                        deploymentScript.setLength(0);
+                        logger.println("\n" + deploymentScript.toString() + "\n\n");
+
+                        stopJaggerAgent(deploymentScript, sut.getUserNameActual(), sut.getServerAddressActual(),
+                                sut.getSshKeyPathActual());
+                        procStarter.cmds(stringToCmds(deploymentScript.toString())).start().join();
+                    }
+                }
+
+                return false;
+            } else {
+
+                return true;
+            }
         } catch (IOException e) {
 
             logger.println("!!!\nException in perform " + e +
