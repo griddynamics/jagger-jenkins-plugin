@@ -172,10 +172,14 @@ public class JaggerEasyDeployPlugin extends Builder
 
         deploymentScript = new StringBuilder();
         deploymentScript.append("#!/bin/bash\n\n");
+        addFunctions(deploymentScript);
+        deploymentScript.append("\n#set -e\nset -v\n\n");
         deploymentScript.append("TimeStart=`date +%y/%m/%d_%H:%M`\n\n");
 
         deploymentScript.append("rm -rf ").append(getBaseDir()).append("\n");
         deploymentScript.append("mkdir ").append(getBaseDir()).append("\n\n");
+
+
 
         killOldJagger(deploymentScript);
 
@@ -193,8 +197,32 @@ public class JaggerEasyDeployPlugin extends Builder
 
         deploymentScript.append("zip -9 ").append("report.zip *.pdf *.html *.xml\n");
 
+        checkExitStatus(deploymentScript);
 
     }
+
+    private void addFunctions(StringBuilder script) {
+
+        script.append("function check_exit_status_0 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] ; " +
+                "then \n\t\texit $status\n\tfi\n}\n");
+
+        script.append("function check_exit_status_0_123 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] && [ \"$status\" -ne 123 ] ; " +
+                "then \n\t\texit $status\n\tfi\n}\n");
+    }
+
+
+    private void checkExitStatus(StringBuilder script) {
+
+        script.append("\nexit_code=$?\n");
+        script.append("\nif [ \"$exit_code\" -ne 0 ]; then\n\texit $exit_code\nfi\n");
+    }
+
+    private void checkExitStatus123(StringBuilder script) {
+
+        script.append("\nexit_code=$?\n");
+        script.append("\nif [ \"$exit_code\" -ne 123 ] && [ \"$exit_code\" -ne 0 ]; then\n\texit $exit_code\nfi\n");
+    }
+
 
 
     /**
@@ -207,6 +235,7 @@ public class JaggerEasyDeployPlugin extends Builder
             for(SuT sut: sutsList) {
                 stopJaggerAgent(deploymentScript, sut.getUserNameActual(), sut.getServerAddressActual(),
                         sut.getSshKeyPathActual());
+                checkExitStatus123(deploymentScript);
             }
         }
     }
@@ -409,12 +438,14 @@ public class JaggerEasyDeployPlugin extends Builder
 
         scpGetKey(userName, address, keyPath, jaggerHome + File.separator + "*.log*", getBaseDir(), script);
         script.append("cd " + baseDir + "; zip -9 ").append(address).append(".zip jagger*.log*; rm jagger*.log*; cd ..\n");
+        checkExitStatus(script);
     }
 
 
     private void copyReports(StringBuilder script) {
 
         copyReports(masterNode, script);
+        checkExitStatus(script);
     }
 
 
@@ -517,7 +548,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
         doOnVmSSH(userName, address, keyPath,
                 command.toString(), script);
-        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
+        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
+        checkExitStatus(script);
+        script.append("\n");
     }
 
 
@@ -565,7 +598,10 @@ public class JaggerEasyDeployPlugin extends Builder
 
         doOnVmSSHDaemon(userName, address, keyPath,
                 command.toString(), script);
-        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
+        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
+        script.append("sleep 5\n");
+        checkExitStatus(script);
+        script.append("\n");
 
     }
 
@@ -638,8 +674,10 @@ public class JaggerEasyDeployPlugin extends Builder
 
                 command.append("\'");
                 doOnVmSSHDaemon(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), command.toString(), script);
-                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n\n");
-
+                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
+                script.append("sleep 5\n");
+                checkExitStatus(script);
+                script.append("\n");
             }
         }
     }
@@ -671,14 +709,21 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("echo \"TRYING TO DEPLOY JAGGER to ").append(userName).append("@").append(serverAddress).append("\"\n");
         doOnVmSSH(userName, serverAddress, keyPath, "rm -rf " + jaggerHome, script);
         script.append("\n");
+        checkExitStatus(script);
+        script.append("\n");
+
         doOnVmSSH(userName, serverAddress, keyPath, "mkdir " + jaggerHome, script);
         script.append("\n");
+        checkExitStatus(script);
+        script.append("\n");
+
 
         scpSendKey(userName,
                 serverAddress,
                 keyPath,
                 getJaggerTestSuitePathActual(),
                 jaggerHome, script);
+        checkExitStatus(script);
 
         //here we take name of file from path: '~/path/to/file' -> 'file'
         String jaggerFileName = getJaggerTestSuitePathActual();
@@ -690,12 +735,16 @@ public class JaggerEasyDeployPlugin extends Builder
         doOnVmSSH(userName, serverAddress, keyPath,
                 "unzip " + jaggerHome + File.separator + jaggerFileName + " -d " + jaggerHome,
                 script);
-        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n\n");
+        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
+        checkExitStatus(script);
+        script.append("\n\n");
 
         script.append("echo \"KILLING previous processes ").append(userName).append("@").append(serverAddress).append("\"\n");
 
         stopJagger(script, userName, serverAddress, keyPath);
+        checkExitStatus123(script);
         stopJaggerAgent(script, userName, serverAddress, keyPath);
+        checkExitStatus123(script);
 
         script.append("\n\n");
 
@@ -816,7 +865,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
             logger.println("exit code : " + exitCode);
 
-            listener.getLogger().flush();
+       //     listener.getLogger().flush();
 
             logger.println("\n\n----------------------------------------------\n\n");
 
