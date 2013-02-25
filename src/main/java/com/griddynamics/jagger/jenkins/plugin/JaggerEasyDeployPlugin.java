@@ -208,6 +208,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
         script.append("function check_exit_status_0_123 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] && [ \"$status\" -ne 123 ] ; " +
                 "then \n\t\texit $status\n\tfi\n}\n");
+
+        script.append("function check_exit_status_0_1 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] && [ \"$status\" -ne 1 ] ; " +
+                "then \n\t\texit $status\n\tfi\n}\n");
     }
 
 
@@ -219,6 +222,11 @@ public class JaggerEasyDeployPlugin extends Builder
     private void checkExitStatus123(StringBuilder script) {
 
         script.append("check_exit_status_0_123\n");
+    }
+
+    private void checkExitStatus1(StringBuilder script) {
+
+        script.append("check_exit_status_0_1\n");
     }
 
 
@@ -436,14 +444,14 @@ public class JaggerEasyDeployPlugin extends Builder
 
         scpGetKey(userName, address, keyPath, jaggerHome + File.separator + "*.log*", getBaseDir(), script);
         script.append("cd " + baseDir + "; zip -9 ").append(address).append(".zip jagger*.log*; rm jagger*.log*; cd ..\n");
-        checkExitStatus(script);
+        checkExitStatus1(script);
     }
 
 
     private void copyReports(StringBuilder script) {
 
         copyReports(masterNode, script);
-        checkExitStatus(script);
+        checkExitStatus1(script);
     }
 
 
@@ -872,11 +880,15 @@ public class JaggerEasyDeployPlugin extends Builder
 
                     for(SuT sut: sutsList) {
                         deploymentScript.setLength(0);
-                        logger.println("\n" + deploymentScript.toString() + "\n\n");
 
                         stopJaggerAgent(deploymentScript, sut.getUserNameActual(), sut.getServerAddressActual(),
                                 sut.getSshKeyPathActual());
+
+                        logger.println("\n" + deploymentScript.toString() + "\n");
+
                         procStarter.cmds(stringToCmds(deploymentScript.toString())).start().join();
+
+                        logger.println("\n");
                     }
                 }
 
