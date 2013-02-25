@@ -204,13 +204,13 @@ public class JaggerEasyDeployPlugin extends Builder
     private void addFunctions(StringBuilder script) {
 
         script.append("function check_exit_status_0 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] ; " +
-                "then \n\t\texit $status\n\tfi\n}\n");
+                "then \n\t\texit $status\n\tfi\n}\n\n");
 
         script.append("function check_exit_status_0_123 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] && [ \"$status\" -ne 123 ] ; " +
-                "then \n\t\texit $status\n\tfi\n}\n");
+                "then \n\t\texit $status\n\tfi\n}\n\n");
 
         script.append("function check_exit_status_0_1 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] && [ \"$status\" -ne 1 ] ; " +
-                "then \n\t\texit $status\n\tfi\n}\n");
+                "then \n\t\texit $status\n\tfi\n}\n\n");
     }
 
 
@@ -498,7 +498,7 @@ public class JaggerEasyDeployPlugin extends Builder
         String address = node.getServerAddressActual();
         String keyPath = node.getSshKeyPathActual();
 
-        script.append("echo \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
+        script.append("\necho \"").append(address).append(" : cd ").append(jaggerHome).append("; ./start.sh properties_file\"\n");
 
         StringBuilder command = new StringBuilder();
         command.append("cd ").append(jaggerHome);
@@ -554,9 +554,11 @@ public class JaggerEasyDeployPlugin extends Builder
 
         doOnVmSSH(userName, address, keyPath,
                 command.toString(), script);
-        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
-        checkExitStatus(script);
+
+    //    script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
         script.append("\n");
+        checkExitStatus(script);
+        script.append("\n\n");
     }
 
 
@@ -600,12 +602,13 @@ public class JaggerEasyDeployPlugin extends Builder
             }
         }
 
-        command.append("\'");
+        command.append("\' > /dev/null 2>&1");
 
         doOnVmSSHDaemon(userName, address, keyPath,
                 command.toString(), script);
-        script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
-        script.append("sleep 5\n");
+     //   script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
+
+        script.append("\nsleep 5\n");
         checkExitStatus(script);
         script.append("\n");
 
@@ -678,10 +681,10 @@ public class JaggerEasyDeployPlugin extends Builder
                     }
                 }
 
-                command.append("\'");
+                command.append("\' > /dev/null 2>&1");
                 doOnVmSSHDaemon(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), command.toString(), script);
-                script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
-                script.append("sleep 5\n");
+            //    script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
+                script.append("\nsleep 5\n");
                 checkExitStatus(script);
                 script.append("\n");
             }
