@@ -172,8 +172,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         deploymentScript = new StringBuilder();
         deploymentScript.append("#!/bin/bash\n\n");
-        addFunctions(deploymentScript);
-//        deploymentScript.append("\n#set -e\nset -v\n\n");
         deploymentScript.append("TimeStart=`date +%y/%m/%d_%H:%M`\n\n");
 
         deploymentScript.append("rm -rf ").append(getBaseDir()).append("\n");
@@ -191,9 +189,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         copyAllLogs(deploymentScript);
 
-        deploymentScript.append("\n\n#mutt -s \"Jenkins[JGR-stable-testplan][$TimeStart]\" jagger@griddynamics.com\n");
-
-        deploymentScript.append("cd ").append(getBaseDir()).append("\n");
+        deploymentScript.append("\n\ncd ").append(getBaseDir()).append("\n");
 
         deploymentScript.append("zip -9 ").append("report.zip *.pdf *.html *.xml\n");
 
@@ -201,32 +197,19 @@ public class JaggerEasyDeployPlugin extends Builder
 
     }
 
-    private void addFunctions(StringBuilder script) {
 
-        script.append("function check_exit_status_0 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] ; " +
-                "then \n\t\texit $status\n\tfi\n}\n\n");
+    private void checkExitStatus(StringBuilder script, int ... exitCodes) {
 
-        script.append("function check_exit_status_0_123 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] && [ \"$status\" -ne 123 ] ; " +
-                "then \n\t\texit $status\n\tfi\n}\n\n");
-
-        script.append("function check_exit_status_0_1 {\n\tstatus=$?\n\tif [ \"$status\" -ne 0 ] && [ \"$status\" -ne 1 ] ; " +
-                "then \n\t\texit $status\n\tfi\n}\n\n");
-    }
-
-
-    private void checkExitStatus(StringBuilder script) {
-
-        script.append("check_exit_status_0\n");
-    }
-
-    private void checkExitStatus123(StringBuilder script) {
-
-        script.append("check_exit_status_0_123\n");
-    }
-
-    private void checkExitStatus1(StringBuilder script) {
-
-        script.append("check_exit_status_0_1\n");
+        script.append("\n\tstatus=$?\n\tif ");
+        if(exitCodes.length == 0) {
+            script.append("[ \"$status\" -ne 0 ]");
+        } else {
+            script.append("[ \"$status\" -ne ").append(exitCodes[0]).append(" ]");
+            for(int i = 1; i < exitCodes.length ; i++){
+                script.append(" && [ \"$status\" -ne ").append(exitCodes[i]).append(" ]");
+            }
+        }
+        script.append(" ; then \n\t\texit $status\n\tfi\n\n");
     }
 
 
@@ -237,11 +220,11 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void stopJagger(StringBuilder deploymentScript) {
 
-        if(sutsList != null) {
-            for(SuT sut: sutsList) {
+        if(getSutsList() != null) {
+            for(SuT sut: getSutsList()) {
                 stopJaggerAgent(deploymentScript, sut.getUserNameActual(), sut.getServerAddressActual(),
                         sut.getSshKeyPathActual());
-                checkExitStatus123(deploymentScript);
+                checkExitStatus(deploymentScript, 0 , 123);
             }
         }
     }
@@ -251,7 +234,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop_agent.sh", script);
         script.append("\n");
-
     }
 
     private void stopJagger(StringBuilder script,
@@ -259,7 +241,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         doOnVmSSH(userName, serverAddress, keyPath, jaggerHome + File.separator + "stop.sh", script);
         script.append("\n");
-
     }
 
 
@@ -291,8 +272,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void checkAgentsOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
 
-        if(sutsList != null) {
-            for(SuT node : sutsList) {
+        if(getSutsList() != null) {
+            for(SuT node : getSutsList()) {
                 checkJavaHome(build, listener, node);
                 checkSshNodesServerAddresses(build, listener, node);
                 checkSshNodesSSHKeyPath(build, listener, node);
@@ -323,7 +304,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
         temp = dbOptions.getRdbDriver();
         dbOptions.setRdbDriverActual(build.getEnvironment(listener).expand(temp));
-
     }
 
     private void checkJaggerTestSuitOnBuildVars(Build build, BuildListener listener) throws IOException, InterruptedException {
@@ -412,8 +392,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void copyAgentsLogs(StringBuilder script) {
 
-        if(sutsList != null){
-            for(SuT node : sutsList) {
+        if(getSutsList() != null){
+            for(SuT node : getSutsList()) {
                 script.append("\necho \"Copy agents logs\"\n");
                 copyLogs(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), script);
                 script.append("echo \"Stop Agent\"\n");
@@ -436,7 +416,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         script.append("\necho \"Copy master logs\"\n");
         copyLogs(masterNode.getUserNameActual(), masterNode.getServerAddressActual(),
-                    masterNode.getSshKeyPathActual(), script);
+                masterNode.getSshKeyPathActual(), script);
     }
 
 
@@ -444,14 +424,14 @@ public class JaggerEasyDeployPlugin extends Builder
 
         scpGetKey(userName, address, keyPath, jaggerHome + File.separator + "*.log*", getBaseDir(), script);
         script.append("cd " + baseDir + "; zip -9 ").append(address).append(".zip jagger*.log*; rm jagger*.log*; cd ..\n");
-        checkExitStatus1(script);
+        checkExitStatus(script, 0, 1);
     }
 
 
     private void copyReports(StringBuilder script) {
 
         copyReports(masterNode, script);
-        checkExitStatus1(script);
+        checkExitStatus(script, 0, 1);
     }
 
 
@@ -507,12 +487,12 @@ public class JaggerEasyDeployPlugin extends Builder
             command.append("; export JAVA_HOME=").append(node.getJavaHomeActual());
         }
 
-        command.append("; ./start.sh ").append(getEnvPropertiesActual()).append(" \'\\\n\t");
+        command.append("; ./start.sh ").append(getEnvPropertiesActual()).append(" \'\\\n");
 
         if(node.getJavaOptionsActual().matches("\\s*")) {
-            command.append("-Xmx1550m -Xms1550m \\\n");
+         //   command.append("-Xmx1550m -Xms1550m \\\n");
         } else {
-            command.append(node.getJavaOptionsActual()).append(" \\\n");
+            command.append("\t").append(node.getJavaOptionsActual()).append(" \\\n");
         }
 
         String key = "chassis.conditions.min.agents.count";
@@ -555,7 +535,6 @@ public class JaggerEasyDeployPlugin extends Builder
         doOnVmSSH(userName, address, keyPath,
                 command.toString(), script);
 
-    //    script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
         script.append("\n");
         checkExitStatus(script);
         script.append("\n\n");
@@ -577,12 +556,12 @@ public class JaggerEasyDeployPlugin extends Builder
             command.append("; export JAVA_HOME=").append(node.getJavaHomeActual());
         }
 
-        command.append("; ./start.sh ").append(getEnvPropertiesActual()).append(" \'\\\n\t");
+        command.append("; ./start.sh ").append(getEnvPropertiesActual()).append(" \'\\\n");
 
         if(node.getJavaOptionsActual().matches("\\s*")) {
-            command.append("-Xmx1550m -Xms1550m \\\n");
+         //   command.append("-Xmx1550m -Xms1550m \\\n");
         } else {
-            command.append(node.getJavaOptionsActual()).append(" \\\n");
+            command.append("\t").append(node.getJavaOptionsActual()).append(" \\\n");
         }
 
         command.append("\t-Dchassis.roles=" + RoleTypeName.KERNEL + " \\\n");
@@ -606,9 +585,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
         doOnVmSSHDaemon(userName, address, keyPath,
                 command.toString(), script);
-     //   script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
 
-        script.append("\nsleep 5\n");
+        script.append("\n");
         checkExitStatus(script);
         script.append("\n");
 
@@ -636,8 +614,8 @@ public class JaggerEasyDeployPlugin extends Builder
      */
     private void startAgents(StringBuilder script) {
 
-        if (sutsList != null) {
-            for(SuT node : sutsList){
+        if (getSutsList() != null) {
+            for(SuT node : getSutsList()){
 
                 killOldJagger1(node.getUserNameActual(), node.getServerAddressActual(),
                         node.getSshKeyPathActual(), jaggerHome, script);
@@ -683,8 +661,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
                 command.append("\' > /dev/null 2>&1");
                 doOnVmSSHDaemon(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), command.toString(), script);
-            //    script.append(" > ").append(File.separator).append("dev").append(File.separator).append("null\n");
-                script.append("\nsleep 5\n");
+
+                script.append("\n");
                 checkExitStatus(script);
                 script.append("\n");
             }
@@ -726,7 +704,6 @@ public class JaggerEasyDeployPlugin extends Builder
         checkExitStatus(script);
         script.append("\n");
 
-
         scpSendKey(userName,
                 serverAddress,
                 keyPath,
@@ -752,12 +729,11 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append("echo \"KILLING previous processes ").append(userName).append("@").append(serverAddress).append("\"\n");
 
         stopJagger(script, userName, serverAddress, keyPath);
-        checkExitStatus123(script);
+        checkExitStatus(script, 0, 123);
         stopJaggerAgent(script, userName, serverAddress, keyPath);
-        checkExitStatus123(script);
+        checkExitStatus(script, 0, 123);
 
         script.append("\n\n");
-
     }
 
 
@@ -765,7 +741,6 @@ public class JaggerEasyDeployPlugin extends Builder
      *  Common Properties that will be used
      */
     private void setUpCommonProperties()  {
-
 
         String key = "chassis.coordination.http.url";
 
@@ -788,9 +763,9 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
         key = "chassis.conditions.min.agents.count";
-        if(sutsList != null) {
+        if(getSutsList() != null) {
 
-            commonProperties.setProperty(key, String.valueOf(sutsList.size()));
+            commonProperties.setProperty(key, String.valueOf(getSutsList().size()));
         } else {
 
             commonProperties.setProperty(key, "0");
@@ -879,9 +854,9 @@ public class JaggerEasyDeployPlugin extends Builder
 
             if(exitCode != 0) {
 
-                if(sutsList != null) {
+                if(getSutsList() != null) {
 
-                    for(SuT sut: sutsList) {
+                    for(SuT sut: getSutsList()) {
                         deploymentScript.setLength(0);
 
                         stopJaggerAgent(deploymentScript, sut.getUserNameActual(), sut.getServerAddressActual(),

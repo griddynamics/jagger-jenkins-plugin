@@ -1,13 +1,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
 
-<!--
-
-  Properties that should be added to properties files to all nodes
-  Most times it is easy way to point systems under test
-
--->
-
 
         <f:optionalBlock field="declared" title = "Additional Environment Properties" inline = "true">
 
@@ -16,7 +9,6 @@
            </f:entry>
 
         </f:optionalBlock>
-
 
 
 </j:jelly>
