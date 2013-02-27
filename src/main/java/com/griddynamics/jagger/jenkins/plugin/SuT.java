@@ -23,19 +23,7 @@ import java.util.ArrayList;
 /**
  * To Make Object of Server that we want to test
  */
-public class SuT implements Describable<SuT>, SshNode {
-
-    private final String serverAddress;   //to view in Jenkins - could be $Parametr for example
-
-    private String serverAddressActual;  //actual address
-
-    private final String userName;
-
-    private String userNameActual;
-
-    private final String sshKeyPath ;
-
-    private String sshKeyPathActual;
+public class SuT extends Node implements Describable {
 
     private final boolean useJmx;
 
@@ -43,66 +31,18 @@ public class SuT implements Describable<SuT>, SshNode {
 
     private String jmxPortActual;
 
-    private final boolean setJavaHome;
-
-    private final String javaHome;
-
-    private String javaHomeActual;
-
-    private final String javaOptions;
-
-    private String javaOptionsActual;
-
-
     @DataBoundConstructor
     public SuT(String serverAddress, String userName, String sshKeyPath,
-               String jmxPort, boolean useJmx, boolean setJavaHome, String javaHome, String minJavaHeap, String maxJavaHeap, boolean useAdvanced, String javaOptions){
+               String jmxPort, boolean useJmx, boolean setJavaHome, String javaHome, String javaOptions){
 
-        this.serverAddress = serverAddress;
-        this.serverAddressActual = serverAddress;
-        this.userName = userName;
-        this.userNameActual = userName;
-        this.sshKeyPath = sshKeyPath;
-        this.sshKeyPathActual = sshKeyPath;
+         super(serverAddress, userName, sshKeyPath, setJavaHome, javaHome, javaOptions);
+
         this.jmxPort = jmxPort;
         this.useJmx = useJmx;
-        this.setJavaHome = setJavaHome;
-        this.javaHome = javaHome;
-        this.javaOptions = javaOptions;
-
-        setJavaHomeActual(javaHome);
 
         setJmxPortActual(jmxPort);
     }
 
-
-    public void setJavaOptionsActual(String javaOptionsActual) {
-        this.javaOptionsActual = javaOptionsActual;
-    }
-
-    public String getJavaOptions() {
-        return javaOptions;
-    }
-
-    public String getJavaOptionsActual() {
-        return javaOptionsActual;
-    }
-
-    public boolean isSetJavaHome() {
-        return setJavaHome;
-    }
-
-    public String getJavaHome() {
-        return javaHome;
-    }
-
-    public String getJavaHomeActual() {
-        return javaHomeActual;
-    }
-
-    public void setJavaHomeActual(String javaHomeActual) {
-        this.javaHomeActual = javaHomeActual;
-    }
 
     public String getJmxPortActual() {
         return jmxPortActual;
@@ -120,54 +60,18 @@ public class SuT implements Describable<SuT>, SshNode {
         return jmxPort;
     }
 
-    public String getUserNameActual() {
-        return userNameActual;
-    }
 
-    public void setUserNameActual(String userNameActual) {
-        this.userNameActual = userNameActual;
-    }
-
-    public String getSshKeyPathActual() {
-        return sshKeyPathActual;
-    }
-
-    public void setSshKeyPathActual(String sshKeyPathActual) {
-        this.sshKeyPathActual = sshKeyPathActual;
-    }
-
-    public String getServerAddressActual() {
-        return serverAddressActual;
-    }
-
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public String getSshKeyPath() {
-        return sshKeyPath;
-    }
-
-    public String getServerAddress() {
-        return serverAddress;
-    }
-
-    public Descriptor<SuT> getDescriptor() {
+    public Descriptor getDescriptor() {
 
         return Hudson.getInstance().getDescriptor(getClass());
     }
 
-    public void setServerAddressActual(String s) {
-        serverAddressActual = s;
-    }
-
     @Extension
-    public static class DescriptorNTA extends Descriptor<SuT>{
+    public static class DescriptorNTA extends Descriptor{
 
         @Override
         public String getDisplayName() {
-            return "SuT";
+            return "SUT";
         }
 
         /**

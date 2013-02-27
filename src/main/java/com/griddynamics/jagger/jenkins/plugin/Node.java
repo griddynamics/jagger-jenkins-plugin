@@ -45,7 +45,7 @@ public class Node implements SshNode {
     public Node(String serverAddress, String userName,
                 String sshKeyPath,
 
-                boolean setJavaHome, String javaHome, String minJavaHeap, String maxJavaHeap, boolean useAdvanced, String javaOptions) {
+                boolean setJavaHome, String javaHome, String javaOptions) {
 
         this.serverAddress = serverAddress;
         this.serverAddressActual = serverAddress;
