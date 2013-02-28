@@ -237,6 +237,7 @@ public class JaggerEasyDeployPlugin extends Builder
         script.append(" ; then \n\t\techo \"No ").append(findName).append(" running on ");
         script.append(node.getServerAddressActual()).append("\"\n\t\texit $JOUT\n\tfi\n\n");
 
+        script.append("echo \"number of process = $JOUT\"");
 
         script.append("\n\n");
     }
@@ -625,7 +626,7 @@ public class JaggerEasyDeployPlugin extends Builder
         doOnVmSSHDaemon(userName, address, keyPath,
                 command.toString(), script);
 
-        script.append("\n");
+        script.append("\n\n");
 
     }
 
