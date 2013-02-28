@@ -489,9 +489,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         command.append("; ./start.sh ").append(getEnvPropertiesActual()).append(" \'\\\n");
 
-        if(node.getJavaOptionsActual().matches("\\s*")) {
-         //   command.append("-Xmx1550m -Xms1550m \\\n");
-        } else {
+        if(!node.getJavaOptionsActual().matches("\\s*")) {
             command.append("\t").append(node.getJavaOptionsActual()).append(" \\\n");
         }
 
@@ -558,9 +556,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         command.append("; ./start.sh ").append(getEnvPropertiesActual()).append(" \'\\\n");
 
-        if(node.getJavaOptionsActual().matches("\\s*")) {
-         //   command.append("-Xmx1550m -Xms1550m \\\n");
-        } else {
+        if(!node.getJavaOptionsActual().matches("\\s*")) {
             command.append("\t").append(node.getJavaOptionsActual()).append(" \\\n");
         }
 
