@@ -48,6 +48,11 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private final boolean multiNodeConfiguration;
 
+    //looking for processes with that names
+    private final String AGENT_STARTER="AgentStarter";
+
+    private final String JAGGER_LAUNCHER="JaggerLauncher";
+
     /**
      * Constructor where fields from *.jelly will be passed
      * @param sutsList
@@ -183,7 +188,11 @@ public class JaggerEasyDeployPlugin extends Builder
 
         startAgents(deploymentScript);
 
-        startNodes(deploymentScript);
+        startKernels(deploymentScript);
+
+        checkIfKernelsAgentsRuns(deploymentScript);
+
+        startMasterNode(masterNode, deploymentScript);
 
         copyReports(deploymentScript);
 
@@ -195,6 +204,41 @@ public class JaggerEasyDeployPlugin extends Builder
 
         checkExitStatus(deploymentScript);
 
+    }
+
+    private void checkIfKernelsAgentsRuns(StringBuilder script) {
+
+        script.append("\nsleep 5\n\necho \"Checking If Kernels, Agents runs\"\n\n");
+
+        if( getSutsList() != null) {
+            for( SshNode node : getSutsList()) {
+                checkIfProcessRuns(node, AGENT_STARTER, script);
+            }
+        }
+
+        if(multiNodeConfiguration) {
+            for(SshNode node : getKernelNodeList()) {
+                checkIfProcessRuns(node, JAGGER_LAUNCHER, script);
+            }
+        }
+    }
+
+    private void checkIfProcessRuns(SshNode node, String findName, StringBuilder script) {
+
+        StringBuilder command = new StringBuilder();
+        command.append("ps axwww | grep ").append(findName).append(" | wc -l");
+
+        script.append("JOUT=$(");
+        doOnVmSSH(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), command.toString(), script);
+        script.append(")\n");
+
+        script.append("\n\tif ");
+        script.append("[ \"$JOUT\" -le 2 ]");
+        script.append(" ; then \n\t\techo \"No ").append(findName).append(" running on ");
+        script.append(node.getServerAddressActual()).append("\"\n\t\texit $JOUT\n\tfi\n\n");
+
+
+        script.append("\n\n");
     }
 
 
@@ -457,18 +501,17 @@ public class JaggerEasyDeployPlugin extends Builder
      * Starting Nodes New
      * @param script deploymentScript
      */
-    private void startNodes(StringBuilder script) {
-
-        script.append("echo \"Copying properties to remote Nodes and start\"\n");
+    private void startKernels(StringBuilder script) {
 
         if(multiNodeConfiguration) {
+
+            script.append("\n\necho \"Starting Kernels\"\n\n");
 
             for(Node node : kernelNodeList) {
 
                 startKernelNode(node, script);
             }
         }
-        startMasterNode(masterNode, script);
     }
 
 
@@ -583,8 +626,6 @@ public class JaggerEasyDeployPlugin extends Builder
                 command.toString(), script);
 
         script.append("\n");
-        checkExitStatus(script);
-        script.append("\n");
 
     }
 
@@ -613,10 +654,7 @@ public class JaggerEasyDeployPlugin extends Builder
         if (getSutsList() != null) {
             for(SuT node : getSutsList()){
 
-                killOldJagger1(node.getUserNameActual(), node.getServerAddressActual(),
-                        node.getSshKeyPathActual(), jaggerHome, script);
-
-                script.append("echo \"Starting Agent\"\n");
+                script.append("echo \"Starting Agents\"\n");
                 script.append("echo \"").append(node.getServerAddressActual()).append(" : cd ").append(jaggerHome).append("; ./start_agent.sh\"\n");
 
                 StringBuilder command = new StringBuilder();
@@ -659,8 +697,6 @@ public class JaggerEasyDeployPlugin extends Builder
                 doOnVmSSHDaemon(node.getUserNameActual(), node.getServerAddressActual(), node.getSshKeyPathActual(), command.toString(), script);
 
                 script.append("\n");
-                checkExitStatus(script);
-                script.append("\n");
             }
         }
     }
@@ -684,6 +720,15 @@ public class JaggerEasyDeployPlugin extends Builder
                         node.getSshKeyPathActual(), jaggerHome,  script);
             }
         }
+
+        if (getSutsList() != null) {
+            for(SuT node : getSutsList()){
+
+                killOldJagger1(node.getUserNameActual(), node.getServerAddressActual(),
+                        node.getSshKeyPathActual(), jaggerHome, script);
+            }
+        }
+
     }
 
 
