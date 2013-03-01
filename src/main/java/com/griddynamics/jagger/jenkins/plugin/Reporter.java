@@ -37,7 +37,7 @@ public class Reporter implements Role, Describable<Reporter> {
 
         @Override
         public String getDisplayName() {
-            return "Reporter";
+            return "REPORTER";
         }
     }
 }
