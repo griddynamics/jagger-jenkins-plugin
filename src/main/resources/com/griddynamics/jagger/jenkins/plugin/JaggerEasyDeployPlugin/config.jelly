@@ -1,0 +1,50 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:section title = "Options">
+
+        <f:entry title = "Jagger Test Suite *.zip" field = "jaggerTestSuitePath">
+             <f:textbox  />
+        </f:entry>
+
+        <f:entry title = "Environment Properties" field = "envProperties">
+             <f:textbox  />
+        </f:entry>
+
+        <f:entry>
+             <f:property field="additionalProperties" />
+        </f:entry>
+
+
+    </f:section>
+
+    <f:section title = "Data Base Options">
+        <f:entry>
+             <f:property field="dbOptions" />
+        </f:entry>
+    </f:section>
+
+   <f:section title = "Agent Installation">
+         <f:entry >
+                 <f:repeatableProperty field = "sutsList" minimum = "0" />
+          </f:entry>
+    </f:section>
+
+
+    <f:section title = "Master Node">
+
+        <f:entry>
+            <f:property field="masterNode" />
+        </f:entry>
+
+    </f:section>
+
+    <f:section title = "Kernels">
+
+        <f:entry>
+             <f:repeatableProperty field = "kernelNodeList" minimum = "0" />
+        </f:entry>
+
+    </f:section>
+
+
+</j:jelly>

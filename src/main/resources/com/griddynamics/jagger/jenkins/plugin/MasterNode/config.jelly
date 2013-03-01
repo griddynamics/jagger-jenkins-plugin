@@ -1,0 +1,27 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+
+    <f:entry title="Address" field="serverAddress">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="User Name" field="userName">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="Ssh Key Path">
+        <f:textbox field="sshKeyPath" />
+    </f:entry>
+
+
+    <f:entry title="Java Options" field="javaOptions">
+        <f:textbox />
+    </f:entry>
+
+    <f:optionalBlock field="setJavaHome" title="Set JAVA_HOME" inline="true">
+          <f:entry title="" field="javaHome">
+                <f:textbox />
+          </f:entry>
+    </f:optionalBlock>
+
+</j:jelly>
