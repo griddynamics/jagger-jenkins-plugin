@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <jagger>
-    <summary>
-        <executedTasks>2</executedTasks>
-        <failedTasks>0</failedTasks>
-        <exc>WARNING</exc>
-    </summary>
     <comparison>
-        <exc>OK</exc>
+        <decision>WARNING</decision>
         <baseline>67</baseline>
         <current>67</current>
     </comparison>
