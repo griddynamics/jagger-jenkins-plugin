@@ -1,0 +1,41 @@
+echo "TRYING TO DEPLOY JAGGER to ${server-address}"
+
+ssh${ssh-key-path} ${username}@${server-address} "rm -rf ${jagger-home}"
+	status=$?
+	if [ "$status" -ne 0 ] ; then
+		exit $status
+	fi
+
+sleep 3
+
+ssh${ssh-key-path} ${user-name}@${server-address} "mkdir ${jagger-home}"
+	status=$?
+	if [ "$status" -ne 0 ] ; then
+		exit $status
+	fi
+
+scp${ssh-key-path} ${jagger-test-suite-path} ${user-name}@${server-address}:${jagger-home}
+	status=$?
+	if [ "$status" -ne 0 ] ; then
+		exit $status
+	fi
+
+ssh${ssh-key-path} ${user-name}@${server-address} "unzip ${jagger-home}/${jagger-test-suite-name} -d ${jagger-home} > /dev/null"
+	status=$?
+	if [ "$status" -ne 0 ] ; then
+		exit $status
+	fi
+
+echo "Killing previous processes on ${server-address}"
+ssh${ssh-key-path} ${user-name}@${server-address} "${jagger-home}/stop-sh"
+	status=$?
+	if [ "$status" -ne 0 ] && [ "$status" -ne 123 ] ; then
+		exit $status
+	fi
+
+ssh${ssh-key-path} ${user-name}@${server-address} "${jagger-home}/stop_agent-sh"
+	status=$?
+	if [ "$status" -ne 0 ] && [ "$status" -ne 123 ] ; then
+		exit $status
+	fi
+
