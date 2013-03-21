@@ -242,12 +242,13 @@ public class JaggerEasyDeployPlugin extends Builder
         addNodeProperties(args, node);
         args.put("master-server-address", getMasterNode().getServerAddressActual());
         args.put("additional-properties", getPropsFromLines(getAdditionalProperties().getTextFromAreaActual()));
-        args.put("jmx-enable", node.isUseJmx());
+        args.put("jagger-home", getJaggerHome());
+        args.put("jmx-enabled", node.isUseJmx());
         if(node.isUseJmx()) {
             args.put("jmx-ports", node.getJmxPortActual().split(","));
         }
 
-        return new Engine().transform(ScriptTemplate.START_KERNEL.getTemplateString(), args);
+        return new Engine().transform(ScriptTemplate.START_AGENT.getTemplateString(), args);
     }
 
     private String startKernel(Node node) throws IOException {
@@ -256,6 +257,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         addNodeProperties(args, node);
         addDBProperties(args);
+        args.put("jagger-home", getJaggerHome());
         args.put("master-server-address", getMasterNode().getServerAddressActual());
         args.put("additional-properties", getPropsFromLines(getAdditionalProperties().getTextFromAreaActual()));
 
