@@ -1,20 +1,18 @@
-echo "${server-address} : cd ${jagger-home}; ./start.sh properties_file"
-ssh${ssh-key-path} ${username}@${server-address} "cd ${jagger-home};${if java-home}export JAVA_HOME=${java-home}${end} ./start.sh ${jagger-properties} '\\${if java-options}
+echo "Starting Master ${server-address}"
+ssh${ssh-key-path} ${user-name}@${server-address} "cd ${jagger-home};${if java-home}export JAVA_HOME=${java-home};${end} ./start.sh ${jagger-properties} ' \\${if java-options}
     ${java-options} \\${end}${if min-agents}
     -Dchassis.conditions.min.agents.count=${min-agents} \\${end}${if min-kernels}
-	-Dchassis.conditions.min.kernels.count=${min-kernels} \\${end}
-	-Dchassis.storage.rdb.client.driver=${db-driver} \\
-	-Dchassis.storage.rdb.client.url=${db-url} \\
-	-Dchassis.storage.rdb.username=${db-user-name} \\
-	-Dchassis.storage.rdb.password=${db-password} \\
-	-Dchassis.storage.hibernate.dialect=${db-dialect} \\
-	-Dchassis.roles=MASTER,COORDINATION_SERVER,HTTP_COORDINATION_SERVER${if min-kernels=0},KERNEL${end} \\
-	-Dchassis.coordinator.zookeeper.endpoint=${server-address}:${if zookeeper-port}${zookeeper-port}${else}2181${end} \\
-	-Dchassis.storage.fs.default.name=hdfs://${server-address}/ \\${if additional-properties}
-    ${additional-properties} \\${end}
-'"
+    -Dchassis.conditions.min.kernels.count=${if min-kernels=0}1${else}${min-kernels}${end} \\${end}
+    -Dchassis.storage.rdb.client.driver=${db-driver} \\
+    -Dchassis.storage.rdb.client.url=${db-url} \\
+    -Dchassis.storage.rdb.username=${db-user-name} \\
+    -Dchassis.storage.rdb.password=${db-password} \\
+    -Dchassis.storage.hibernate.dialect=${db-dialect} \\
+    -Dchassis.roles=MASTER,COORDINATION_SERVER,HTTP_COORDINATION_SERVER${if min-kernels=0},KERNEL${end}${if h2-db},RDB_SERVER${end} \\
+    -Dchassis.coordinator.zookeeper.endpoint=${server-address}:${if zookeeper-port}${zookeeper-port}${else}2181${end} \\
+    -Dchassis.storage.fs.default.name=hdfs://${server-address}/ ${if additional-properties}\\
+    ${additional-properties}${end} '"
 	status=$?
 	if [ "$status" -ne 0 ] ; then
 		exit $status
 	fi
-

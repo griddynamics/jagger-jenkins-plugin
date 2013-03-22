@@ -16,7 +16,12 @@ public enum ScriptTemplate {
     START_NODES("script/starting.nodes.script"),
     START_MASTER("script/master.starting.script"),
     START_KERNEL("script/kernel.starting.script"),
-    START_AGENT("script/agent.starting.script");
+    START_AGENT("script/agent.starting.script"),
+    CHECK_KERNEL("script/kernel.checking.script"),
+    CHECK_AGENT("script/agent.checking.script"),
+    COPY_LOGS("script/copy.logs.script"),
+    COPY_REPORTS("script/copy.reports.script"),
+    STOP_AGENT("script/agent.stop.script");
 
     private String templatePath;
 
