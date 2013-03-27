@@ -17,7 +17,7 @@ import java.net.UnknownHostException;
  * User: amikryukov
  * Date: 2/20/13
  */
-public class MasterNode extends Node implements Describable {
+public class MasterNode extends Node implements Describable<MasterNode> {
 
     @DataBoundConstructor
     public MasterNode(String serverAddress, String userName, String sshKeyPath, boolean setJavaHome, String javaHome, String javaOptions) {
@@ -29,7 +29,7 @@ public class MasterNode extends Node implements Describable {
     }
 
      @Extension
-    public static class DescriptorMN extends Descriptor {
+    public static class DescriptorMN extends Descriptor<MasterNode> {
 
         @Override
         public String getDisplayName() {

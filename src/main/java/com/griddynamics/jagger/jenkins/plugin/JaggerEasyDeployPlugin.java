@@ -1,13 +1,13 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
 import com.floreysoft.jmte.Engine;
-import groovy.text.TemplateEngine;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import hudson.util.*;
+import hudson.util.FormValidation;
+import hudson.util.QuotedStringTokenizer;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -44,11 +44,13 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private String jaggerTestSuitePathActual;
 
-    private final String baseDir = "result";
+    private final String BASE_DIR = "result";
 
-    private final String jaggerHome = "runned_jagger" ;
+    private final String JAGGER_HOME = "runned_jagger" ;
 
     private final boolean multiNodeConfiguration;
+
+    private final String LINE_SEPARATOR = System.getProperty("line.separator");
 
     /**
      * Constructor where fields from *.jelly will be passed
@@ -79,6 +81,11 @@ public class JaggerEasyDeployPlugin extends Builder
         multiNodeConfiguration = kernelNodeList != null && kernelNodeList.size() > 0;
     }
 
+
+    public String getLINE_SEPARATOR() {
+        return LINE_SEPARATOR;
+    }
+
     public Launcher.ProcStarter getProcStarter() {
         return procStarter;
     }
@@ -87,8 +94,8 @@ public class JaggerEasyDeployPlugin extends Builder
         this.deploymentScript = deploymentScript;
     }
 
-    public String getJaggerHome() {
-        return jaggerHome;
+    public String getJAGGER_HOME() {
+        return JAGGER_HOME;
     }
 
     public ArrayList<KernelNode> getKernelNodeList() {
@@ -103,8 +110,8 @@ public class JaggerEasyDeployPlugin extends Builder
         return multiNodeConfiguration;
     }
 
-    public String getBaseDir() {
-        return baseDir;
+    public String getBASE_DIR() {
+        return BASE_DIR;
     }
 
     public String getEnvPropertiesActual() {
@@ -173,13 +180,13 @@ public class JaggerEasyDeployPlugin extends Builder
         try {
             setDeploymentScript(generateScript());
         } catch (IOException e) {
-            logger.println("Exception while reading script templates\n" + e);
+            logger.println("Exception while reading script templates" + getLINE_SEPARATOR() + e);
             return false;
         }
 
-        logger.println("\n-------------Deployment-Script-------------------\n");
+        logger.println(getLINE_SEPARATOR() + "-------------Deployment-Script-------------------" + getLINE_SEPARATOR());
         logger.println(getDeploymentScript());
-        logger.println("\n-------------------------------------------------\n\n");
+        logger.println(getLINE_SEPARATOR() + "-------------------------------------------------" + getLINE_SEPARATOR() + getLINE_SEPARATOR());
 
         return true;
     }
@@ -194,7 +201,7 @@ public class JaggerEasyDeployPlugin extends Builder
     private String generateScript() throws IOException {
 
         Map<String,Object> args = new HashMap<String, Object>();
-        args.put("base-directory", getBaseDir());
+        args.put("base-directory", getBASE_DIR());
         args.put("deploying", deployJagger());
         args.put("starting-nodes", startNodes());
         args.put("collecting-results", collectResults());
@@ -223,7 +230,7 @@ public class JaggerEasyDeployPlugin extends Builder
         Map<String,Object> args = new HashMap<String, Object>();
 
         addNodeProperties(args, node);
-        args.put("jagger-home", getJaggerHome());
+        args.put("jagger-home", getJAGGER_HOME());
 
         return new Engine().transform(ScriptTemplate.STOP_AGENT.getTemplateString(), args);
     }
@@ -258,8 +265,8 @@ public class JaggerEasyDeployPlugin extends Builder
         Map<String,Object> args = new HashMap<String, Object>();
 
         addNodeProperties(args, node);
-        args.put("base-directory", getBaseDir());
-        args.put("jagger-home",getJaggerHome());
+        args.put("base-directory", getBASE_DIR());
+        args.put("jagger-home", getJAGGER_HOME());
 
         return new Engine().transform(ScriptTemplate.COPY_REPORTS.getTemplateString(), args);
     }
@@ -270,8 +277,8 @@ public class JaggerEasyDeployPlugin extends Builder
         Map<String,Object> args = new HashMap<String, Object>();
 
         addNodeProperties(args, node);
-        args.put("base-directory", getBaseDir());
-        args.put("jagger-home",getJaggerHome());
+        args.put("base-directory", getBASE_DIR());
+        args.put("jagger-home", getJAGGER_HOME());
 
 
         return new Engine().transform(ScriptTemplate.COPY_LOGS.getTemplateString(), args);
@@ -354,7 +361,7 @@ public class JaggerEasyDeployPlugin extends Builder
         addNodeProperties(args, node);
         args.put("master-server-address", getMasterNode().getServerAddressActual());
         args.put("additional-properties", addAdditionalProperties());
-        args.put("jagger-home", getJaggerHome());
+        args.put("jagger-home", getJAGGER_HOME());
         args.put("jmx-enabled", node.isUseJmx());
         if(node.isUseJmx()) {
             args.put("jmx-ports", node.getJmxPortActual().split(","));
@@ -370,7 +377,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         addNodeProperties(args, node);
         addDBProperties(args);
-        args.put("jagger-home", getJaggerHome());
+        args.put("jagger-home", getJAGGER_HOME());
         args.put("master-server-address", getMasterNode().getServerAddressActual());
         args.put("additional-properties", addAdditionalProperties());
         args.put("jagger-properties", getEnvPropertiesActual());
@@ -382,7 +389,7 @@ public class JaggerEasyDeployPlugin extends Builder
     private String startMaster() throws IOException {
 
         Map <String,Object> args = new HashMap<String, Object>();
-        args.put("jagger-home", getJaggerHome());
+        args.put("jagger-home", getJAGGER_HOME());
         if(!getDbOptions().isUseExternalDB()) {
             args.put("h2-db", "h2");
         }
@@ -406,17 +413,31 @@ public class JaggerEasyDeployPlugin extends Builder
 
         StringBuilder result = new StringBuilder();
         if(getAdditionalProperties().isDeclared()) {
-            Iterator iter = getAdditionalProperties().getPropertiesIterator();
+            Iterator iter = getLinesIterator(getAdditionalProperties().getTextFromAreaActual());
             if(iter != null && iter.hasNext()) {
                 do {
                     result.append("-D").append(iter.next());
                     if(iter.hasNext()){
-                        result.append(" \\\n\t");
+                        result.append(" \\").append(LINE_SEPARATOR).append("\t");
                     }
                 } while (iter.hasNext());
             }
         }
+
         return result.toString();
+    }
+
+
+     public Iterator getLinesIterator(String text) {
+
+        List<String> result = new ArrayList<String>();
+        for(String line : text.split(getLINE_SEPARATOR())) {
+            if(!line.trim().isEmpty()) {
+                result.add(line);
+            }
+        }
+
+        return result.iterator();
     }
 
 
@@ -489,7 +510,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         Map <String,Object> args = new HashMap<String, Object>();
         addNodeProperties(args, node);
-        args.put("jagger-home",getJaggerHome());
+        args.put("jagger-home", getJAGGER_HOME());
         args.put("jagger-test-suite-path", new File(getJaggerTestSuitePathActual()).getAbsolutePath());
         args.put("jagger-test-suite-name", new File(getJaggerTestSuitePathActual()).getName());
 
@@ -502,7 +523,7 @@ public class JaggerEasyDeployPlugin extends Builder
      * @return  string
      */
     private String processKey(String keyPath) {
-        return "".equals(keyPath.trim()) ? "" : " -i " + keyPath.trim();
+        return keyPath.trim().isEmpty() ? "" : " -i " + keyPath.trim();
     }
 
     /**
@@ -664,7 +685,7 @@ public class JaggerEasyDeployPlugin extends Builder
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)  throws InterruptedException, IOException {
 
         PrintStream logger = listener.getLogger();
-        logger.println("\n______Jagger_Easy_Deploy_Started______\n");
+        logger.println(getLINE_SEPARATOR() + "______Jagger_Easy_Deploy_Started______" + getLINE_SEPARATOR());
         String pathToDeploymentScript = build.getWorkspace() + File.separator + "deploy-script.sh";
 
         try{
@@ -673,22 +694,22 @@ public class JaggerEasyDeployPlugin extends Builder
 
             createScriptFile(pathToDeploymentScript);
 
-            logger.println("\n-----------------Deploying--------------------\n\n");
+            logger.println(getLINE_SEPARATOR() + "-----------------Deploying--------------------" + getLINE_SEPARATOR() + getLINE_SEPARATOR());
 
             int exitCode = getProcStarter().cmds(stringToCmds("./deploy-script.sh")).start().join();
 
             logger.println("exit code : " + exitCode);
 
-            logger.println("\n\n----------------------------------------------\n\n");
+            logger.println(getLINE_SEPARATOR() + "----------------------------------------------" + getLINE_SEPARATOR());
 
             if(exitCode != 0) {
 
                 if(getSutsList() != null) {
 
                         setDeploymentScript(stopAgents());
-                        logger.println("\n" + getDeploymentScript() + "\n");
+                        logger.println(getLINE_SEPARATOR() + getDeploymentScript() + getLINE_SEPARATOR());
                         getProcStarter().cmds(stringToCmds(getDeploymentScript())).start().join();
-                        logger.println("\n");
+                        logger.println(getLINE_SEPARATOR());
                 }
 
                 return false;
@@ -698,7 +719,7 @@ public class JaggerEasyDeployPlugin extends Builder
             }
         } catch (IOException e) {
 
-            logger.println("!!!\nException in perform " + e +
+            logger.println("!!!" + getLINE_SEPARATOR() + "Exception in perform " + e +
                     "can't create script file or run script");
 
             if(new File(pathToDeploymentScript).delete()) {

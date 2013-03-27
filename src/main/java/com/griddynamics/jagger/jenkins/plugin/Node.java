@@ -1,16 +1,6 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
-import hudson.Extension;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import hudson.util.FormValidation;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-
-import java.io.IOException;
-import java.net.*;
-import java.util.HashMap;
 
 /**
  * Created with IntelliJ IDEA.

@@ -6,10 +6,6 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -50,17 +46,6 @@ public class AdditionalProperties implements Describable<AdditionalProperties>{
         this.textFromAreaActual = textFromAreaActual;
     }
 
-    public Iterator getPropertiesIterator() {
-
-        List<String> result = new ArrayList<String>();
-        for(String line : getTextFromArea().split("\\n")) {
-            if(! "".equals(line.trim())) {
-                result.add(line);
-            }
-        }
-
-        return result.iterator();
-    }
 
     @Extension
     public static class DescriptorAP extends Descriptor<AdditionalProperties>{
