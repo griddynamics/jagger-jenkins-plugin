@@ -52,6 +52,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private final String LINE_SEPARATOR = System.getProperty("line.separator");
 
+    private final static Engine TRANSFORM_ENGINE = new Engine();
+
     /**
      * Constructor where fields from *.jelly will be passed
      * @param sutsList
@@ -207,7 +209,7 @@ public class JaggerEasyDeployPlugin extends Builder
         args.put("collecting-results", collectResults());
         args.put("stopping-agents", stopAgents());
 
-        return new Engine().transform(ScriptTemplate.MAIN.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.MAIN.getTemplateString(), args);
     }
 
 
@@ -232,7 +234,7 @@ public class JaggerEasyDeployPlugin extends Builder
         addNodeProperties(args, node);
         args.put("jagger-home", getJAGGER_HOME());
 
-        return new Engine().transform(ScriptTemplate.STOP_AGENT.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.STOP_AGENT.getTemplateString(), args);
     }
 
 
@@ -268,7 +270,7 @@ public class JaggerEasyDeployPlugin extends Builder
         args.put("base-directory", getBASE_DIR());
         args.put("jagger-home", getJAGGER_HOME());
 
-        return new Engine().transform(ScriptTemplate.COPY_REPORTS.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.COPY_REPORTS.getTemplateString(), args);
     }
 
 
@@ -281,7 +283,7 @@ public class JaggerEasyDeployPlugin extends Builder
         args.put("jagger-home", getJAGGER_HOME());
 
 
-        return new Engine().transform(ScriptTemplate.COPY_LOGS.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.COPY_LOGS.getTemplateString(), args);
     }
 
 
@@ -292,7 +294,7 @@ public class JaggerEasyDeployPlugin extends Builder
         args.put("starting-kernels-agents", startKernelsAgents());
         args.put("check-kernels-agents", checkKernelsAgents());
 
-        return new Engine().transform(ScriptTemplate.START_NODES.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.START_NODES.getTemplateString(), args);
     }
 
 
@@ -321,7 +323,7 @@ public class JaggerEasyDeployPlugin extends Builder
         Map <String,Object> args = new HashMap<String, Object>();
         addNodeProperties(args, node);
 
-        return new Engine().transform(ScriptTemplate.CHECK_AGENT.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.CHECK_AGENT.getTemplateString(), args);
     }
 
 
@@ -330,7 +332,7 @@ public class JaggerEasyDeployPlugin extends Builder
         Map <String,Object> args = new HashMap<String, Object>();
         addNodeProperties(args, node);
 
-        return new Engine().transform(ScriptTemplate.CHECK_KERNEL.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.CHECK_KERNEL.getTemplateString(), args);
     }
 
 
@@ -367,7 +369,7 @@ public class JaggerEasyDeployPlugin extends Builder
             args.put("jmx-ports", node.getJmxPortActual().split(","));
         }
 
-        return new Engine().transform(ScriptTemplate.START_AGENT.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.START_AGENT.getTemplateString(), args);
     }
 
 
@@ -382,7 +384,7 @@ public class JaggerEasyDeployPlugin extends Builder
         args.put("additional-properties", addAdditionalProperties());
         args.put("jagger-properties", getEnvPropertiesActual());
 
-        return new Engine().transform(ScriptTemplate.START_KERNEL.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.START_KERNEL.getTemplateString(), args);
     }
 
 
@@ -405,7 +407,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         args.put("additional-properties", addAdditionalProperties());
 
-        return new Engine().transform(ScriptTemplate.START_MASTER.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.START_MASTER.getTemplateString(), args);
     }
 
 
@@ -514,7 +516,7 @@ public class JaggerEasyDeployPlugin extends Builder
         args.put("jagger-test-suite-path", new File(getJaggerTestSuitePathActual()).getAbsolutePath());
         args.put("jagger-test-suite-name", new File(getJaggerTestSuitePathActual()).getName());
 
-        return new Engine().transform(ScriptTemplate.DEPLOYING.getTemplateString(), args);
+        return TRANSFORM_ENGINE.transform(ScriptTemplate.DEPLOYING.getTemplateString(), args);
     }
 
     /**
