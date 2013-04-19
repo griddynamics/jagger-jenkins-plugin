@@ -50,7 +50,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private final String LINE_SEPARATOR = System.getProperty("line.separator");
 
-    private final Engine transformEngine = new Engine();
+    private transient Engine transformEngine = Engine.createDefaultEngine();
 
     /**
      * Constructor where fields from *.jelly will be passed
@@ -758,8 +758,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void setUpProcStarter(Launcher launcher, AbstractBuild<?, ?> build, BuildListener listener) {
 
-        procStarter = launcher.new ProcStarter();
-        procStarter.envs();
+        procStarter = launcher.launch();
         procStarter.pwd(build.getWorkspace());
         procStarter.stdout(listener);
     }
