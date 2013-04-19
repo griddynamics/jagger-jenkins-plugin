@@ -1014,8 +1014,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private void setUpProcStarter(Launcher launcher, AbstractBuild<?, ?> build, BuildListener listener) {
 
-        procStarter = launcher.new ProcStarter();
-        procStarter.envs();
+        procStarter = launcher.launch();
         procStarter.pwd(build.getWorkspace());
         procStarter.stdout(listener);
     }
