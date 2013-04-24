@@ -48,7 +48,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private final boolean multiNodeConfiguration;
 
-    private final String LINE_SEPARATOR = System.getProperty("line.separator");
+    private String lineSeparator;
 
     private transient Engine transformEngine;
 
@@ -78,12 +78,14 @@ public class JaggerEasyDeployPlugin extends Builder
         this.envPropertiesActual = envProperties;
         this.masterNode = masterNode;
 
+        this.lineSeparator = System.getProperty("line.separator");
+
         multiNodeConfiguration = kernelNodeList != null && kernelNodeList.size() > 0;
     }
 
 
-    public String getLINE_SEPARATOR() {
-        return LINE_SEPARATOR;
+    public String getLineSeparator() {
+        return lineSeparator;
     }
 
     public Launcher.ProcStarter getProcStarter() {
@@ -166,6 +168,7 @@ public class JaggerEasyDeployPlugin extends Builder
         PrintStream logger = listener.getLogger();
 
         transformEngine = Engine.createDefaultEngine();
+        lineSeparator = System.getProperty("line.separator");
 
         try {
             checkUsesOfEnvironmentProperties(build, listener);
@@ -182,13 +185,13 @@ public class JaggerEasyDeployPlugin extends Builder
         try {
             setDeploymentScript(generateScript());
         } catch (IOException e) {
-            logger.println("Exception while reading script templates" + getLINE_SEPARATOR() + e);
+            logger.println("Exception while reading script templates" + getLineSeparator() + e);
             return false;
         }
 
-        logger.println(getLINE_SEPARATOR() + "-------------Deployment-Script-------------------" + getLINE_SEPARATOR());
+        logger.println(getLineSeparator() + "-------------Deployment-Script-------------------" + getLineSeparator());
         logger.println(getDeploymentScript());
-        logger.println(getLINE_SEPARATOR() + "-------------------------------------------------" + getLINE_SEPARATOR() + getLINE_SEPARATOR());
+        logger.println(getLineSeparator() + "-------------------------------------------------" + getLineSeparator() + getLineSeparator());
 
         return true;
     }
@@ -420,7 +423,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 do {
                     result.append("-D").append(iter.next());
                     if(iter.hasNext()){
-                        result.append(" \\").append(LINE_SEPARATOR).append("\t");
+                        result.append(" \\").append(getLineSeparator()).append("\t");
                     }
                 } while (iter.hasNext());
             }
@@ -433,7 +436,7 @@ public class JaggerEasyDeployPlugin extends Builder
      public Iterator getLinesIterator(String text) {
 
         List<String> result = new ArrayList<String>();
-        for(String line : text.split(getLINE_SEPARATOR())) {
+        for(String line : text.split(getLineSeparator())) {
             if(!line.trim().isEmpty()) {
                 result.add(line);
             }
@@ -687,7 +690,7 @@ public class JaggerEasyDeployPlugin extends Builder
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)  throws InterruptedException, IOException {
 
         PrintStream logger = listener.getLogger();
-        logger.println(getLINE_SEPARATOR() + "______Jagger_Easy_Deploy_Started______" + getLINE_SEPARATOR());
+        logger.println(getLineSeparator() + "______Jagger_Easy_Deploy_Started______" + getLineSeparator());
         String pathToDeploymentScript = build.getWorkspace() + File.separator + "deploy-script.sh";
 
         try{
@@ -696,22 +699,22 @@ public class JaggerEasyDeployPlugin extends Builder
 
             createScriptFile(pathToDeploymentScript);
 
-            logger.println(getLINE_SEPARATOR() + "-----------------Deploying--------------------" + getLINE_SEPARATOR() + getLINE_SEPARATOR());
+            logger.println(getLineSeparator() + "-----------------Deploying--------------------" + getLineSeparator() + getLineSeparator());
 
             int exitCode = getProcStarter().cmds(stringToCmds("./deploy-script.sh")).start().join();
 
             logger.println("exit code : " + exitCode);
 
-            logger.println(getLINE_SEPARATOR() + "----------------------------------------------" + getLINE_SEPARATOR());
+            logger.println(getLineSeparator() + "----------------------------------------------" + getLineSeparator());
 
             if(exitCode != 0) {
 
                 if(getSutsList() != null) {
 
                         setDeploymentScript(stopAgents());
-                        logger.println(getLINE_SEPARATOR() + getDeploymentScript() + getLINE_SEPARATOR());
+                        logger.println(getLineSeparator() + getDeploymentScript() + getLineSeparator());
                         getProcStarter().cmds(stringToCmds(getDeploymentScript())).start().join();
-                        logger.println(getLINE_SEPARATOR());
+                        logger.println(getLineSeparator());
                 }
 
                 return false;
@@ -721,7 +724,7 @@ public class JaggerEasyDeployPlugin extends Builder
             }
         } catch (IOException e) {
 
-            logger.println("!!!" + getLINE_SEPARATOR() + "Exception in perform " + e +
+            logger.println("!!!" + getLineSeparator() + "Exception in perform " + e +
                     "can't create script file or run script");
 
             if(new File(pathToDeploymentScript).delete()) {
@@ -823,7 +826,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 temp = System.getProperty("user.home") + temp;
             }
             if(!new File(temp).exists()){
-                return FormValidation.error("file not exists");
+                return FormValidation.warning("file not exists");
             }
 
             return FormValidation.ok();
