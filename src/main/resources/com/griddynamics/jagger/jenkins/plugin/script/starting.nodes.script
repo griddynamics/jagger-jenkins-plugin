@@ -1,0 +1,13 @@
+
+${if starting-kernels-agents}
+echo "Starting Kernels/Agents"
+${starting-kernels-agents}
+
+echo "Checking if Kernels/Agents runs"
+sleep 10
+
+${check-kernels-agents}
+${end}
+
+echo "Starting Master"
+${starting-master}

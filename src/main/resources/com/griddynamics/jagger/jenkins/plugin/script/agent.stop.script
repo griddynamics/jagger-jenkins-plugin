@@ -1,0 +1,4 @@
+
+echo "Stoping Agent ${server-address}"
+
+ssh${ssh-key-path} ${user-name}@${server-address} "${jagger-home}/stop_agent.sh"

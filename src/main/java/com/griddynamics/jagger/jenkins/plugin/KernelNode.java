@@ -17,7 +17,7 @@ import java.net.UnknownHostException;
  * User: amikryukov
  * Date: 2/20/13
  */
-public class KernelNode extends Node implements Describable {
+public class KernelNode extends Node implements Describable<KernelNode> {
 
     @DataBoundConstructor
     public KernelNode(String serverAddress, String userName, String sshKeyPath, boolean setJavaHome, String javaHome, String javaOptions) {
@@ -29,7 +29,7 @@ public class KernelNode extends Node implements Describable {
     }
 
     @Extension
-    public static class DescriptorKN extends Descriptor {
+    public static class DescriptorKN extends Descriptor<KernelNode> {
 
         @Override
         public String getDisplayName() {
