@@ -1,0 +1,9 @@
+
+echo "Copy logs from ${server-address}"
+scp${ssh-key-path} ${user-name}@${server-address}:${jagger-home}/*.log* ${base-directory}
+    status=$?
+	if [ "$status" -ne 0 ] && [ "$status" -ne 1 ] ; then
+		echo "Could not copy logs. $status"
+	fi
+cd ${base-directory}; zip -9 ${server-address}.zip jagger*.log*; rm jagger*.log*; cd ..
+

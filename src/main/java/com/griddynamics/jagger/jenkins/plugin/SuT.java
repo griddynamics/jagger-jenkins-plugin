@@ -10,8 +10,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.IOException;
-import java.net.*;
-import java.util.ArrayList;
+import java.net.Socket;
+import java.net.UnknownHostException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 /**
  * To Make Object of Server that we want to test
  */
-public class SuT extends Node implements Describable {
+public class SuT extends Node implements Describable<SuT> {
 
     private final boolean useJmx;
 
@@ -67,7 +67,7 @@ public class SuT extends Node implements Describable {
     }
 
     @Extension
-    public static class DescriptorNTA extends Descriptor{
+    public static class DescriptorNTA extends Descriptor<SuT>{
 
         @Override
         public String getDisplayName() {

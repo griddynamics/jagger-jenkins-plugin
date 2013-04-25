@@ -1,0 +1,25 @@
+#!/bin/bash
+
+rm -rf ${base-directory}
+sleep 2
+mkdir ${base-directory}
+
+
+echo "Deploying"
+${deploying}
+
+
+echo "Starting Nodes"
+${starting-nodes}
+
+
+echo "Collecting Results"
+${collecting-results}
+
+${if stopping-agents}
+echo "Stopping Agents"
+${stopping-agents}
+${end}
+
+cd ${base-directory}
+zip -9 report.zip *.pdf *.html *.xml

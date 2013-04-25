@@ -6,6 +6,7 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+
 /**
  * Created by IntelliJ IDEA.
  * User: amikryukov
@@ -44,6 +45,7 @@ public class AdditionalProperties implements Describable<AdditionalProperties>{
     public void setTextFromAreaActual(String textFromAreaActual) {
         this.textFromAreaActual = textFromAreaActual;
     }
+
 
     @Extension
     public static class DescriptorAP extends Descriptor<AdditionalProperties>{
