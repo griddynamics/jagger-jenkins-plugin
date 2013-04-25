@@ -96,10 +96,6 @@ public class JaggerEasyDeployPlugin extends Builder
         this.deploymentScript = deploymentScript;
     }
 
-    public String getJAGGER_HOME() {
-        return JAGGER_HOME;
-    }
-
     public ArrayList<KernelNode> getKernelNodeList() {
         return kernelNodeList;
     }
@@ -110,10 +106,6 @@ public class JaggerEasyDeployPlugin extends Builder
 
     public boolean isMultiNodeConfiguration() {
         return multiNodeConfiguration;
-    }
-
-    public String getBASE_DIR() {
-        return BASE_DIR;
     }
 
     public String getEnvPropertiesActual() {
@@ -206,7 +198,7 @@ public class JaggerEasyDeployPlugin extends Builder
     private String generateScript() throws IOException {
 
         Map<String,Object> args = new HashMap<String, Object>();
-        args.put("base-directory", getBASE_DIR());
+        args.put("base-directory", BASE_DIR);
         args.put("deploying", deployJagger());
         args.put("starting-nodes", startNodes());
         args.put("collecting-results", collectResults());
@@ -235,7 +227,7 @@ public class JaggerEasyDeployPlugin extends Builder
         Map<String,Object> args = new HashMap<String, Object>();
 
         addNodeProperties(args, node);
-        args.put("jagger-home", getJAGGER_HOME());
+        args.put("jagger-home", JAGGER_HOME);
 
         return transformEngine.transform(ScriptTemplate.STOP_AGENT.getTemplateString(), args);
     }
@@ -270,8 +262,8 @@ public class JaggerEasyDeployPlugin extends Builder
         Map<String,Object> args = new HashMap<String, Object>();
 
         addNodeProperties(args, node);
-        args.put("base-directory", getBASE_DIR());
-        args.put("jagger-home", getJAGGER_HOME());
+        args.put("base-directory", BASE_DIR);
+        args.put("jagger-home", JAGGER_HOME);
 
         return transformEngine.transform(ScriptTemplate.COPY_REPORTS.getTemplateString(), args);
     }
@@ -282,8 +274,8 @@ public class JaggerEasyDeployPlugin extends Builder
         Map<String,Object> args = new HashMap<String, Object>();
 
         addNodeProperties(args, node);
-        args.put("base-directory", getBASE_DIR());
-        args.put("jagger-home", getJAGGER_HOME());
+        args.put("base-directory", BASE_DIR);
+        args.put("jagger-home", JAGGER_HOME);
 
 
         return transformEngine.transform(ScriptTemplate.COPY_LOGS.getTemplateString(), args);
@@ -366,7 +358,7 @@ public class JaggerEasyDeployPlugin extends Builder
         addNodeProperties(args, node);
         args.put("master-server-address", getMasterNode().getServerAddressActual());
         args.put("additional-properties", addAdditionalProperties());
-        args.put("jagger-home", getJAGGER_HOME());
+        args.put("jagger-home", JAGGER_HOME);
         args.put("jmx-enabled", node.isUseJmx());
         if(node.isUseJmx()) {
             args.put("jmx-ports", node.getJmxPortActual().split(","));
@@ -382,7 +374,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         addNodeProperties(args, node);
         addDBProperties(args);
-        args.put("jagger-home", getJAGGER_HOME());
+        args.put("jagger-home", JAGGER_HOME);
         args.put("master-server-address", getMasterNode().getServerAddressActual());
         args.put("additional-properties", addAdditionalProperties());
         args.put("jagger-properties", getEnvPropertiesActual());
@@ -394,7 +386,7 @@ public class JaggerEasyDeployPlugin extends Builder
     private String startMaster() throws IOException {
 
         Map <String,Object> args = new HashMap<String, Object>();
-        args.put("jagger-home", getJAGGER_HOME());
+        args.put("jagger-home", JAGGER_HOME);
         if(!getDbOptions().isUseExternalDB()) {
             args.put("h2-db", "h2");
         }
@@ -515,7 +507,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         Map <String,Object> args = new HashMap<String, Object>();
         addNodeProperties(args, node);
-        args.put("jagger-home", getJAGGER_HOME());
+        args.put("jagger-home", JAGGER_HOME);
         args.put("jagger-test-suite-path", new File(getJaggerTestSuitePathActual()).getAbsolutePath());
         args.put("jagger-test-suite-name", new File(getJaggerTestSuitePathActual()).getName());
 
