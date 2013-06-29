@@ -1,5 +1,6 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
+import hudson.FilePath;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -33,12 +34,12 @@ public class SessionDecision {
      * @throws IOException
      * @throws SAXException
      */
-    public static SessionDecision create (File path) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+    public static SessionDecision create (FilePath path) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         SessionDecision decision=new SessionDecision();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(true);
         DocumentBuilder builder = factory.newDocumentBuilder();
-        Document doc = builder.parse(new FileInputStream(path));
+        Document doc = builder.parse(path.read());
         decision.setComparisonDecision(readDecision(doc, XPATH_COMPARISON_DECISION));
         Decision sessionDecision=readDecision(doc, XPATH_SESSION_DECISION);
         if(sessionDecision==null){

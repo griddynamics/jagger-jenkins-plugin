@@ -1,6 +1,7 @@
 package com.griddynamics.jagger.jenkins.plugin;
 
 import hudson.Extension;
+			import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
@@ -17,20 +18,20 @@ import java.io.IOException;
 public class JaggerComparisonPlugin extends Builder {
 
     private final String path;
-    private final boolean ignoreErrors; //ignoring errors in plugin
+    private final boolean stopOnErrors; //ignoring errors in plugin
 
     @DataBoundConstructor
-    public JaggerComparisonPlugin(String path,boolean ignoreErrors) {
+    public JaggerComparisonPlugin(String path, boolean stopOnErrors) {
         this.path = path;
-        this.ignoreErrors = ignoreErrors;
+        this.stopOnErrors = stopOnErrors;
     }
 
     public String getPath() {
         return path;
     }
 
-    public boolean getIgnoreErrors() {
-        return ignoreErrors;
+    public boolean isStopOnErrors() {
+        return stopOnErrors;
     }
 
     @Override
@@ -38,19 +39,17 @@ public class JaggerComparisonPlugin extends Builder {
         SessionDecision decision;
         try{
             String filePath = build.getEnvironment(listener).expand(getPath());
-            File  file=new File(filePath);
-            if(file.isAbsolute()){
-                decision=SessionDecision.create(file);
-            } else {
-                decision=SessionDecision.create(new File(String.valueOf(build.getWorkspace()),filePath));
-            }
+            FilePath file = new FilePath(build.getExecutor().getCurrentWorkspace(), filePath);
+            listener.getLogger().println("Reading file: " + file.absolutize());
+            decision = SessionDecision.create(file);
+
         } catch (Exception e){
             listener.getLogger().println("Plugin exception: " + e.toString());
-            if (getIgnoreErrors()){
-                listener.getLogger().println("Ignoring error");
-                return true;
+            if (isStopOnErrors()){
+                return false;
             }
-            return false;
+            listener.getLogger().println("Ignoring error");
+            return true;
         }
         Result currentBuildResult=build.getResult();
         Decision result=decision.makeDecision();
