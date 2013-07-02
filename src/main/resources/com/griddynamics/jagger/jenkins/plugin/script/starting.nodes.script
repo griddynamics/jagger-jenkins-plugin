@@ -3,7 +3,7 @@ ${if starting-kernels-agents}
 echo "Starting Kernels/Agents"
 ${starting-kernels-agents}
 
-echo "Checking if Kernels/Agents runs"
+echo "Checking if Kernels/Agents run"
 sleep 10
 
 ${check-kernels-agents}

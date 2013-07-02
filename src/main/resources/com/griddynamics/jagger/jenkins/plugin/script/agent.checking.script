@@ -1,8 +1,8 @@
 
 echo "Checking Agent ${server-address}"
-JOUT=$(ssh${ssh-key-path} ${user-name}@${server-address} "ps axwww | grep AgentStarter | wc -l")
+JOUT=$(ssh${ssh-key-path} ${user-name}@${server-address} "pgrep -f AgentStarter")
 
-	if [ "$JOUT" -le 2 ] ; then
+	if [ -z "$JOUT" ] ; then
 		echo "No AgentStarter running on ${server-address}"
 		exit $JOUT
 	fi
