@@ -753,11 +753,12 @@ public class JaggerEasyDeployPlugin extends Builder
     }
 
 
-    private void setUpProcStarter(Launcher launcher, AbstractBuild<?, ?> build, BuildListener listener) {
+    private void setUpProcStarter(Launcher launcher, AbstractBuild<?, ?> build, BuildListener listener) throws IOException, InterruptedException {
 
         procStarter = launcher.launch();
         procStarter.pwd(build.getWorkspace());
         procStarter.stdout(listener);
+        procStarter.envs(build.getEnvironment(listener));
     }
 
     /**
