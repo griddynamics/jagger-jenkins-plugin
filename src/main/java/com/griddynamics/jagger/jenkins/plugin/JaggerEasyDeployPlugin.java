@@ -2,6 +2,7 @@ package com.griddynamics.jagger.jenkins.plugin;
 
 import com.floreysoft.jmte.Engine;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
@@ -683,7 +684,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
         PrintStream logger = listener.getLogger();
         logger.println(getLineSeparator() + "______Jagger_Easy_Deploy_Started______" + getLineSeparator());
-        String pathToDeploymentScript = build.getWorkspace() + File.separator + "deploy-script.sh";
+        FilePath pathToDeploymentScript =
+                new FilePath(build.getExecutor().getCurrentWorkspace(), "deploy-script.sh");
 
         try{
 
@@ -714,15 +716,17 @@ public class JaggerEasyDeployPlugin extends Builder
 
                 return true;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
 
             logger.println("!!!" + getLineSeparator() + "Exception in perform " + e +
                     "can't create script file or run script");
-
-            if(new File(pathToDeploymentScript).delete()) {
+            try {
+                pathToDeploymentScript.delete();
                 logger.println(pathToDeploymentScript + " has been deleted");
-            } else {
-                logger.println(pathToDeploymentScript + " haven't been created");
+            } catch (Exception exception) {
+                logger.println("Exception during delete file '"
+                        + pathToDeploymentScript.absolutize() + "': " + exception);
+                exception.printStackTrace(logger);
             }
         }
 
@@ -735,11 +739,11 @@ public class JaggerEasyDeployPlugin extends Builder
      * @throws IOException  if can't create file  or ru cmds.
      * @param file 5
      */
-    private void createScriptFile(String file) throws IOException {
+    private void createScriptFile(FilePath file) throws Exception {
 
         PrintWriter fw = null;
         try{
-            fw = new PrintWriter(new FileOutputStream(file));
+            fw = new PrintWriter(file.write());
             fw.write(getDeploymentScript());
 
         } finally {
