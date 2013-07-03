@@ -1,8 +1,8 @@
 
 echo "Checking Kernel ${server-address}"
-JOUT=$(ssh${ssh-key-path} ${user-name}@${server-address} "ps axwww | grep JaggerLauncher | wc -l")
+JOUT=$(ssh${ssh-key-path} ${user-name}@${server-address} "pgrep -f JaggerLauncher")
 
-	if [ "$JOUT" -le 2 ] ; then
+	if [ -z "$JOUT" ] ; then
 		echo "No JaggerLauncher running on ${server-address}"
 		exit $JOUT
 	fi
