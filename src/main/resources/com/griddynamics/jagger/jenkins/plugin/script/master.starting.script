@@ -1,5 +1,5 @@
 echo "Starting Master ${server-address}"
-ssh${ssh-key-path} ${user-name}@${server-address} "cd ${jagger-home};${if java-home}export JAVA_HOME=${java-home};${end} ./start.sh ${jagger-properties} ' \\${if java-options}
+ssh${ssh-key-path} ${user-name}@${server-address} "cd ${jagger-home};${if java-home}export JAVA_HOME=${java-home};${end} ./start.sh ${jagger-properties}  \\${if java-options}
     ${java-options} \\${end}${if min-agents}
     -Dchassis.conditions.min.agents.count=${min-agents} \\${end}${if min-kernels}
     -Dchassis.conditions.min.kernels.count=${if min-kernels=0}1${else}${min-kernels}${end} \\${end}
@@ -11,7 +11,7 @@ ssh${ssh-key-path} ${user-name}@${server-address} "cd ${jagger-home};${if java-h
     -Dchassis.roles=MASTER,COORDINATION_SERVER,HTTP_COORDINATION_SERVER${if min-kernels=0},KERNEL${end}${if h2-db},RDB_SERVER${end} \\
     -Dchassis.coordinator.zookeeper.endpoint=${server-address}:${if zookeeper-port}${zookeeper-port}${else}2181${end} \\
     -Dchassis.storage.fs.default.name=hdfs://${server-address}/ ${if additional-properties}\\
-    ${additional-properties}${end} '"
+    ${additional-properties}${end} "
 	status=$?
 	if [ "$status" -ne 0 ] ; then
 		exit $status
