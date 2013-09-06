@@ -1,11 +1,11 @@
 
 
 echo "Starting Agent ${server-address}"
-ssh -f${ssh-key-path} ${user-name}@${server-address} "cd ${jagger-home};${if java-home}export JAVA_HOME=${java-home};${end} ./start_agent.sh  \\${if java-options}
-    ${java-options} \\${end}
+ssh -f${ssh-key-path} ${user-name}@${server-address} "cd ${jagger-home};${if java-home}export JAVA_HOME=${java-home};${end} ./start_agent.sh  \\
     -Dchassis.coordination.http.url=http://${master-server-address}:${if http-port}${http-port}${else}8089${end} \\
     -Djmx.enabled=${jmx-enabled} \\${if jmx-ports}
     -Djmx.services=${foreach jmx-ports port}${if last_port}localhost:${port}${else}localhost:${port},${end}${end} \\${end}${if additional-properties}
-    ${additional-properties} \\${end}
+    ${additional-properties} \\${end}${if java-options}
+    ${java-options} \\${end}
  > /dev/null 2>&1"
 
