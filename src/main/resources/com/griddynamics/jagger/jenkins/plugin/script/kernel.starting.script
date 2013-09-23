@@ -11,5 +11,5 @@ ssh -f${ssh-key-path} ${user-name}@${server-address} "cd ${jagger-home};${if jav
 	-Dchassis.coordinator.zookeeper.endpoint=${master-server-address}:${if zookeeper-port}${zookeeper-port}${else}2181${end} \\
 	-Dchassis.storage.fs.default.name=hdfs://${master-server-address}/ \\${if additional-properties}
     ${additional-properties} \\${end}
- > /dev/null 2>&1"
+ > /dev/null"
 
