@@ -110,11 +110,12 @@ public class SuT extends Node implements Describable<SuT> {
 
             if(value == null || value.matches("\\s*")) {
                 return FormValidation.warning("Set JMX Port(s)");
+            } else if (value.contains("$")) {
+                return FormValidation.ok();
             } else if (!value.matches("\\d+(,\\d+)*")) {
                 return FormValidation.error("wrong format: split with comas");
-            } else {
-                return FormValidation.ok();
             }
+            return FormValidation.ok();
         }
     }
 }
