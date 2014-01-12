@@ -3,6 +3,10 @@ echo "Checking Agent ${server-address}"
 JOUT=$(ssh${ssh-key-path} ${user-name}@${server-address} "pgrep -f AgentStarter")
 
 	if [ -z "$JOUT" ] ; then
-		echo "No AgentStarter running on ${server-address}"
-		exit $JOUT
+		echo "No AgentStarter running on ${server-address}" 1>&2;
+
+		FAIL_IF_AGENT_NOT_RUNNING="${fail-if-not-running}"
+		if [ $FAIL_IF_AGENT_NOT_RUNNING = "true" ] ; then
+		    exit $JOUT
+		fi
 	fi

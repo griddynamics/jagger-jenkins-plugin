@@ -318,6 +318,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         Map <String,Object> args = new HashMap<String, Object>();
         addNodeProperties(args, node);
+        args.put("fail-if-not-running", node.isFailIfNotRunning());
 
         return transformEngine.transform(ScriptTemplate.CHECK_AGENT.getTemplateString(), args);
     }

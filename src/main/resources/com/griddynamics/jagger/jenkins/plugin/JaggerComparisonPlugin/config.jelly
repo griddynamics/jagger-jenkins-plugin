@@ -2,7 +2,9 @@
   <f:entry title="Path to Jagger output xml file" field="path">
     <f:textbox />
   </f:entry>
-  <f:entry title="Stop and set the build to 'failed' status if there are errors when processing a result file" field="stopOnErrors">
-    <f:checkbox default="checked"/>
+
+  <f:entry field="stopOnErrors"
+       title="Stop and set the build status to 'failed', if there are errors when processing a result file">
+       <f:booleanRadio />
   </f:entry>
 </j:jelly>
