@@ -6,7 +6,7 @@ JOUT=$(ssh${ssh-key-path} ${user-name}@${server-address} "pgrep -f AgentStarter"
 		echo "No AgentStarter running on ${server-address}" 1>&2;
 
 		FAIL_IF_AGENT_NOT_RUNNING="${fail-if-not-running}"
-		if [ $FAIL_IF_AGENT_NOT_RUNNING = "true" ] ; then}"
+		if [ $FAIL_IF_AGENT_NOT_RUNNING = "true" ] ; then
  		    exit $ERROR_CODE_AGENT_NOT_RUNNING
 		fi
 	fi
