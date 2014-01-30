@@ -29,16 +29,20 @@ public class SuT extends Node implements Describable<SuT> {
 
     private final String jmxPort;
 
+    private final boolean failIfNotRunning;
+
     private String jmxPortActual;
 
     @DataBoundConstructor
     public SuT(String serverAddress, String userName, String sshKeyPath,
-               String jmxPort, boolean useJmx, boolean setJavaHome, String javaHome, String javaOptions){
+               String jmxPort, boolean useJmx, boolean setJavaHome,
+               String javaHome, String javaOptions, boolean failIfNotRunning) {
 
-         super(serverAddress, userName, sshKeyPath, setJavaHome, javaHome, javaOptions);
+        super(serverAddress, userName, sshKeyPath, setJavaHome, javaHome, javaOptions);
 
         this.jmxPort = jmxPort;
         this.useJmx = useJmx;
+        this.failIfNotRunning = failIfNotRunning;
 
         setJmxPortActual(jmxPort);
     }
@@ -46,6 +50,10 @@ public class SuT extends Node implements Describable<SuT> {
 
     public String getJmxPortActual() {
         return jmxPortActual;
+    }
+
+    public boolean isFailIfNotRunning() {
+        return failIfNotRunning;
     }
 
     public void setJmxPortActual(String jmxPortActual) {
@@ -110,11 +118,12 @@ public class SuT extends Node implements Describable<SuT> {
 
             if(value == null || value.matches("\\s*")) {
                 return FormValidation.warning("Set JMX Port(s)");
+            } else if (value.contains("$")) {
+                return FormValidation.ok();
             } else if (!value.matches("\\d+(,\\d+)*")) {
                 return FormValidation.error("wrong format: split with comas");
-            } else {
-                return FormValidation.ok();
             }
+            return FormValidation.ok();
         }
     }
 }

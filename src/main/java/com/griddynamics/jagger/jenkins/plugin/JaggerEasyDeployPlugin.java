@@ -53,6 +53,8 @@ public class JaggerEasyDeployPlugin extends Builder
 
     private transient Engine transformEngine;
 
+    private final Map<String, Integer> errorCodes = new HashMap<String, Integer>();
+
     /**
      * Constructor where fields from *.jelly will be passed
      * @param sutsList
@@ -205,7 +207,14 @@ public class JaggerEasyDeployPlugin extends Builder
         args.put("collecting-results", collectResults());
         args.put("stopping-agents", stopAgents());
 
+        loadErrorCodes();
+        args.putAll(errorCodes);
+
         return transformEngine.transform(ScriptTemplate.MAIN.getTemplateString(), args);
+    }
+
+    private void loadErrorCodes() {
+        errorCodes.put("error-code-agent-not-running", 256);
     }
 
 
@@ -318,6 +327,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         Map <String,Object> args = new HashMap<String, Object>();
         addNodeProperties(args, node);
+        args.put("fail-if-not-running", node.isFailIfNotRunning());
 
         return transformEngine.transform(ScriptTemplate.CHECK_AGENT.getTemplateString(), args);
     }

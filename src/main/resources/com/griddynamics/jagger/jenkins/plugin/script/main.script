@@ -4,6 +4,8 @@ rm -rf ${base-directory}
 sleep 2
 mkdir ${base-directory}
 
+#Error codes:
+ERROR_CODE_AGENT_NOT_RUNNING=${error-code-agent-not-running}
 
 echo "Deploying"
 ${deploying}
