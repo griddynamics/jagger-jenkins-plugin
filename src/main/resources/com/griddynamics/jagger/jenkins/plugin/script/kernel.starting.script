@@ -11,5 +11,4 @@ ssh -f${ssh-key-path} ${user-name}@${server-address} "cd ${jagger-home};${if jav
 	-Dchassis.storage.fs.default.name=hdfs://${master-server-address}/ \\${if additional-properties}
     ${additional-properties} \\${end}${if java-options}
     ${java-options} \\${end}
- > /dev/null 2>&1"
-
+> /dev/null"

@@ -7,5 +7,5 @@ ssh -f${ssh-key-path} ${user-name}@${server-address} "cd ${jagger-home};${if jav
     -Djmx.services=${foreach jmx-ports port}${if last_port}localhost:${port}${else}localhost:${port},${end}${end} \\${end}${if additional-properties}
     ${additional-properties} \\${end}${if java-options}
     ${java-options} \\${end}
- > /dev/null 2>&1"
+ > /dev/null"
 
