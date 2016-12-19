@@ -453,7 +453,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
         map.put("user-name", node.getUserNameActual());
         map.put("server-address", node.getServerAddressActual());
-        map.put("ssh-key-path", processKey(node.getSshKeyPathActual()));
+        map.put("ssh-key-path", processKey(node.getSshKeyPathActual(), node.getSshOptionsActual()));
         if(node.isSetJavaHome()) {
             map.put("java-home", node.getJavaHomeActual());
         }
@@ -530,8 +530,9 @@ public class JaggerEasyDeployPlugin extends Builder
      * @param keyPath string to process;
      * @return  string
      */
-    private String processKey(String keyPath) {
-        return keyPath.trim().isEmpty() ? "" : " -i " + keyPath.trim();
+    private String processKey(String keyPath, String options) {
+        String sshCommand = keyPath.trim().isEmpty() ? "" : " -i " + keyPath.trim();
+        return options.trim().isEmpty() ? sshCommand : sshCommand + " " + options;
     }
 
     /**
@@ -569,6 +570,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 checkJavaHome(build, listener, node);
                 checkSshNodesServerAddresses(build, listener, node);
                 checkSshNodesSSHKeyPath(build, listener, node);
+                checkSshNodesSSHOptions(build, listener, node);
                 checkSshNodesUserName(build, listener, node);
                 checkJmxPort(build, listener, node);
                 checkJavaOptions(build, listener, node);
@@ -625,6 +627,7 @@ public class JaggerEasyDeployPlugin extends Builder
         checkSshNodesServerAddresses(build, listener, masterNode);
         checkSshNodesUserName(build, listener, masterNode);
         checkSshNodesSSHKeyPath(build, listener, masterNode);
+        checkSshNodesSSHOptions(build, listener, masterNode);
         checkJavaHome(build, listener, masterNode);
         checkJavaOptions(build, listener, masterNode);
 
@@ -634,6 +637,7 @@ public class JaggerEasyDeployPlugin extends Builder
                 checkSshNodesServerAddresses(build, listener, node);
                 checkSshNodesUserName(build, listener, node);
                 checkSshNodesSSHKeyPath(build, listener, node);
+                checkSshNodesSSHOptions(build, listener, node);
                 checkJavaHome(build, listener, node);
                 checkJavaOptions(build, listener, node);
             }
@@ -659,6 +663,12 @@ public class JaggerEasyDeployPlugin extends Builder
 
         String temp = node.getSshKeyPath();
         node.setSshKeyPathActual(build.getEnvironment(listener).expand(temp));
+    }
+
+    private void checkSshNodesSSHOptions(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
+
+        String temp = node.getSshOptions();
+        masterNode.setSshOptionsActual(build.getEnvironment(listener).expand(temp));
     }
 
 

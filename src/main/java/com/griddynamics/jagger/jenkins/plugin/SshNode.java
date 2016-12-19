@@ -7,29 +7,31 @@ package com.griddynamics.jagger.jenkins.plugin;
  */
 public interface SshNode {
 
-    public String getUserNameActual();
+    String getUserNameActual();
 
-    public void setUserNameActual(String userNameActual);
+    void setUserNameActual(String userNameActual);
 
-    public String getSshKeyPathActual();
+    String getSshKeyPathActual();
 
-    public void setSshKeyPathActual(String sshKeyPathActual);
+    void setSshKeyPathActual(String sshKeyPathActual);
 
-    public String getServerAddressActual();
+    String getServerAddressActual();
 
-    public String getUserName();
+    String getUserName();
 
-    public String getSshKeyPath() ;
+    String getSshKeyPath();
 
-    public String getServerAddress();
+    String getSshOptions();
 
-    public void setServerAddressActual(String s);
+    String getServerAddress();
 
-    public String getJavaHome();
+    void setServerAddressActual(String s);
 
-    public void setJavaHomeActual(String javaHomeActual);
+    String getJavaHome();
 
-    public void setJavaOptionsActual(String javaOptionsActual);
+    void setJavaHomeActual(String javaHomeActual);
 
-    public String getJavaOptions();
+    void setJavaOptionsActual(String javaOptionsActual);
+
+    String getJavaOptions();
 }

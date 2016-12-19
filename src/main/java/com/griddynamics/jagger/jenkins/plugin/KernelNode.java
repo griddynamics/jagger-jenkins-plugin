@@ -20,8 +20,8 @@ import java.net.UnknownHostException;
 public class KernelNode extends Node implements Describable<KernelNode> {
 
     @DataBoundConstructor
-    public KernelNode(String serverAddress, String userName, String sshKeyPath, boolean setJavaHome, String javaHome, String javaOptions) {
-        super(serverAddress, userName, sshKeyPath, setJavaHome, javaHome, javaOptions);
+    public KernelNode(String serverAddress, String userName, String sshKeyPath, String sshOptions, boolean setJavaHome, String javaHome, String javaOptions) {
+        super(serverAddress, userName, sshKeyPath, sshOptions, setJavaHome, javaHome, javaOptions);
     }
 
     public Descriptor getDescriptor() {
