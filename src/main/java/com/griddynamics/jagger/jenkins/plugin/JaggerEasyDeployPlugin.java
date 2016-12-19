@@ -728,8 +728,9 @@ public class JaggerEasyDeployPlugin extends Builder
             }
         } catch (Exception e) {
 
-            logger.println("!!!" + getLineSeparator() + "Exception in perform " + e +
-                    "can't create script file or run script");
+            logger.println("!!!" + getLineSeparator() + "Exception in perform(): " + e +
+                    "\nCan't create script file or run script");
+            e.printStackTrace(logger);
             try {
                 pathToDeploymentScript.delete();
                 logger.println(pathToDeploymentScript + " has been deleted");
@@ -763,7 +764,7 @@ public class JaggerEasyDeployPlugin extends Builder
         }
 
         //setting permissions for executing
-        procStarter.cmds(stringToCmds("chmod +x " + file)).start();
+        procStarter.cmds(stringToCmds("chmod +x '" + file + "'")).start();
     }
 
 
