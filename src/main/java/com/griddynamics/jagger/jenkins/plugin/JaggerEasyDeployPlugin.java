@@ -9,6 +9,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.QuotedStringTokenizer;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -528,11 +529,12 @@ public class JaggerEasyDeployPlugin extends Builder
     /**
      *process key
      * @param keyPath string to process;
+     * @param options ssh options
      * @return  string
      */
     private String processKey(String keyPath, String options) {
-        String sshCommand = keyPath.trim().isEmpty() ? "" : " -i " + keyPath.trim();
-        return options.trim().isEmpty() ? sshCommand : sshCommand + " " + options;
+        String sshCommand = StringUtils.isBlank(keyPath) ? "" : " -i " + keyPath.trim();
+        return StringUtils.isBlank(options) ? sshCommand : sshCommand + " " + options.trim();
     }
 
     /**
