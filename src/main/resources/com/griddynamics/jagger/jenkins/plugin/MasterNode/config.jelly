@@ -13,6 +13,9 @@
         <f:textbox field="sshKeyPath" />
     </f:entry>
 
+    <f:entry title="Ssh Options">
+        <f:textbox field="sshOptions" />
+    </f:entry>
 
     <f:entry title="Java Options" field="javaOptions">
         <f:textbox />

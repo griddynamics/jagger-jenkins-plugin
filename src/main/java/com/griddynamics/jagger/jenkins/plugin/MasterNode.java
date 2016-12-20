@@ -20,8 +20,8 @@ import java.net.UnknownHostException;
 public class MasterNode extends Node implements Describable<MasterNode> {
 
     @DataBoundConstructor
-    public MasterNode(String serverAddress, String userName, String sshKeyPath, boolean setJavaHome, String javaHome, String javaOptions) {
-        super(serverAddress, userName, sshKeyPath, setJavaHome, javaHome, javaOptions);
+    public MasterNode(String serverAddress, String userName, String sshKeyPath, String sshOptions, boolean setJavaHome, String javaHome, String javaOptions) {
+        super(serverAddress, userName, sshKeyPath, sshOptions, setJavaHome, javaHome, javaOptions);
     }
 
     public Descriptor getDescriptor() {

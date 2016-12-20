@@ -34,11 +34,11 @@ public class SuT extends Node implements Describable<SuT> {
     private String jmxPortActual;
 
     @DataBoundConstructor
-    public SuT(String serverAddress, String userName, String sshKeyPath,
+    public SuT(String serverAddress, String userName, String sshKeyPath, String sshOptions,
                String jmxPort, boolean useJmx, boolean setJavaHome,
                String javaHome, String javaOptions, boolean failIfNotRunning) {
 
-        super(serverAddress, userName, sshKeyPath, setJavaHome, javaHome, javaOptions);
+        super(serverAddress, userName, sshKeyPath, sshOptions, setJavaHome, javaHome, javaOptions);
 
         this.jmxPort = jmxPort;
         this.useJmx = useJmx;
