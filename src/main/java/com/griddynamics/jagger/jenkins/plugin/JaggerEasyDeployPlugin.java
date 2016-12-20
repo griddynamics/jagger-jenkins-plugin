@@ -58,8 +58,7 @@ public class JaggerEasyDeployPlugin extends Builder
 
     /**
      * Constructor where fields from *.jelly will be passed
-     * @param sutsList
-     *                      List of nodes to test
+     * @param sutsList  List of nodes to test
      * @param masterNode  Master
      * @param kernelNodeList  Kernels
      * @param jaggerTestSuitePath test suite path
@@ -670,7 +669,7 @@ public class JaggerEasyDeployPlugin extends Builder
     private void checkSshNodesSSHOptions(Build build, BuildListener listener, SshNode node) throws IOException, InterruptedException {
 
         String temp = node.getSshOptions();
-        masterNode.setSshOptionsActual(build.getEnvironment(listener).expand(temp));
+        node.setSshOptionsActual(build.getEnvironment(listener).expand(temp));
     }
 
 

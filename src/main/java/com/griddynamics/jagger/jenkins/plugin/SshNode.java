@@ -15,6 +15,10 @@ public interface SshNode {
 
     void setSshKeyPathActual(String sshKeyPathActual);
 
+    String getSshOptionsActual();
+
+    void setSshOptionsActual(String sshOptionsActual);
+
     String getServerAddressActual();
 
     String getUserName();
