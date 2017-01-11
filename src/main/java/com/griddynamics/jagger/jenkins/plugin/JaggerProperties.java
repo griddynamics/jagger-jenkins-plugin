@@ -11,8 +11,9 @@ import java.util.Properties;
 public class JaggerProperties extends Properties{
 
     /**
-     * Add to Value new Value like this : >>old,new<<
+     * Add to Value new Value like this : &gt;&gt;old,new&lt;&lt;
      * If there is no key in properties, then key ,value sets like usual
+     *
      * @param key key
      * @param value value
      */
