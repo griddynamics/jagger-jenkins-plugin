@@ -8,7 +8,7 @@
 
     <groupId>com.griddynamics.jagger</groupId>
     <artifactId>jagger-jenkins-plugin</artifactId>
-    <version>1.0.10-SNAPSHOT</version>
+    <version>1.0.10-rc1</version>
     <name>Jagger Jenkins Plug-in</name>
     <packaging>hpi</packaging>
 
@@ -32,7 +32,8 @@
         <url>https://github.com/griddynamics/jagger-jenkins-plugin</url>
         <connection>scm:git:git://github.com/griddynamics/jagger-jenkins-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:griddynamics/jagger-jenkins-plugin.git</developerConnection>
-    </scm>
+      <tag>jagger-jenkins-plugin-1.0.10-rc1</tag>
+  </scm>
 
     <issueManagement>
         <url>https://github.com/griddynamics/jagger-jenkins-plugin/issues</url>
